@@ -1,0 +1,25 @@
+{
+  "name": "@ddlaws0n/agent-stuff",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build ./scripts/validate-skills.ts --target bun --outdir dist",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "skills:check": "bun run ./scripts/validate-skills.ts",
+    "test": "bun test",
+    "test:python": "uv run --with 'pyyaml>=6.0.2,<7' python -B -m unittest discover -s skills/create-github-actions/tests -p 'test_*.py'",
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun run skills:check && bun run test && bun run test:python"
+  },
+  "dependencies": {
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,16 @@
+name: Unsafe release
+on:
+  pull_request_target:
+  issue_comment:
+permissions: write-all
+jobs:
+  shared:
+    uses: example/actions/.github/workflows/release.yml@main
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - run: echo "${{ github.event.comment.body }}" | sh
+      - run: npm publish

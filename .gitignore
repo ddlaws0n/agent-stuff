@@ -1,0 +1,11 @@
+.DS_Store
+.local/
+node_modules/
+dist/
+__pycache__/
+*.pyc
+eval-results/
+coverage/
+.env
+.env.*
+!.env.example

@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Create .github/workflows/ci.yml for our pnpm monorepo with fork-safe PR checks and a Node version matrix.",
+    "should_trigger": true
+  },
+  {
+    "query": "Audit this GitHub Actions release workflow for permissions, mutable action refs, and pull_request_target risk.",
+    "should_trigger": true
+  },
+  {
+    "query": "Our Actions job fails only on ubuntu-latest after setup-node; help repair the workflow.",
+    "should_trigger": true
+  },
+  {
+    "query": "Build a reusable workflow_call deployment with OIDC and environment approval.",
+    "should_trigger": true
+  },
+  {
+    "query": "Upgrade actions/checkout and setup-python safely and pin privileged steps by SHA.",
+    "should_trigger": true
+  },
+  {
+    "query": "Add caching and artifacts to our GitHub Actions test matrix without stale cache keys.",
+    "should_trigger": true
+  },
+  {
+    "query": "Create a composite action under .github/actions that runs our repository checks.",
+    "should_trigger": true
+  },
+  {
+    "query": "Harden an issue_comment workflow that parses slash commands from contributor text.",
+    "should_trigger": true
+  },
+  {
+    "query": "Convert our GitHub Actions pipeline to GitLab CI YAML.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a Jenkinsfile for building and deploying this Java service.",
+    "should_trigger": false
+  },
+  {
+    "query": "Design Terraform for an AWS ECS deployment; CI already exists and needs no changes.",
+    "should_trigger": false
+  },
+  {
+    "query": "Draft release notes and choose the next semantic version.",
+    "should_trigger": false
+  },
+  {
+    "query": "Why does npm test fail locally with a TypeScript error?",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up a CircleCI test workflow for this repository.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain OIDC conceptually without creating or reviewing any automation.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add a deployment shell script that operators run manually outside CI.",
+    "should_trigger": false
+  }
+]

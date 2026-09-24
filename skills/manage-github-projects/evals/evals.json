@@ -1,0 +1,40 @@
+{
+  "skill_name": "manage-github-projects",
+  "evals": [
+    {
+      "id": 1,
+      "name": "board-state-report",
+      "prompt": "What's the current state of my homelab project board? I want to know how many issues are open vs closed, what the Status breakdown looks like for open issues, how many open issues are missing a Priority and Size, and which open issues are stalest.",
+      "expected_output": "Runs ghpm.py report. Prints state totals, per-Status breakdown for OPEN, single-select coverage (Priority/Size set counts), and the stalest-OPEN list. Should reference real issue numbers and not just describe the command.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "triage-set-fields",
+      "prompt": "Triage issue #437 — it's a real bug, high priority, size M. Set Priority to High, Size to M, and Status to In Progress. Then add the 'bug' label.",
+      "expected_output": "Uses ghpm.py fields first to confirm legal values (good practice), then runs set 437 Priority=High, set 437 Size=M, set 437 Status=\"In Progress\", label 437 bug. Verifies field/option names exist before applying.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "link-subissues",
+      "prompt": "Make #440 a sub-issue of #420, and mark #440 as blocked by #418.",
+      "expected_output": "Runs link 420 440 --relation subissue (or default), then link 418 440 --relation blocks. Explains that 'subissue' creates a true parent/child link while 'blocks' uses label+body-ref convention since GitHub has no first-class blocks link via GraphQL.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "create-and-rank",
+      "prompt": "Create a new issue called 'Upgrade Caddy to v2.9' in the homelab repo with body 'Tracking the Caddy 2.9 upgrade for the reverse-proxy stack.', label it 'infra', assign it to me, add it to the project, set Size to S and Priority to Medium.",
+      "expected_output": "Runs create with --label infra --assignee <self>, then set on the new issue number for Size=S and Priority=Medium. Note: create auto-adds to project, so no separate add-to-project needed.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "dry-run-bulk",
+      "prompt": "I want to move issues 430, 431, 432, 433 all to Status='Todo' but I'm nervous — show me what would happen first.",
+      "expected_output": "Uses --dry-run in a loop over the four issue numbers, printing the planned mutation for each without sending. Does NOT execute the mutations. Explains the dry-run behavior to the user and offers to run for real.",
+      "files": []
+    }
+  ]
+}

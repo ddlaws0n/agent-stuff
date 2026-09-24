@@ -1,0 +1,44 @@
+{
+  "skill_name": "create-github-actions",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a secure GitHub Actions CI workflow for a Node repo. It should run on pull requests and main branch pushes, install from package-lock.json, run npm test, and avoid giving secrets to forked PRs.",
+      "expected_output": "A GitHub Actions workflow with safe triggers, explicit read-only permissions, pinned actions, npm ci/test, timeout, concurrency, and no secret exposure to forked PRs.",
+      "files": [],
+      "expectations": [
+        "The workflow uses pull_request rather than pull_request_target for PR CI.",
+        "The workflow sets contents: read or narrower permissions.",
+        "The job has timeout-minutes and dependency installation uses npm ci.",
+        "External action references include explicit versions or SHAs.",
+        "The response includes a validation command."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Add a manual production deployment workflow using GitHub Actions environments and OIDC. It should not use static cloud credentials and should require production approval.",
+      "expected_output": "A manual environment-gated deployment with job-scoped OIDC permissions, serialized concurrency, pinned actions, and documented GitHub Environment reviewer configuration.",
+      "files": [],
+      "expectations": [
+        "The workflow uses workflow_dispatch and a production environment.",
+        "Only the deploy job grants id-token: write.",
+        "The design does not require long-lived cloud access keys.",
+        "Concurrency prevents overlapping production deploys.",
+        "Privileged external actions are full-SHA pinned or the limitation is explicitly called out."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review the supplied release workflow for unsafe GitHub Actions patterns and propose a corrected design.",
+      "expected_output": "An audit of the supplied workflow that identifies privileged PR execution, overbroad permissions, mutable reusable-workflow refs, and unsafe event-text interpolation, then proposes safer trust boundaries.",
+      "files": ["evals/fixtures/unsafe-release.yml"],
+      "expectations": [
+        "The response flags pull_request_target combined with untrusted checkout or execution.",
+        "The response replaces permissions: write-all with narrow job permissions.",
+        "The response flags the reusable workflow reference at main as mutable.",
+        "The response flags direct issue-comment interpolation into run as shell-injection risk.",
+        "The corrected design separates untrusted validation from trusted publishing."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "skill_name": "create-agentsmd",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create an AGENTS.md for this repository. Inspect the repo first and make it useful for coding agents.",
+      "expected_output": "Creates a concise root AGENTS.md grounded in repository manifests, docs, CI, and configuration. It uses exact existing commands, omits unsupported sections and placeholders, and does not explain generic concepts the agent already knows.",
+      "assertions": [
+        "The generated AGENTS.md contains no placeholder text or template brackets",
+        "Every setup, build, lint, test, or type-check command is supported by repository evidence",
+        "The document contains repository-specific guidance rather than generic coding advice",
+        "The final response distinguishes checks that were actually executed from instructions merely discovered in the repository"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our AGENTS.md has grown into a huge generic template. Audit it against the repository and rewrite it so agents get only the instructions that actually matter.",
+      "expected_output": "Reviews the existing file, preserves accurate high-value constraints, removes generic explanations and stale or unsupported instructions, and produces a materially leaner evidence-backed AGENTS.md without silently discarding repository-specific gotchas.",
+      "assertions": [
+        "Useful repository-specific instructions from the previous AGENTS.md are preserved unless contradicted by current evidence",
+        "Generic framework explanations and unenforced stylistic platitudes are removed",
+        "Unsupported requirements are removed or explicitly qualified",
+        "The resulting document is more concise without losing commands or constraints that change agent behavior"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create agent instructions for this monorepo. The frontend and backend use different toolchains, but most contribution rules are shared.",
+      "expected_output": "Creates shared root guidance and uses nested AGENTS.md only where subtree-specific commands or constraints materially differ. Nested files do not duplicate inherited root guidance, and the response explains the scoping decision.",
+      "assertions": [
+        "Shared repository-wide guidance is kept at the root",
+        "Subproject-specific commands or constraints are scoped to the relevant subtree when nested files are warranted",
+        "Nested files do not repeat root-level guidance unnecessarily",
+        "No provider-specific AGENTS.md extensions are introduced unless repository evidence requires them"
+      ]
+    }
+  ]
+}
