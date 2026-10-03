@@ -1,4 +1,3 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { parseDocument } from "yaml";
 
@@ -10,24 +9,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export function validateSkill(directory: string): string[] {
+async function validateMetadata(
+  data: Record<string, unknown>,
+  name: string,
+  body: string,
+  directory: string,
+): Promise<string[]> {
   const errors: string[] = [];
-  const skillFile = join(directory, "SKILL.md");
-  const name = basename(directory);
-  if (!existsSync(skillFile)) return [`${name}: missing SKILL.md`];
-
-  const text = readFileSync(skillFile, "utf8");
-  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/.exec(text);
-  if (!frontmatter)
-    return [`${name}: SKILL.md needs YAML frontmatter and a Markdown body`];
-
-  const document = parseDocument(frontmatter[1], { uniqueKeys: true });
-  for (const error of document.errors)
-    errors.push(`${name}: invalid YAML: ${error.message}`);
-  if (document.errors.length) return errors;
-  const data: unknown = document.toJS();
-  if (!isRecord(data)) return [`${name}: frontmatter must be a mapping`];
-
   if (
     typeof data.name !== "string" ||
     data.name !== name ||
@@ -48,7 +36,7 @@ export function validateSkill(directory: string): string[] {
     );
   }
   if (data.license !== "MIT") errors.push(`${name}: license must be MIT`);
-  if (!existsSync(join(directory, "LICENSE")))
+  if (!(await Bun.file(join(directory, "LICENSE")).exists()))
     errors.push(`${name}: missing bundled LICENSE`);
   if (
     data.compatibility !== undefined &&
@@ -74,90 +62,130 @@ export function validateSkill(directory: string): string[] {
   ) {
     errors.push(`${name}: metadata values must be strings`);
   }
-  if (!frontmatter[2].trim()) errors.push(`${name}: SKILL.md body is empty`);
+  if (!body.trim()) errors.push(`${name}: SKILL.md body is empty`);
+  return errors;
+}
 
-  const evalFile = join(directory, "evals", "evals.json");
-  if (existsSync(evalFile)) {
-    try {
-      const evals: unknown = JSON.parse(readFileSync(evalFile, "utf8"));
-      if (
-        !isRecord(evals) ||
-        evals.skill_name !== name ||
-        !Array.isArray(evals.evals) ||
-        evals.evals.length === 0
-      ) {
-        errors.push(
-          `${name}: evals/evals.json needs matching skill_name and a nonempty evals array`,
-        );
-      } else {
-        const ids = new Set<number>();
-        for (const [index, item] of evals.evals.entries()) {
-          const prefix = `${name}: eval ${index + 1}`;
-          if (!isRecord(item)) {
-            errors.push(`${prefix} must be an object`);
-            continue;
-          }
-          if (
-            !Number.isSafeInteger(item.id) ||
-            (item.id as number) < 1 ||
-            ids.has(item.id as number)
-          ) {
-            errors.push(`${prefix} needs a unique positive integer id`);
-          } else ids.add(item.id as number);
-          if (typeof item.prompt !== "string" || !item.prompt.trim())
-            errors.push(`${prefix} needs a prompt`);
-          if (
-            typeof item.expected_output !== "string" ||
-            !item.expected_output.trim()
-          )
-            errors.push(`${prefix} needs expected_output`);
-          if (
-            item.files !== undefined &&
-            (!Array.isArray(item.files) ||
-              item.files.some((file) => {
-                if (typeof file !== "string" || !file || isAbsolute(file))
-                  return true;
-                const path = resolve(directory, file);
-                const within = relative(directory, path);
-                return (
-                  within === ".." ||
-                  within.startsWith(`..${sep}`) ||
-                  !existsSync(path) ||
-                  !statSync(path).isFile()
-                );
-              }))
-          )
-            errors.push(
-              `${prefix} files must be existing paths within the skill`,
-            );
-          if (
-            item.assertions !== undefined &&
-            (!Array.isArray(item.assertions) ||
-              item.assertions.some(
-                (assertion) =>
-                  typeof assertion !== "string" || !assertion.trim(),
-              ))
-          ) {
-            errors.push(`${prefix} assertions must be nonempty strings`);
-          }
-        }
-      }
-    } catch (error) {
-      errors.push(`${name}: invalid evals/evals.json: ${String(error)}`);
-    }
+async function validFiles(directory: string, value: unknown): Promise<boolean> {
+  if (!Array.isArray(value)) return false;
+  const files: unknown[] = value;
+  for (const file of files) {
+    if (typeof file !== "string" || !file || isAbsolute(file)) return false;
+    const path = resolve(directory, file);
+    const within = relative(directory, path);
+    if (within === ".." || within.startsWith(`..${sep}`)) return false;
+    const input = Bun.file(path);
+    if (!(await input.exists()) || !(await input.stat()).isFile()) return false;
   }
+  return true;
+}
+
+async function validateEvals(
+  directory: string,
+  name: string,
+): Promise<string[]> {
+  const evalFile = Bun.file(join(directory, "evals", "evals.json"));
+  if (!(await evalFile.exists())) return [];
+
+  const errors: string[] = [];
+  try {
+    const evals: unknown = await evalFile.json();
+    if (
+      !isRecord(evals) ||
+      evals.skill_name !== name ||
+      !Array.isArray(evals.evals) ||
+      evals.evals.length === 0
+    ) {
+      return [
+        `${name}: evals/evals.json needs matching skill_name and a nonempty evals array`,
+      ];
+    }
+
+    const ids = new Set<number>();
+    const items: unknown[] = evals.evals;
+    for (const [index, item] of items.entries()) {
+      const prefix = `${name}: eval ${index + 1}`;
+      if (!isRecord(item)) {
+        errors.push(`${prefix} must be an object`);
+        continue;
+      }
+      if (
+        typeof item.id !== "number" ||
+        !Number.isSafeInteger(item.id) ||
+        item.id < 1 ||
+        ids.has(item.id)
+      ) {
+        errors.push(`${prefix} needs a unique positive integer id`);
+      } else ids.add(item.id);
+      if (typeof item.prompt !== "string" || !item.prompt.trim())
+        errors.push(`${prefix} needs a prompt`);
+      if (
+        typeof item.expected_output !== "string" ||
+        !item.expected_output.trim()
+      )
+        errors.push(`${prefix} needs expected_output`);
+      if (
+        item.files !== undefined &&
+        !(await validFiles(directory, item.files))
+      )
+        errors.push(`${prefix} files must be existing paths within the skill`);
+      if (
+        item.assertions !== undefined &&
+        (!Array.isArray(item.assertions) ||
+          item.assertions.some(
+            (assertion: unknown) =>
+              typeof assertion !== "string" || !assertion.trim(),
+          ))
+      ) {
+        errors.push(`${prefix} assertions must be nonempty strings`);
+      }
+    }
+  } catch (error) {
+    errors.push(`${name}: invalid evals/evals.json: ${String(error)}`);
+  }
+  return errors;
+}
+
+export async function validateSkill(directory: string): Promise<string[]> {
+  const name = basename(directory);
+  const skillFile = Bun.file(join(directory, "SKILL.md"));
+  if (!(await skillFile.exists())) return [`${name}: missing SKILL.md`];
+
+  const text = await skillFile.text();
+  const frontmatter = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/.exec(text);
+  if (!frontmatter)
+    return [`${name}: SKILL.md needs YAML frontmatter and a Markdown body`];
+
+  const document = parseDocument(frontmatter[1], { uniqueKeys: true });
+  const yamlErrors = document.errors.map(
+    (error) => `${name}: invalid YAML: ${error.message}`,
+  );
+  if (yamlErrors.length) return yamlErrors;
+  const data: unknown = document.toJS();
+  if (!isRecord(data)) return [`${name}: frontmatter must be a mapping`];
+
+  const errors = await validateMetadata(data, name, frontmatter[2], directory);
+  errors.push(...(await validateEvals(directory, name)));
   return errors;
 }
 
 if (import.meta.main) {
   const skillsDir = resolve(import.meta.dir, "..", "skills");
-  const directories = readdirSync(skillsDir, { withFileTypes: true }).filter(
-    (entry) => entry.isDirectory() && !entry.name.startsWith("."),
-  );
+  const directories: string[] = [];
+  for await (const entry of new Bun.Glob("*").scan({
+    cwd: skillsDir,
+    onlyFiles: false,
+  })) {
+    if ((await Bun.file(join(skillsDir, entry)).stat()).isDirectory())
+      directories.push(entry);
+  }
+  directories.sort();
   if (directories.length === 0) throw new Error("No skills found in skills/");
-  const errors = directories.flatMap((entry) =>
-    validateSkill(join(skillsDir, entry.name)),
-  );
+  const errors = (
+    await Promise.all(
+      directories.map((entry) => validateSkill(join(skillsDir, entry))),
+    )
+  ).flat();
   if (errors.length) {
     console.error(errors.join("\n"));
     process.exitCode = 1;
