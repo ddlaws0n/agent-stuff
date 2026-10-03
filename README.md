@@ -19,6 +19,10 @@ Until the repository is published, inspect locally with `npx skills add . --list
 
 | Skill | Purpose |
 |-|-|
+| [`create-agentsmd`](skills/create-agentsmd/SKILL.md) | Create repository-grounded agent instructions. |
+| [`create-github-actions`](skills/create-github-actions/SKILL.md) | Create and review secure GitHub Actions workflows. |
+| [`har-workflow-analysis`](skills/har-workflow-analysis/SKILL.md) | Analyze browser network captures and assess workflow automation. |
+| [`manage-secrets-varlock`](skills/manage-secrets-varlock/SKILL.md) | Manage schema-driven environment configuration and secrets with Varlock. |
 | [`manage-github-projects`](skills/manage-github-projects/SKILL.md) | Manage GitHub Projects v2 boards and their issues via `gh` and Python. |
 
 ## Author a skill
@@ -50,12 +54,20 @@ metadata:
 ```sh
 bun install
 bun run check          # typecheck, lint, format, skill/eval validation, Bun and Python tests
-bun run test:python    # run only the Python workflow-validator tests (uv installs PyYAML)
+bun run test:python    # Python workflow-validator tests (uv installs PyYAML)
+bun run test:eval      # evaluation fixture/model-selection tests
+bun run test:har       # HAR streaming and privacy regressions (uv installs ijson)
 bun run build          # compile the repository's TypeScript tooling to dist/
 bun run format         # format TypeScript/JSON configuration
 ```
 
 `bun run skills:check` validates skill metadata and eval definitions. For per-skill output quality, trigger selection, safety, and baseline comparisons, see [docs/evals.md](docs/evals.md). `AGENTS.md` contains contributor guidance (also linked as `CLAUDE.md`).
+
+## Evaluation status
+
+All five skills have structural validation and starter task-quality eval prompts. Repository checks also cover developer tooling, workflow validation, evaluation fixture preparation, and HAR privacy/streaming regressions. These checks do not establish task quality or trigger-selection accuracy.
+
+The historical pilot compared one task each for `create-agentsmd`, `create-github-actions`, and `manage-github-projects`: with-skill outputs passed 14/14 assertions, baselines 13/14. The only assertion difference was in GitHub Actions; skill runs used more tokens in all three pairs. These are single-case observations from a direct-provider cohort, not a broad benchmark. The new Docker/OpenRouter pilot completed all six runs and scored 13/14 with skill versus 12/14 without; keep this cohort separate from historical results. Transcript review also found a CI network probe against instructions and a rejected mock board mutation; passing output checks does not establish safe behavior. Human feedback remains pending. Varlock and HAR have not yet had paired behavioral evaluations, and live GitHub board mutations have not been evaluated. See [evaluation methodology and current verification](docs/evals.md) and the [Docker pilot harness](eval/harness/README.md).
 
 ## License
 

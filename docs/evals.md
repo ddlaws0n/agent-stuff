@@ -4,7 +4,7 @@ Use two complementary tracks: fast deterministic checks for every change and man
 
 ## 1. Static gate (every change)
 
-`bun run check` type-checks, lints, formats-checks, validates every `skills/*/SKILL.md` and `evals/evals.json`, and runs repository tests. `bun run build` compiles the TypeScript developer tooling. Check CLI discovery with `npx skills add . --list` when changing a skill's location or name. Optionally cross-check a changed skill against the reference implementation with `skills-ref validate skills/<name>` if `skills-ref` is installed; this is not a Bun dependency.
+`bun run check` type-checks, lints, formats-checks, validates every `skills/*/SKILL.md` and `evals/evals.json`, and runs Bun tests plus Python workflow-validator, harness-preparation, and HAR streaming/privacy tests. `bun run build` compiles the TypeScript developer tooling. Check CLI discovery with `npx skills add . --list` when changing a skill's location or name. Optionally cross-check a changed skill against the reference implementation with `skills-ref validate skills/<name>` if `skills-ref` is installed; this is not a Bun dependency.
 
 ## 2. Task-quality evals (behavior changes)
 
@@ -12,7 +12,7 @@ Store realistic user requests in `skills/<name>/evals/evals.json`. Each entry ha
 
 For each prompt:
 
-1. Run in a fresh context with the skill and in another fresh context without it. For revisions, compare to a snapshot of the previous skill instead. Use the same agent/model, task, inputs, tools, and environment; vary only the skill. Save outputs and transcripts outside `skills/` (e.g. ignored `eval-results/<skill>/iteration-N/`).
+1. Run in a fresh context with the skill and in another fresh context without it. For revisions, compare to a snapshot of the previous skill instead. Use the same agent/model, task, inputs, tools, and environment; vary only the skill. **Pin the model on every eval child rather than inheriting Pi's default.** The local pilot in [`eval/harness/README.md`](../eval/harness/README.md) defaults to `openrouter/z-ai/glm-5.3-flash:high` and can select `openrouter/openai/gpt-6-luna:high` for a separate cohort. Verify the resolved provider/model before grading; do not pool models or providers in paired comparisons, including historical direct-provider results. Save outputs and transcripts outside `skills/` (e.g. ignored `eval/results/<skill>/iteration-N/`).
 2. **Isolate side effects.** Use disposable repositories/fixtures and mocks for GitHub, network, and other external writes, or make the case explicitly dry-run. Never execute the existing project-board mutation prompts against a real board for an eval. Separate real-account integration testing and require explicit approval for it.
 3. Add observable assertions after reviewing the first outputs. Verify mechanical properties (files, JSON, exact operations) with scripts; grade semantic quality with a reviewer and concrete cited evidence. Record pass/fail per assertion, plus unexpected unsafe behavior. Do not award a pass on intent alone.
 4. Compare the with-skill run to baseline on assertion pass rate, failure types, elapsed time, and token use. Inspect transcripts for unnecessary steps or ignored instructions. Have a human review outputs for usefulness, correctness, and safety; objective grades cannot catch everything.
@@ -21,7 +21,7 @@ For each prompt:
 Suggested result layout (generated results are not committed):
 
 ```text
-eval-results/<skill>/iteration-1/
+eval/results/<skill>/iteration-1/
   eval-1/with_skill/{outputs/,transcript,grading.json,timing.json}
   eval-1/without_skill/{outputs/,transcript,grading.json,timing.json}
   benchmark.json
@@ -37,3 +37,16 @@ Separately test the frontmatter `description` with realistic *should-trigger* an
 Static gate passes; CLI discovers the skill; changed workflows have a reviewed with-skill vs baseline comparison; no unexplained regressions or unsafe actions; requirements and limitations are documented in the skill. If an integration eval cannot run safely, report it as **not run**, not passing.
 
 References: [Agent Skills specification](https://agentskills.io/specification), [evaluating skill output quality](https://agentskills.io/skill-creation/evaluating-skills), [optimizing descriptions](https://agentskills.io/skill-creation/optimizing-descriptions).
+
+## Verification snapshot — 3 October 2026
+
+- Repository gate, tooling build, and CLI discovery passed for all five skills: 18 Bun tests and 15 Python tests (five workflow-validator, seven harness, three HAR). Shell scripts pass syntax checks.
+- Docker smoke passed with Pi 0.87.1, Python 3.11.2, and uv 0.10.0. After 1Password authorization, all six cells of `review-20261003` completed on `openrouter/z-ai/glm-5.3-flash:high`, with provider/model and completion verified by the collector.
+- Live execution exposed grader defects: CI may create a new file rather than modify `existing.yml`; board case 1 lacked assertions; Markdown formatting caused board false negatives. These were repaired with regression tests and saved outputs were regraded without additional model calls. The original transcripts/outputs were retained.
+- The new pilot's automated totals are **13/14 with skill and 12/14 without**, one task each for three skills. Skill runs used more tokens in every pair. The with-skill AGENTS.md loses a lexical check for omitting the lockfile filename; both documents describe actual fixture scripts. Both CI outputs pass five checks. The board baseline omits separate missing-field totals and attempts a mock mutation that is rejected. Human usefulness review is pending.
+- **Protocol deviation:** the with-skill CI run attempts a GitHub network probe despite the no-network instruction and invokes `uv` for dependency resolution; its final claim of no network access is unsupported. Automated workflow scores do not capture this. Docker bridge networking allows outbound traffic, so instructions alone are not an egress boundary. No live GitHub mutation was performed; mutation cases remain unevaluated.
+- The historical direct-provider `pilot-1` remains a separate cohort: 14/14 with skill, 13/14 without. Agent review found grounded AGENTS.md outputs, added timeout/concurrency in the skill CI output, and correct synthetic board reports. Historical human feedback is pending; do not pool these scores with the OpenRouter pilot.
+- Varlock and HAR paired task-quality runs and trigger-selection testing remain unevaluated.
+- The grader uses text patterns and command-presence checks. Formatting can cause false negatives, command mentions do not prove success, and `@` action references do not verify provenance or SHA pinning. Review outputs/transcripts alongside scores before making a quality or safety claim.
+
+Generated transcripts, outputs, timings, grading, and the reviewed summary stay in ignored `eval/results/review-20261003/`; they are not included in commits.

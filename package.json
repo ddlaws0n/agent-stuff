@@ -12,7 +12,9 @@
     "skills:check": "bun run ./scripts/validate-skills.ts",
     "test": "bun test",
     "test:python": "uv run --with 'pyyaml>=6.0.2,<7' python -B -m unittest discover -s skills/create-github-actions/tests -p 'test_*.py'",
-    "check": "bun run typecheck && bun run lint && bun run format:check && bun run skills:check && bun run test && bun run test:python"
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun run skills:check && bun run test && bun run test:python && bun run test:eval && bun run test:har",
+    "test:eval": "uv run python -B -m unittest discover -s eval/harness -p 'test_*.py'",
+    "test:har": "uv run --with 'ijson>=3.2,<4' python -B -m unittest discover -s skills/har-workflow-analysis/evals -p 'test_*.py'"
   },
   "dependencies": {
     "yaml": "^2.9.1"
