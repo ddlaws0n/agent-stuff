@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Migrate this Next.js repo from dotenv to Varlock and create a safe .env.schema.",
+    "should_trigger": true
+  },
+  {
+    "query": "Our Varlock APP_ENV selection is wrong in Turborepo CI; debug the schema and integration.",
+    "should_trigger": true
+  },
+  {
+    "query": "Add 1Password-backed Varlock references for Stripe and database credentials without exposing values.",
+    "should_trigger": true
+  },
+  {
+    "query": "Run an agent-safe Varlock audit of .env.schema and tell me which keys fail validation.",
+    "should_trigger": true
+  },
+  {
+    "query": "Set up @env-spec types and required/sensitive rules for this service.",
+    "should_trigger": true
+  },
+  {
+    "query": "Wire varlock run into Docker, migrations, and our non-JS worker process.",
+    "should_trigger": true
+  },
+  {
+    "query": "Configure separate development and production 1Password instances in Varlock.",
+    "should_trigger": true
+  },
+  {
+    "query": "Scan this Varlock migration for leaked secrets and unsafe browser-exposed config.",
+    "should_trigger": true
+  },
+  {
+    "query": "Explain what environment variables are in a beginner README.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add one public VITE_API_BASE_URL variable to our existing Vite config; we are not adopting Varlock.",
+    "should_trigger": false
+  },
+  {
+    "query": "Rotate my production API key in the vendor dashboard.",
+    "should_trigger": false
+  },
+  {
+    "query": "Fix a GitHub Actions secret name typo without changing environment management.",
+    "should_trigger": false
+  },
+  {
+    "query": "Document the OS PATH environment variable.",
+    "should_trigger": false
+  },
+  {
+    "query": "Use AWS Secrets Manager directly from this Terraform module; no Varlock or env schema is involved.",
+    "should_trigger": false
+  },
+  {
+    "query": "Read my .env file and paste all current values into a table.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add an API key field to this application's settings form.",
+    "should_trigger": false
+  }
+]
