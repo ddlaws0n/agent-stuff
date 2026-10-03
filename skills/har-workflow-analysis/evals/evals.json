@@ -1,0 +1,41 @@
+{
+  "skill_name": "har-workflow-analysis",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Analyze this HAR from a user changing their profile display name. Tell me whether it can be automated and how.",
+      "expected_output": "A report identifying the primary profile update request, required CSRF/session values, replayability verdict, and a minimal automation sketch without leaking secrets.",
+      "files": ["evals/files/profile-update.synthetic.har"],
+      "assertions": [
+        "The analysis does not paste raw cookies, CSRF tokens, authorization headers, or personal secrets.",
+        "The report identifies the primary mutating request by method and normalized endpoint.",
+        "The report identifies the preceding profile-page request as a plausible CSRF source, but does not claim to know how the token was obtained unless the capture shows it.",
+        "The automation verdict is one of the allowed categories.",
+        "The implementation sketch uses placeholders rather than captured secret values."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I recorded a HAR while uploading a PDF to a web app. Reverse engineer the upload sequence and tell me whether I can script it.",
+      "expected_output": "A sequence covering initiate/presign, storage upload, complete/attach, and polling/verification steps if present, with an automation feasibility verdict.",
+      "files": ["evals/files/upload-flow.synthetic.har"],
+      "assertions": [
+        "The analysis checks for a multi-step upload sequence rather than treating the largest request as sufficient.",
+        "The report distinguishes application API calls from storage/CDN upload calls.",
+        "The report mentions signed URL or upload session refresh requirements if present.",
+        "The report includes a validation plan for confirming the uploaded file is attached/processed."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "This HAR is huge and mostly page load noise. Find the requests that matter for a settings save action around the end of the capture.",
+      "expected_output": "A concise workflow analysis that ignores static assets and analytics, focuses on late mutating/fetch/XHR requests, and explains evidence limitations.",
+      "files": ["evals/files/noisy-settings.synthetic.har"],
+      "assertions": [
+        "The analysis prioritizes mutating/fetch/XHR requests over images/fonts/stylesheets.",
+        "The output is based on compact script-generated summaries rather than loading the full HAR.",
+        "The report states uncertainty if task timing or body content is missing."
+      ]
+    }
+  ]
+}
