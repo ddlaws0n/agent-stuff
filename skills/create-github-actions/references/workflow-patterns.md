@@ -4,8 +4,9 @@ Read this file when the task involves deployments, release publishing, reusable 
 
 ## Trigger selection
 
+<!-- prettier-ignore -->
 | Scenario | Prefer | Avoid |
-| --- | --- | --- |
+|-|-|-|
 | PR checks | `pull_request` | `pull_request_target` unless metadata-only and hardened |
 | Branch CI | `push` to protected branches | broad `push` triggers with expensive matrices on every branch |
 | Manual deploy | `workflow_dispatch` + `environment` | unconstrained manual deploys with global write permissions |
@@ -24,8 +25,9 @@ permissions:
 
 Add job-level scopes only when needed:
 
+<!-- prettier-ignore -->
 | Capability | Typical permission |
-| --- | --- |
+|-|-|
 | Comment on PR/issue | `pull-requests: write` or `issues: write` |
 | Upload SARIF/code scanning | `security-events: write` |
 | Publish GitHub Release | `contents: write` |

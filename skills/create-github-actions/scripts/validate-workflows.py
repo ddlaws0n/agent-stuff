@@ -4,6 +4,10 @@
 # dependencies = [
 #   "pyyaml>=6.0.2,<7",
 # ]
+#
+# [tool.ty.rules]
+# # Dependencies above are installed by `uv run`, not in the repo environment.
+# unresolved-import = "ignore"
 # ///
 
 """Static validator for GitHub Actions workflow YAML.

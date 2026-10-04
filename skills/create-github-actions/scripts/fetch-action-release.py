@@ -5,6 +5,10 @@
 #   "httpx>=0.27,<1",
 #   "packaging>=24,<26",
 # ]
+#
+# [tool.ty.rules]
+# # Dependencies above are installed by `uv run`, not in the repo environment.
+# unresolved-import = "ignore"
 # ///
 
 """Fetch release/tag context for a GitHub Action repository.

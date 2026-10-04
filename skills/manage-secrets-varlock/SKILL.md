@@ -1,14 +1,14 @@
 ---
 name: manage-secrets-varlock
 description: >-
-  Use this skill when the user wants to adopt, migrate, debug, validate, or
-  improve Varlock / @env-spec environment variable management in a project,
-  including .env.schema authoring, dotenv migration, multi-environment setup,
-  CI/CD validation, framework integration, AI-safe secrets, leak scanning, and
-  1Password-backed secrets. Use when Varlock is named or when the user explicitly
-  wants schema-driven environment configuration, dotenv migration, leak-safe
-  validation, or secret-provider integration; do not force Varlock onto routine
-  environment-variable or API-key questions.
+  Adopts, migrates, debugs, validates, and improves Varlock / @env-spec
+  environment variable management: .env.schema authoring, dotenv migration,
+  multi-environment setup, CI/CD validation, framework integration, AI-safe
+  secrets, leak scanning, and 1Password-backed secrets. Use when Varlock is
+  named or when the user explicitly wants schema-driven environment
+  configuration, dotenv migration, leak-safe validation, or secret-provider
+  integration. Do not use for routine environment-variable or API-key questions;
+  never force Varlock onto them.
 license: MIT
 compatibility: >-
   Requires shell access in the target project. Varlock JS package requires
@@ -16,14 +16,14 @@ compatibility: >-
   integration may require @varlock/1password-plugin and/or op CLI.
 metadata:
   author: ddlaws0n
-  version: "0.3.0"
+  version: "0.3.1"
 ---
 
 # Varlock environment management
 
 Use this skill to help users design, migrate, validate, or troubleshoot Varlock-backed environment configuration. Treat `.env.schema` as the safe, committed source of truth for config names, descriptions, types, validation rules, environment loading, and secret resolver references. Do **not** ask the user to paste secret values.
 
-## Core workflow
+## Workflow
 
 1. **Identify the project shape**
    - Check for `package.json`, framework config, monorepo tooling, existing `.env*` files, CI config, and any current dotenv usage.
@@ -59,20 +59,20 @@ Use this skill to help users design, migrate, validate, or troubleshoot Varlock-
 
 5. **Validate and iterate**
    - Run `varlock load --agent --format json-full` for redacted validation details; use exit status rather than parsing pretty output. Beware that resolvers may contact secret providers or prompt for desktop auth.
-   - Run `varlock audit` to compare source references with schema keys and `varlock scan --staged` before committing (or `varlock scan` for the working tree; explicit paths for generated build output). Scan checks *resolved* sensitive values, not arbitrary unknown secrets; it is not a substitute for reviewing git history and credential hygiene.
+   - Run `varlock audit` to compare source references with schema keys and `varlock scan --staged` before committing (or `varlock scan` for the working tree; explicit paths for generated build output). Scan checks _resolved_ sensitive values, not arbitrary unknown secrets; it is not a substitute for reviewing git history and credential hygiene.
    - Fix schema errors, missing values, unsafe sensitivity markings, and environment-selection issues before finalizing.
 
 6. **Summarize changes clearly**
    - Report what files changed, how environments resolve, where secrets live, and how developers/CI should run commands.
    - Include copy-paste commands for install, validation, dev, test, build, and production.
 
-## When to read references
+## References
 
 - Read `references/schema-patterns.md` when creating or editing `.env.schema`, decorators, functions, data types, imports, or validation rules.
 - Read `references/projects-and-integrations.md` when wiring Varlock into a real app, framework, package scripts, CI/CD, Docker, monorepo, or non-JS project.
 - Read `references/onepassword.md` when the user mentions 1Password, `op://`, `op read`, 1Password Environments, service accounts, desktop app auth, vaults, or secret-zero handling.
 
-## Available script
+## Scripts
 
 - `scripts/varlock-project-check.sh PROJECT_DIR` performs a lightweight project check with `varlock load --agent --format json-full`, `varlock audit`, and `varlock scan`. It resolves secrets; ask before using it in projects where resolver side effects or interactive authentication are unexpected. Select the target environment via the project's own `@currentEnv` flag before calling it.
 
@@ -87,7 +87,7 @@ Use this skill to help users design, migrate, validate, or troubleshoot Varlock-
 - For 1Password desktop app auth, remember the user authenticates as themselves; do not enable it for production secrets unless explicitly intended.
 - For production 1Password access, prefer narrowly scoped service accounts and separate production vaults/instances.
 
-## Output templates
+## Output
 
 ### Migration plan
 

@@ -1,11 +1,16 @@
 ---
 name: create-agentsmd
 description: >-
-  Use this skill when the user asks to create, write, regenerate, review, audit, or improve an AGENTS.md file for a code repository, including monorepos or nested package instructions. Inspect the repository and derive concise, evidence-backed guidance for setup, development, testing, code conventions, architecture constraints, validation, and repo-specific gotchas. Do not invent commands or copy generic templates.
+  Creates or improves AGENTS.md files with concise, evidence-backed guidance
+  derived from the repository: setup, development, testing, code conventions,
+  architecture constraints, validation, and repo-specific gotchas. Use when the
+  user asks to create, write, regenerate, review, audit, or improve an AGENTS.md
+  file for a code repository, including monorepos or nested package
+  instructions. Do not invent commands or copy generic templates.
 license: MIT
 metadata:
   author: ddlaws0n
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # Create or improve AGENTS.md

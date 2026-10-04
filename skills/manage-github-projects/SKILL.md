@@ -1,11 +1,26 @@
 ---
 name: manage-github-projects
-description: Manage GitHub Projects v2 (the new board view) and the issues in them — inspect board state, set Status/Priority/Size/Estimate/Iteration and custom fields, label/assign/milestone issues, link issues (sub-issues, blocked-by, duplicate), create issues and drafts, and remove items. Use this skill whenever the user mentions a GitHub project board, project fields, t-shirt sizes or estimates, issue Status/Priority/Size columns, triaging or grooming a backlog, linking/blocking/duplicating issues, or wants a report on project coverage and staleness. Trigger on phrases like "move this issue to In Progress", "set priority to High", "size this issue as L", "what's the state of my project board", "link these issues", "add this to the Homelab project", "which issues have no size", "triage the backlog". Use it even when the user just says "the project" and means a GitHub Projects board, not a code project.
+description: >-
+  Manages GitHub Projects v2 boards and the issues in them: inspects board
+  state, sets Status/Priority/Size/Estimate/Iteration and custom fields,
+  labels/assigns/milestones issues, links issues (sub-issues, blocked-by,
+  duplicate), creates issues and drafts, and removes items. Use when the user
+  mentions a GitHub project board, project fields, t-shirt sizes or estimates,
+  issue Status/Priority/Size columns, triaging or grooming a backlog,
+  linking/blocking/duplicating issues, or wants a report on project coverage and
+  staleness, including phrases like "move this issue to In Progress", "set
+  priority to High", "size this issue as L", "what's the state of my project
+  board", "link these issues", "add this to the Homelab project", "which issues
+  have no size", or "triage the backlog". Also use when the user says "the
+  project" and means a GitHub Projects board. Do not use for plain issue work
+  without a board, or Projects classic.
 license: MIT
-compatibility: Requires Python 3.10+, GitHub CLI (gh) with project scope, and GitHub access; uv is optional.
+compatibility: >-
+  Requires Python 3.10+, GitHub CLI (gh) with project scope, and GitHub access;
+  uv is optional.
 metadata:
   author: ddlaws0n
-  version: "0.1.1"
+  version: "0.1.2"
 ---
 
 # Manage GitHub Projects
@@ -14,7 +29,7 @@ A skill for working with **GitHub Projects v2** — the board/table product that
 layers custom fields (Status, Priority, Size, Estimate, Iteration, …) on top of
 issues. The Projects GraphQL API is fiddly: single-select fields need opaque
 option IDs, items paginate in pages of 100, and labels/assignees/milestones live
-on the *issue* not the *project item*. This skill bundles one helper script that
+on the _issue_ not the _project item_. This skill bundles one helper script that
 absorbs all of that, so you spend your time on the triage decision instead of
 the API bookkeeping.
 
@@ -30,26 +45,34 @@ the API bookkeeping.
 - Removing items from a board or closing issues
 
 **Don't use this for:** plain `gh issue` work with no project-board involvement
-(just use `gh` directly), or GitHub Projects *classic* (v1) — this targets v2.
+(just use `gh` directly), or GitHub Projects _classic_ (v1) — this targets v2.
 
-## The helper script
+## Workflow
+
+1. Confirm the board and its vocabulary: run `fields` before any change, and `report` for state questions. Take field names and option values from that output.
+2. For bulk or uncertain changes, run the commands with `--dry-run` first and review the planned mutations.
+3. Apply the changes. Destructive commands (`close`, `remove-from-project`, `delete-draft`) need the user's confirmation.
+4. Report what changed, and say when a link was recorded as a label rather than a first-class GitHub relationship.
+
+## Scripts
 
 Everything runs through `scripts/ghpm.py`. Run it with `uv run` (preferred) or
 `python3`. Auth is inherited from `gh` — needs the `project` scope
 (`gh auth refresh -s project` once).
 
 ```bash
-uv run ~/.agents/skills/manage-github-projects/scripts/ghpm.py <command> [options]
+uv run <skill-dir>/scripts/ghpm.py <command> [options]
 ```
 
-The path to the script is `scripts/ghpm.py` relative to this skill directory
-(`~/.agents/skills/manage-github-projects/scripts/ghpm.py`). When you cd into a repo,
-omit `--repo` and it auto-detects from the git remote.
+`<skill-dir>` is this skill's installed directory, which varies by agent and
+scope. Run the script by absolute path from inside the target repository so
+`--repo` can be omitted and auto-detected from the git remote.
 
-**Global options** (placed *before* the subcommand):
+**Global options** (placed _before_ the subcommand):
 
+<!-- prettier-ignore -->
 | Option | Purpose |
-|---|---|
+|-|-|
 | `--project-number N` | Target project by number (owner-scoped) |
 | `--project-name "Title"` | Target project by title |
 | `--owner LOGIN` | Project owner (default: repo owner from git remote) |
@@ -94,7 +117,7 @@ The script translates `High` → its option ID, `3` → number, `2026-09-15` →
 
 ### Repo-level metadata (NOT project fields)
 
-Labels, assignees, and milestone are properties of the *issue*, not the project
+Labels, assignees, and milestone are properties of the _issue_, not the project
 item — `updateProjectV2ItemFieldValue` cannot touch them. Use these instead:
 
 ```bash
@@ -170,7 +193,7 @@ items), drop down to raw GraphQL — see `references/graphql-reference.md` for t
 full query/mutation catalog including the inline-fragment shapes for every field
 value type. Auth stays the same (`gh api graphql`).
 
-## Deeper reference
+## References
 
 - `references/graphql-reference.md` — full query/mutation catalog, the
   pagination pattern, the footguns (single-select option IDs, issue-number vs

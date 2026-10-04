@@ -1,19 +1,28 @@
 ---
 name: create-github-actions
-description: Use this skill when creating, editing, reviewing, or troubleshooting GitHub Actions workflows, CI/CD pipelines, reusable workflows, composite actions, release automation, deployments, action version upgrades, OIDC authentication, permissions, caching, artifact handling, or files under .github/workflows and .github/actions. It is especially relevant when the user asks for secure workflow YAML, pull request checks, test/build matrices, environment-gated deploys, or workflow failure fixes.
-compatibility: Provider-agnostic Agent Skill. Requires repository file access. Optional network access plus Python 3.11+ and uv/pipx to run bundled scripts for action-release lookup and workflow validation.
+description: >-
+  Creates, edits, reviews, and troubleshoots secure GitHub Actions workflows,
+  reusable workflows, and composite actions with minimal permissions, verified
+  action versions, and static validation. Use when working on CI/CD pipelines,
+  release automation, deployments, action version upgrades, OIDC authentication,
+  permissions, caching, artifact handling, or files under .github/workflows and
+  .github/actions, especially secure workflow YAML, pull request checks,
+  test/build matrices, environment-gated deploys, or workflow failure fixes.
 license: MIT
+compatibility: >-
+  Provider-agnostic Agent Skill. Requires repository file access. Optional
+  network access plus Python 3.11+ and uv/pipx to run bundled scripts for
+  action-release lookup and workflow validation.
 metadata:
   author: ddlaws0n
-  version: "0.1.1"
-  domain: github-actions
+  version: "0.1.2"
 ---
 
 # Create GitHub Actions workflows
 
 Use this skill to design, edit, audit, and validate production-quality GitHub Actions workflows. Optimize for secure trust boundaries, minimal permissions, maintainable YAML, clear failure modes, and action versions verified from live metadata when network access is available.
 
-## Default workflow
+## Workflow
 
 1. Inspect the repository before writing YAML:
    - `.github/workflows/`, `.github/actions/`, existing workflow failures, scripts, Makefile/task runner, Dockerfiles, package manifests, lockfiles, deployment config, and release config.
@@ -46,8 +55,9 @@ Use this skill to design, edit, audit, and validate production-quality GitHub Ac
 
 ## Architecture defaults
 
+<!-- prettier-ignore -->
 | Need | Default pattern |
-| --- | --- |
+|-|-|
 | Small project CI | one `ci.yml` with lint/typecheck/test/build jobs |
 | Expensive matrices | small PR matrix; broader scheduled or main-branch matrix |
 | Release publishing | protected tag or manual trigger; narrow write permissions; provenance where supported |
@@ -126,12 +136,17 @@ jobs:
 
 ### Deployment with OIDC
 
-Read `references/workflow-patterns.md` when the request involves cloud deployment, protected environments, release publishing, reusable workflows, or composite actions.
+See `references/workflow-patterns.md`.
 
-## Available scripts
+## Scripts
 
 - `scripts/fetch-action-release.py` — Fetches latest GitHub Action release/tag context and emits text or JSON for version selection.
 - `scripts/validate-workflows.py` — Performs heuristic static checks for workflow YAML, top- or job-level permissions, timeouts, action and reusable-workflow pinning, dangerous triggers, cache keys, and unsafe shell interpolation. Use `--require-sha` for privileged workflows.
+
+## References
+
+- Read `references/workflow-patterns.md` when the request involves cloud deployment with OIDC, protected environments, release publishing, reusable workflows, or composite actions.
+- `assets/node-ci.yml` is a starting point for Node.js CI.
 
 ## Gotchas
 
@@ -145,7 +160,7 @@ Read `references/workflow-patterns.md` when the request involves cloud deploymen
 - `actions/cache` restore keys can restore stale dependencies. Lockfile-based keys reduce cross-branch surprises.
 - GitHub-hosted runner labels such as `ubuntu-latest` move over time. Pin OS versions when compiler/toolchain drift matters.
 
-## Final response format
+## Output
 
 When returning workflow changes, include:
 

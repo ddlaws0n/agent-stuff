@@ -1,10 +1,11 @@
 # GraphQL Reference — GitHub Projects v2
 
 Full query/mutation catalog underpinning `ghpm.py`. Read this when you need to
-understand *why* the script does something, debug a raw response, or extend
+understand _why_ the script does something, debug a raw response, or extend
 the script with a new operation.
 
 ## Table of contents
+
 1. [Auth & invocation](#auth--invocation)
 2. [Project discovery](#project-discovery)
 3. [Field configuration](#field-configuration)
@@ -30,8 +31,8 @@ gh api graphql -f query='query($org:String!,$n:Int!){organization(login:$org){pr
   -f org=octo-org -F n=5
 ```
 
-**Footgun for complex inputs:** `-F` and `-f` do NOT correctly pass *input
-object* variables (like `UpdateProjectV2ItemFieldValueInput`). `-F` leaves
+**Footgun for complex inputs:** `-F` and `-f` do NOT correctly pass _input
+object_ variables (like `UpdateProjectV2ItemFieldValueInput`). `-F` leaves
 JSON-looking strings quoted (so GitHub sees a string where it expects an
 object), and `-f` forces everything to a string. For mutations with input
 objects, send the whole request as JSON over stdin instead:
@@ -51,11 +52,13 @@ uniformly for scalars, enums, nested objects, and null.
 ## Project discovery
 
 **All projects visible to the viewer:**
+
 ```graphql
 query { viewer { projectsV2(first: 20) { nodes { title number url closed } } } }
 ```
 
 **User-owned projects (the common case for personal boards):**
+
 ```graphql
 query($login: String!) {
   user(login: $login) { projectsV2(first: 50) { nodes { id number title url closed } } }
@@ -63,6 +66,7 @@ query($login: String!) {
 ```
 
 **Projects linked to a repository:**
+
 ```graphql
 query($owner: String!, $name: String!) {
   repository(owner: $owner, name: $name) {
@@ -156,6 +160,7 @@ empty.
 You **cannot add and update an item in the same call** — add first, then update.
 
 ### Add an existing issue/PR to a project (idempotent — returns existing ID if already present)
+
 ```graphql
 mutation($input: AddProjectV2ItemByIdInput!) {
   addProjectV2ItemById(input: $input) { item { id } }
@@ -164,6 +169,7 @@ mutation($input: AddProjectV2ItemByIdInput!) {
 ```
 
 ### Create a draft issue in the project
+
 ```graphql
 mutation($input: AddProjectV2DraftIssueInput!) {
   addProjectV2DraftIssue(input: $input) { projectItem { id } }
@@ -172,6 +178,7 @@ mutation($input: AddProjectV2DraftIssueInput!) {
 ```
 
 ### Update a single-select field
+
 ```graphql
 mutation($input: UpdateProjectV2ItemFieldValueInput!) {
   updateProjectV2ItemFieldValue(input: $input) { projectV2Item { id } }
@@ -180,16 +187,19 @@ mutation($input: UpdateProjectV2ItemFieldValueInput!) {
 ```
 
 ### Update text / number / date
+
 ```graphql
 # value: { text: "..." }        | { number: 3.0 }      | { date: "2026-09-01" }
 ```
 
 ### Update an iteration field
+
 ```graphql
 # value: { iterationId: "IT_ID" }
 ```
 
 ### Clear a field
+
 ```graphql
 mutation($input: ClearProjectV2ItemFieldValueInput!) {
   clearProjectV2ItemFieldValue(input: $input) { projectV2Item { id } }
@@ -198,6 +208,7 @@ mutation($input: ClearProjectV2ItemFieldValueInput!) {
 ```
 
 ### Remove an item from the project
+
 ```graphql
 mutation($input: DeleteProjectV2ItemInput!) {
   deleteProjectV2Item(input: $input) { deletedItemId }
@@ -207,12 +218,14 @@ mutation($input: DeleteProjectV2ItemInput!) {
 ```
 
 ### Link a sub-issue (true parent/child relationship)
+
 ```graphql
 mutation($input: AddSubIssueInput!) {
   addSubIssue(input: $input) { subissue { id } }
 }
 # input: { parentId, subIssueId }   # both are issue node IDs
 ```
+
 Also available: `removeSubIssue`.
 
 ---
@@ -222,8 +235,9 @@ Also available: `removeSubIssue`.
 `updateProjectV2ItemFieldValue` **cannot** change Assignees, Labels, Milestone,
 or Repository — these are properties of the issue/PR, not the project item. Use:
 
+<!-- prettier-ignore -->
 | Operation | Mutation |
-|---|---|
+|-|-|
 | Add assignees | `addAssigneesToAssignable(input: {assignableId, assigneeIds})` |
 | Remove assignees | `removeAssigneesFromAssignable(...)` |
 | Add labels | `addLabelsToLabelable(input: {labelableId, labelIds})` |
@@ -243,7 +257,7 @@ is simpler than hand-rolling these — `ghpm.py` shells out to it.
 2. **Iteration needs the iteration ID.** Same pattern — fetch from
    `configuration.iterations`.
 3. **Issue number ≠ item ID.** `#437` is the repo issue number; `PVTI_...` is
-   the project row. To mutate a field you need the *item ID*, which means
+   the project row. To mutate a field you need the _item ID_, which means
    looking the issue up inside `project.items` (the script does this).
 4. **Draft issues have no number.** They can only be addressed by item ID.
 5. **Add-then-update ordering.** A freshly added item has no field values; you

@@ -33,7 +33,7 @@ import json
 import os
 import subprocess
 import sys
-from typing import Any
+from typing import Any, NoReturn
 
 # --------------------------------------------------------------------------- #
 # Low-level gh wrapper
@@ -231,13 +231,14 @@ query($id: ID!, $cursor: String) {
 def fetch_project_items(project_id: str, query: str) -> list[dict]:
     items: list[dict] = []
     cursor = None
-    while True:
+    has_next = True
+    while has_next:
         data = gh_graphql(query, {"id": project_id, "cursor": cursor})
         page = data["node"]["items"]
         items.extend(page["nodes"])
-        if not page["pageInfo"]["hasNextPage"]:
-            return items
+        has_next = page["pageInfo"]["hasNextPage"]
         cursor = page["pageInfo"]["endCursor"]
+    return items
 
 
 class Project:
@@ -455,7 +456,7 @@ def cmd_report(project: Project, args) -> None:
         open_recs.sort(key=lambda r: r["_updated"] or 0, reverse=True)
         print("\n=== 10 stalest OPEN issues (days since update) ===")
         for r in open_recs[:10]:
-            print(f"  #{r['number']:<4} upd={r['_updated']}d  {r['title'][:70]}")
+            print(f"  #{r['number']:<4} upd={r['_updated']}d  {(r['title'] or '')[:70]}")
     # anomalies
     print("\n=== Anomalies: OPEN issues with no Status set ===")
     statusless = [r for r in open_recs if not r.get("Status")]
@@ -668,7 +669,7 @@ def confirm(prompt: str) -> bool:
     return input(prompt + " [y/N] ").strip().lower() in ("y", "yes")
 
 
-def die(msg: str) -> None:
+def die(msg: str) -> NoReturn:
     print(f"error: {msg}", file=sys.stderr); sys.exit(1)
 
 
