@@ -135,7 +135,7 @@ export async function runCell(cell: Cell, key: string, dockerBin = "docker") {
   const consume = (line: string) => {
     if (!line.trim()) return;
     const safe = secret ? line.replaceAll(secret, "[REDACTED]") : line;
-    transcript.write(`${safe}\n`);
+    void transcript.write(`${safe}\n`);
     const event = JSON.parse(safe);
     const message = inspectEvent(event, expected);
     if (message) {
@@ -255,13 +255,13 @@ async function main() {
     },
   );
   if (prepared.exitCode !== 0) throw new Error("Preparation failed");
-  const manifest = JSON.parse(
+  const manifest: { cells: Cell[] } = JSON.parse(
     await readFile(
       join(repo, "eval/results", runName, "manifest.json"),
       "utf8",
     ),
   );
-  for (const cell of manifest.cells as Cell[]) await runCell(cell, cell.key);
+  for (const cell of manifest.cells) await runCell(cell, cell.key);
   const graded = Bun.spawnSync(
     ["python3", "-B", join(harness, "grade.py"), "--run-name", runName],
     {

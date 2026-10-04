@@ -168,6 +168,7 @@ test("terminates a child when resolved-model validation fails", async () => {
     );
     await chmod(bin, 0o755);
     const started = Date.now();
+    // oxlint-disable-next-line typescript/await-thenable -- Bun types `rejects` matchers as void, but they return a promise.
     await expect(
       runCell(
         {
