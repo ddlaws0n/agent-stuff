@@ -1,0 +1,11 @@
+{
+  "skill_name": "skill-template",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A realistic request a user would make for this skill.",
+      "expected_output": "What a successful response contains.",
+      "assertions": ["An objectively checkable property of the output."]
+    }
+  ]
+}

@@ -17,51 +17,33 @@ Until the repository is published, inspect locally with `npx skills add . --list
 
 ## Catalog
 
+<!-- prettier-ignore -->
 | Skill | Purpose |
 |-|-|
+| [`analyze-har-workflows`](skills/analyze-har-workflows/SKILL.md) | Analyze browser network captures and assess workflow automation. |
 | [`create-agentsmd`](skills/create-agentsmd/SKILL.md) | Create repository-grounded agent instructions. |
 | [`create-github-actions`](skills/create-github-actions/SKILL.md) | Create and review secure GitHub Actions workflows. |
-| [`har-workflow-analysis`](skills/har-workflow-analysis/SKILL.md) | Analyze browser network captures and assess workflow automation. |
-| [`manage-secrets-varlock`](skills/manage-secrets-varlock/SKILL.md) | Manage schema-driven environment configuration and secrets with Varlock. |
 | [`manage-github-projects`](skills/manage-github-projects/SKILL.md) | Manage GitHub Projects v2 boards and their issues via `gh` and Python. |
+| [`manage-secrets-varlock`](skills/manage-secrets-varlock/SKILL.md) | Manage schema-driven environment configuration and secrets with Varlock. |
 
 ## Author a skill
 
-Create `skills/<name>/SKILL.md` (flat layout) and copy the root `LICENSE` into that directory so the license notice accompanies installations. The directory and `name` must match. Put optional supporting material in `scripts/`, `references/`, or `assets/` inside that directory. Keep the skill self-contained: consumers install skills, not this repository's dev dependencies.
-
-Use this frontmatter (quoted version is a string, not a YAML number):
-
-```yaml
----
-name: my-skill
-description: Do a specific task. Use when the user asks for the task or mentions its relevant context.
-license: MIT
-metadata:
-  author: ddlaws0n
-  version: "0.1.0"
----
-```
-
-- `name` and `description` are required by the [Agent Skills specification](https://agentskills.io/specification). Write descriptions for **both** capability and trigger conditions; keep them specific and under 1024 characters.
-- `license: MIT`, `metadata.author`, and `metadata.version` are this repository's conventions. Version each skill independently with SemVer; bump it when its behavior or interface changes, and use a patch bump for corrections. The root `package.json` version does not version skills.
-- Add `compatibility` only for actual runtime requirements (tools, platform, network, authentication); explain setup in the body. Avoid `allowed-tools` unless an agent-specific need justifies its experimental portability trade-off.
-- Prefer concise instructions and relative links to on-demand references. Never embed secrets or unpublished/private material in a public skill.
+Copy [`templates/skill-template/`](templates/skill-template/SKILL.md) to `skills/<verb>-<object>/` and follow [docs/authoring.md](docs/authoring.md): naming, layout, frontmatter, section names, versioning, and evals. Keep each skill self-contained: consumers install skills, not this repository's dev dependencies.
 
 ## Develop
 
-[Bun](https://bun.sh/) is needed for repository checks and TypeScript tooling; [uv](https://docs.astral.sh/uv/) is needed to run the Python tests:
+[Bun](https://bun.sh/) runs the repository tooling; [uv](https://docs.astral.sh/uv/) runs Python tests and the Python-based skill checkers:
 
 ```sh
-bun install
-bun run check          # typecheck, lint, format, skill/eval validation, Bun and Python tests
-bun run test:python    # Python workflow-validator tests (uv installs PyYAML)
-bun run test:eval      # evaluation fixture/model-selection tests
-bun run test:har       # HAR streaming and privacy regressions (uv installs ijson)
+bun install            # also installs lefthook git hooks
+bun run check          # typecheck, oxlint, Prettier, skill validation, agnix, skills-ref, all tests
+bun run format         # format TypeScript, JSON, YAML, and Markdown with Prettier
+bun run skills:scan    # Cisco skill-scanner security analysis
+bun run skills:versions  # require version bumps for skills changed since origin/main
 bun run build          # compile the repository's TypeScript tooling to dist/
-bun run format         # format TypeScript/JSON configuration
 ```
 
-`bun run skills:check` validates skill metadata and eval definitions. For per-skill output quality, trigger selection, safety, and baseline comparisons, see [docs/evals.md](docs/evals.md). `AGENTS.md` contains contributor guidance (also linked as `CLAUDE.md`).
+`bun run test:python` discovers each skill's `tests/` directory and installs its `tests/requirements.txt` with uv. For per-skill output quality, trigger selection, safety, and baseline comparisons, see [docs/evals.md](docs/evals.md). `AGENTS.md` contains contributor guidance (also linked as `CLAUDE.md`). CI runs the same checks plus the security scan and version check on every pull request.
 
 ## Evaluation status
 
