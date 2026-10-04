@@ -1,19 +1,21 @@
 ---
-name: har-workflow-analysis
+name: analyze-har-workflows
 description: >-
-  Use this skill when the user provides a HAR file, browser network export,
-  DevTools capture, or asks how a website action works from network requests.
-  Inspect form submissions, uploads, settings changes, checkout flows, API
-  calls, GraphQL operations, auth/session handling, and whether the action can
-  be scripted or automated. Use especially for large or sensitive captures:
-  extract a compact, privacy-conscious request/response shape before reasoning.
+  Analyzes HAR files and browser network captures to explain how a website
+  action works and whether it can be scripted or automated. Use when the user
+  provides a HAR file, browser network export, or DevTools capture, or asks how
+  a website action works from its network requests: form submissions, uploads,
+  settings changes, checkout flows, API calls, GraphQL operations, and
+  auth/session handling. Use especially for large or sensitive captures; it
+  extracts a compact, privacy-conscious request/response shape before reasoning.
+  Do not use for live browser automation or scraping without a capture.
 license: MIT
 compatibility: >-
   Requires Python 3.10+. uv is recommended for streaming large HARs via the
   bundled script's ijson dependency; Python alone supports small HARs.
 metadata:
   author: ddlaws0n
-  version: "0.1.1"
+  version: "0.2.0"
 ---
 
 # HAR workflow analysis
@@ -24,7 +26,7 @@ Analyze a HAR capture to infer how a website task works and whether it can be sc
 
 Never paste or load an entire HAR into the model. HAR files often contain cookies, bearer tokens, CSRF tokens, personal data, file contents, and large static assets. Extract a compact working set first. Treat even script outputs as sensitive: redaction is best-effort, not a guarantee of anonymity. Keep outputs local and out of shared repositories, and do not publish or upload the HAR or analysis without the user's permission.
 
-## Default workflow
+## Workflow
 
 1. **Clarify the user task only if missing.** Useful details: what action was performed, approximate time in the recording, expected visible result, and target domain. If the prompt already gives enough context, proceed.
 2. **Choose a private work directory** outside shared or version-controlled folders, e.g. `ANALYSIS_DIR="$(mktemp -d)"`. Resolve `scripts/har_probe.py` relative to the installed skill directory; the commands below assume that directory is your working directory. Never run captured mutating requests just to validate a hypothesis.
@@ -75,7 +77,7 @@ Prioritize requests with these signals:
 - **manual-only/blocked:** captcha, MFA/WebAuthn required at action time, clear anti-automation challenge, encrypted client payload with unknown signing key, or workflow depends on human review. Never suggest bypassing these controls.
 - **insufficient-evidence:** HAR lacks request/response bodies, missing earlier session bootstrap, relevant requests blocked/truncated, or task timing is unknown.
 
-## Report structure
+## Output
 
 ```markdown
 # HAR Workflow Analysis: [task/site]
@@ -85,7 +87,7 @@ Prioritize requests with these signals:
 
 ## Key workflow sequence
 | Step | Request index | Method | Endpoint | Purpose | Evidence |
-|---|---:|---|---|---|---|
+|-|-:|-|-|-|-|
 
 ## Primary action request
 - Method + URL pattern:
@@ -118,7 +120,16 @@ Prioritize requests with these signals:
 - Ignore noisy third-party telemetry unless it carries the primary action. Analytics requests can contain action names but are rarely the automation endpoint.
 - When the HAR is huge, use script filters and request indices. Do not paste or load the whole file into the agent context. If a request depends on unseen body values, describe the limitation rather than copying raw data into the report.
 
-## When to load references
+## Scripts
+
+`scripts/har_probe.py` streams a HAR and writes compact, best-effort-redacted outputs:
+
+- `summarize` writes `summary.json` (counts and top candidates), `entries.jsonl` (one request/response shape per entry), `candidates.jsonl` (likely user actions by heuristic score), and `endpoints.tsv` (normalized endpoint patterns).
+- `extract --indices` writes `selected.json` with details for chosen request indices.
+
+It needs Python 3.10+; `uv run` installs `ijson` for streaming, and plain `python3` loads HARs under 100 MiB in memory.
+
+## References
 
 - Load `references/automation-signals.md` when the verdict is uncertain or the site uses GraphQL, uploads, CSRF, signed URLs, WebSockets, or anti-automation controls.
 - Load `assets/report-template.md` when the user asks for a polished deliverable or stakeholder-ready report.

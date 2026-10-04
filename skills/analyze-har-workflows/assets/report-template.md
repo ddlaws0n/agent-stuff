@@ -10,8 +10,9 @@
 
 ## Workflow sequence
 
+<!-- prettier-ignore -->
 | Step | Request index | Time | Method | Endpoint | Purpose | Evidence |
-|---|---:|---|---|---|---|---|
+|-|-:|-|-|-|-|-|
 | 1 |  |  |  |  |  |  |
 
 ## Primary action request
@@ -43,8 +44,9 @@ Response shape:
 
 ## Dynamic values
 
+<!-- prettier-ignore -->
 | Value | Where used | Source request/index | How to refresh |
-|---|---|---:|---|
+|-|-|-:|-|
 | CSRF token | header/body |  | GET page or bootstrap API |
 | Resource ID | URL/body |  | Current page/API response |
 | Upload URL | upload request |  | Init/presign endpoint |

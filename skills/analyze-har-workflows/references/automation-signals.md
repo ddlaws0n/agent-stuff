@@ -5,60 +5,75 @@ Use this reference when deciding whether a HAR-observed workflow can be automate
 ## Common workflow archetypes
 
 ### Classic HTML form
+
 Signals:
+
 - `GET` document page returns HTML with hidden inputs.
 - `POST` form-urlencoded or multipart body.
 - Response is `302` redirect or HTML success page.
 
 Automation approach:
+
 1. `GET` form page.
 2. Parse hidden fields and CSRF token.
 3. Submit `POST` with session cookies and fields.
 4. Follow redirect and verify success marker.
 
 ### JSON API action
+
 Signals:
+
 - `fetch`/`xhr` request with JSON body.
 - Same-origin `/api`, `/v1`, `/v2`, `/rest`, or domain-specific API path.
 - Response includes created/updated resource, ID, status, or validation errors.
 
 Automation approach:
+
 1. Authenticate or reuse a session cookie only with permission.
 2. Fetch bootstrap config if required.
 3. Send JSON payload with required headers.
 4. Verify response and optionally fetch resource by ID.
 
 ### GraphQL mutation
+
 Signals:
+
 - URL often `/graphql` or equivalent.
 - JSON body has `operationName`, `query`, and `variables`.
 - Mutation name appears in query text.
 
 Automation approach:
+
 1. Group by `operationName`.
 2. Identify required variables and dynamic IDs.
 3. Recreate the mutation body.
 4. Preserve headers used for CSRF/session if required.
 
 ### Upload flow
+
 Signals:
+
 - `multipart/form-data` request, `blob`, `arraybuffer`, or binary mime type.
 - Requests to S3/GCS/Azure storage, presigned URL, or CDN/storage host.
 - Separate calls named `init`, `presign`, `complete`, `attach`, `process`, or `status`.
 
 Automation approach:
+
 1. Call initiation endpoint to get upload ID or presigned URL.
 2. Upload bytes to storage endpoint with exact method/headers required by signature.
 3. Call complete/attach endpoint.
 4. Poll processing/status endpoint until success.
 
 ### Settings/profile change
+
 Signals:
+
 - `PATCH`, `PUT`, or `POST` to `/settings`, `/profile`, `/account`, `/users/{id}`.
 - May require CSRF or ETag/If-Match concurrency headers.
 - Response may be `204 No Content`.
 
 Automation approach:
+
 1. Fetch current settings to capture IDs, ETag, CSRF, and current field names.
 2. Submit minimal patch when possible.
 3. Verify by fetching settings again.
