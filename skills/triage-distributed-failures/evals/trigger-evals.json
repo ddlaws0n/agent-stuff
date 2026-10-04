@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Our payment consumer duplicated charges after a queue timeout. Build an evidence timeline and tell us the safest containment and tests.",
+    "should_trigger": true
+  },
+  {
+    "query": "Users see stale account data after writes through Redis and read replicas; help investigate the production anomaly.",
+    "should_trigger": true
+  },
+  {
+    "query": "We lost some writes during a regional failover and need hypotheses, evidence to preserve, and immediate mitigations.",
+    "should_trigger": true
+  },
+  {
+    "query": "Two dashboards disagree after last night's backfill. Triage whether this is lag, duplication, timestamp semantics, or actual loss.",
+    "should_trigger": true
+  },
+  {
+    "query": "A hot Kafka partition caused retries and consumer lag; diagnose the incident without resetting offsets blindly.",
+    "should_trigger": true
+  },
+  {
+    "query": "Some rows inserted in Postgres never showed up in Elasticsearch via our Debezium CDC connector last week. Where did they go?",
+    "should_trigger": true
+  },
+  {
+    "query": "After a consumer group rebalance we sent the same welcome email to ~2k users. Here are the logs, what happened?",
+    "should_trigger": true
+  },
+  {
+    "query": "Help me write the postmortem for Tuesday's incident where order events were processed out of order across two services.",
+    "should_trigger": true
+  },
+  {
+    "query": "Design a new event schema and replay strategy for customer upgrades; there is no incident.",
+    "should_trigger": false
+  },
+  {
+    "query": "Design an idempotent Kafka consumer for our new billing service, including dedupe keys and retry topics.",
+    "should_trigger": false
+  },
+  {
+    "query": "Review our plan to add a read replica in a second region before we launch in the EU.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write an ADR comparing Redis and DynamoDB for session storage.",
+    "should_trigger": false
+  },
+  {
+    "query": "My pod is stuck in CrashLoopBackOff after the deploy; here is the kubectl describe output.",
+    "should_trigger": false
+  },
+  {
+    "query": "This Flask endpoint throws a KeyError on every request; here is the stack trace.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain what eventual consistency means in one paragraph for onboarding.",
+    "should_trigger": false
+  },
+  {
+    "query": "Create a load-test plan for a new API architecture before launch.",
+    "should_trigger": false
+  }
+]

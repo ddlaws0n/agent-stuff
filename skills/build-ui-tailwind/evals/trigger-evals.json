@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Set up Tailwind v4.3 in this Vite app using CSS-first @theme and the official Vite plugin.",
+    "should_trigger": true
+  },
+  {
+    "query": "Migrate our v3 safelist and content config to Tailwind v4 @source directives.",
+    "should_trigger": true
+  },
+  {
+    "query": "Why is Tailwind v4 ignoring the plugins in our retained tailwind.config.js?",
+    "should_trigger": true
+  },
+  {
+    "query": "Add a custom utility, custom variant, and brand color token to our Tailwind CSS entry file.",
+    "should_trigger": true
+  },
+  {
+    "query": "After upgrading tailwindcss, half my classes are missing from the built CSS. The colors are built from props.",
+    "should_trigger": true
+  },
+  {
+    "query": "npm update bumped tailwind and now the build says it can't use tailwindcss directly as a PostCSS plugin. Fix it.",
+    "should_trigger": true
+  },
+  {
+    "query": "Our webpack app needs Tailwind. Wire it into the build and make sure the styles show up.",
+    "should_trigger": true
+  },
+  {
+    "query": "Make this sidebar RTL-friendly with Tailwind and give it a thin, stable scrollbar.",
+    "should_trigger": true
+  },
+  {
+    "query": "Maintain this Tailwind v3 app without migrating it to v4.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write vanilla CSS logical properties for a component with no Tailwind dependency.",
+    "should_trigger": false
+  },
+  {
+    "query": "Configure Vite aliases and dev-server proxy settings; Tailwind already works and needs no changes.",
+    "should_trigger": false
+  },
+  {
+    "query": "Convert these Bootstrap classes to custom CSS, not Tailwind.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add the shadcn dialog and data-table components to this project with the CLI.",
+    "should_trigger": false
+  },
+  {
+    "query": "Give this landing page a bold, distinctive visual direction with better typography and color.",
+    "should_trigger": false
+  },
+  {
+    "query": "Upgrade PostCSS plugins unrelated to Tailwind.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain CSS container queries without using a utility framework.",
+    "should_trigger": false
+  }
+]

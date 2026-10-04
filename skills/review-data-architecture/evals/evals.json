@@ -1,0 +1,68 @@
+{
+  "skill_name": "review-data-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this proposed checkout architecture: API writes orders to Postgres, publishes order.created to Kafka, a payment worker charges the card and updates order status, Redis caches the order status page. What are the reliability and consistency risks?",
+      "expected_output": "A cross-cutting, constraints-first architecture review that identifies transaction boundaries, duplicate-payment risk, timeout ambiguity, cache staleness, delivery semantics, alternatives, and validation steps without turning into incident triage.",
+      "files": [],
+      "assertions": [
+        "Output has a section or list explicitly labeled assumptions or open questions.",
+        "Output names the dual write between the Postgres commit and the Kafka publish as a risk and proposes an outbox, CDC, or equivalent fix.",
+        "Output recommends an idempotency key or deduplication for the payment charge.",
+        "Output states that the Redis-cached order status can be stale and names an invalidation or TTL approach.",
+        "Output includes a table comparing at least two options with a failure-modes column.",
+        "Output lists at least two concrete validation steps, such as a duplicate-delivery test or a failure drill."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We need a customer health dashboard built from product usage events, CRM fields, billing status, and support tickets. Should the serving store be Postgres, Elasticsearch, Snowflake, Redis, or something else?",
+      "expected_output": "A technology trade-off analysis based on access patterns, freshness, sources of truth, derived views, failure modes, operational burden, and a recommendation with alternatives.",
+      "files": [],
+      "assertions": [
+        "Output names the source of truth for each of the four inputs: usage events, CRM, billing, and support.",
+        "Output states that the dashboard store is a derived view and describes how it is rebuilt or backfilled.",
+        "Output asks for or assumes a specific freshness target, such as minutes or hours.",
+        "Output includes a table comparing at least three of the named stores with a failure-modes column.",
+        "Output gives exactly one primary recommendation and lists the conditions under which it would change."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Since this morning's failover, some customers see order totals that don't match their receipts, and a few orders are missing from the replica. What's going on?",
+      "expected_output": "Recognizes an active production anomaly and routes to incident triage (triage-distributed-failures) instead of producing an architecture review or trade-off matrix.",
+      "files": [],
+      "assertions": [
+        "Output names triage-distributed-failures or explicitly says this is incident triage, not an architecture review.",
+        "Output does not contain a trade-off matrix table.",
+        "Output does not recommend migrating to a different database."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Quick one: for a 20 GB single-region SaaS app with about 200 writes/sec, should session data live in Postgres or Redis?",
+      "expected_output": "A short, direct recommendation driven by a few deciding constraints (durability needs, latency, operational cost of another datastore), the main failure mode, and the assumptions that would change the answer, without the full review template.",
+      "files": [],
+      "assertions": [
+        "Output gives one recommendation in its first paragraph.",
+        "Output is under 350 words.",
+        "Output does not contain an Executive summary heading or a trade-off matrix table.",
+        "Output names at least one assumption that would change the recommendation."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Write an ADR for moving our multi-tenant reporting queries off the primary Postgres onto a read replica versus a separate ClickHouse cluster. Reports can be up to 15 minutes stale; the primary is at 70% CPU from reporting load.",
+      "expected_output": "A new ADR that follows assets/adr-template.md, records both options with failure modes and operational burden, ties the decision to the 15-minute staleness tolerance, and includes validation and rollback plans.",
+      "files": ["assets/adr-template.md"],
+      "assertions": [
+        "Output contains the headings Status, Context, Decision, Options considered, Consequences, Validation plan, and Rollback or migration plan.",
+        "The Options considered table includes both the read replica and ClickHouse.",
+        "Output references the 15-minute staleness tolerance.",
+        "Output addresses replication lag or data freshness for the chosen option.",
+        "The Validation plan contains at least one checkbox item."
+      ]
+    }
+  ]
+}

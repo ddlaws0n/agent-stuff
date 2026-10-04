@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Here's a HAR from submitting the profile form; figure out which request saves the change.",
+    "should_trigger": true
+  },
+  {
+    "query": "I exported the network tab from DevTools while uploading an invoice. Can I script this upload?",
+    "should_trigger": true
+  },
+  {
+    "query": "This 400 MB .har captures our checkout flow. Summarize the API calls without loading the whole file.",
+    "should_trigger": true
+  },
+  {
+    "query": "Which GraphQL mutation in this capture changes the notification settings, and what tokens does it need?",
+    "should_trigger": true
+  },
+  {
+    "query": "From session.har, work out how the site refreshes its CSRF token before the save request.",
+    "should_trigger": true
+  },
+  {
+    "query": "Could we automate this admin action with plain HTTP calls, or does it need a browser? HAR attached.",
+    "should_trigger": true
+  },
+  {
+    "query": "Analyze this browser network export and tell me how the multi-step file upload works.",
+    "should_trigger": true
+  },
+  {
+    "query": "The HAR has cookies and bearer tokens in it; extract the request shape for the delete action privately.",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a Playwright script that logs into the dashboard and downloads the monthly report.",
+    "should_trigger": false
+  },
+  {
+    "query": "Scrape product prices from this e-commerce site every hour.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain what the HAR file format is and how to export one from Chrome.",
+    "should_trigger": false
+  },
+  {
+    "query": "Our Express API returns 500 on POST /orders; debug the server handler.",
+    "should_trigger": false
+  },
+  {
+    "query": "Analyze this Wireshark pcap for TLS handshake failures.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write OpenAPI docs for our REST endpoints from the route definitions.",
+    "should_trigger": false
+  },
+  {
+    "query": "Speed up our web page: Lighthouse says largest contentful paint is slow.",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up request logging middleware in our Next.js app.",
+    "should_trigger": false
+  }
+]

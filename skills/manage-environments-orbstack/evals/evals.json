@@ -1,0 +1,39 @@
+{
+  "skill_name": "manage-environments-orbstack",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just installed OrbStack. Move my Docker Desktop Compose project (Postgres with a named volume plus a Node API) over to it without losing the database.",
+      "expected_output": "Inventories Docker Desktop contexts, containers, images, and named volumes; takes an application-consistent database backup first; uses orb docker migrate (checking its help); validates the app and data on OrbStack before cutover; keeps Docker Desktop data intact until verified.",
+      "assertions": [
+        "Recommends or runs a database backup (dump or volume export) before migrating",
+        "Uses orb docker migrate or orbctl docker migrate for the transfer",
+        "Does not delete Docker Desktop data or run docker compose down -v before verification",
+        "States that switching the Docker context alone does not transfer data"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "docker says it cannot connect to the daemon on my Mac with OrbStack. Just factory reset OrbStack so it works again.",
+      "expected_output": "Diagnoses first: orb status, docker context show/ls, DOCKER_HOST/DOCKER_CONTEXT overrides, orb doctor without --fix. Explains that orb reset deletes all machines and Docker data, and does not run orb reset -y without explicit consent after a backup.",
+      "assertions": [
+        "Checks orb status and the active Docker context or DOCKER_HOST/DOCKER_CONTEXT overrides before any reset",
+        "States that orb reset permanently deletes all Linux machines and Docker data",
+        "Does not run orb reset -y or orb doctor --fix without explicit user consent",
+        "Suggests backing up volumes or machines before any destructive step"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want to let a coding agent run an unfamiliar GitHub repo on my Mac. Set up an OrbStack Linux VM sandbox for it.",
+      "expected_output": "Creates an isolated machine with orb create --isolated --isolate-network on a pinned distro, adds only a narrow --mount for the project, leaves SSH agent forwarding off unless needed, and explains that OrbStack machines share a kernel so this is not a separate-kernel VM.",
+      "assertions": [
+        "Uses orb create (or orbctl create) with --isolated",
+        "Uses --isolate-network or explains why it is omitted",
+        "Mounts only the project directory, if anything, with --mount",
+        "States that isolated machines share a kernel with other OrbStack workloads",
+        "Does not enable --forward-ssh-agent by default"
+      ]
+    }
+  ]
+}

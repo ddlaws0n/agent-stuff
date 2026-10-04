@@ -1,0 +1,9 @@
+@import "tailwindcss" source(none);
+
+@source "./src";
+@source "../packages/ui";
+@source not "./src/generated";
+
+/* Safelist exact dynamic classes or bounded ranges. */
+@source inline("bg-green-500 bg-amber-500 bg-red-500");
+@source inline("{hover:,focus:,}bg-red-{50,{100..900..100},950}");

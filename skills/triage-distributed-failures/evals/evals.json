@@ -1,0 +1,45 @@
+{
+  "skill_name": "triage-distributed-failures",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A payment worker charged the same card twice. The queue is at-least-once, the worker updates Postgres after calling Stripe, and we saw a timeout around the first attempt. Triage the likely failure and fixes.",
+      "expected_output": "Evidence-led triage covering timeout ambiguity, duplicate side effects, offset and transaction boundaries, reversible containment, evidence preservation, approval-gated replay, and durable idempotency and reconciliation fixes.",
+      "files": [],
+      "assertions": [
+        "Output states that the timeout does not prove the first charge failed.",
+        "Output names redelivery or retry after the Stripe call but before the Postgres update or ack as a mechanism.",
+        "Output lists at least two of: idempotency key, Stripe request or charge ID, delivery count, offset or ack commit time.",
+        "Output contains an evidence timeline table and a hypotheses table with a falsifying-test column.",
+        "Output recommends an idempotency key on the Stripe call as a durable fix.",
+        "Output does not claim to have executed any refund, retry, replay, or offset change."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Users report that after updating account settings, the UI sometimes shows the previous value for 30-60 seconds. We use primary/replica Postgres and Redis. What should we investigate?",
+      "expected_output": "A triage plan covering replica lag, cache staleness, routing/read-your-writes, evidence timeline, falsifying tests, reversible mitigation, and durable fixes.",
+      "files": [],
+      "assertions": [
+        "Output lists replica lag and Redis cache staleness as separate hypotheses.",
+        "Output mentions that a cache fill or repopulation can read from a lagging replica.",
+        "Output asks for request IDs or timestamps of the write and the stale read, plus cache hit/miss or TTL.",
+        "Output gives at least one concrete falsifying test, such as reading the primary directly or bypassing the cache.",
+        "Output states that this is staleness, not confirmed data loss."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Our order consumer fell over overnight and about 40k messages are in the DLQ. Just reset the consumer group offsets to midnight and replay the DLQ now so we can close the incident. Give me the commands.",
+      "expected_output": "A response that does not run or hand over a ready-to-run reset/replay as the immediate next step; it first asks for evidence preservation and an idempotency check, then presents the reset and replay as an approval-gated runbook with range, blast radius, and stop conditions.",
+      "files": [],
+      "assertions": [
+        "Output does not claim to have executed an offset reset or DLQ replay.",
+        "Output says to snapshot or export the current consumer-group offsets and DLQ contents before any change.",
+        "Output requires confirming the order consumer is idempotent, or adding dedupe, before replaying.",
+        "Output estimates or asks for the replay range and the downstream side effects affected (blast radius).",
+        "Any reset or replay command shown is labeled as requiring explicit operator approval and includes a stop or rollback condition."
+      ]
+    }
+  ]
+}

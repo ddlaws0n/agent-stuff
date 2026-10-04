@@ -281,13 +281,22 @@ test("reports each invalid eval field", async () => {
   const directory = await fixture();
   await writeEvals(directory, {
     skill_name: "sample",
-    evals: [{ id: 0, prompt: "", expected_output: "", assertions: [""] }],
+    evals: [
+      {
+        id: 0,
+        prompt: "",
+        expected_output: "",
+        assertions: [""],
+        expectations: ["ignored"],
+      },
+    ],
   });
   expect(await validateSkill(directory)).toEqual([
     "sample: eval 1 needs a unique positive integer id",
     "sample: eval 1 needs a prompt",
     "sample: eval 1 needs expected_output",
     "sample: eval 1 assertions must be nonempty strings",
+    "sample: eval 1 has unknown keys: expectations",
   ]);
 });
 

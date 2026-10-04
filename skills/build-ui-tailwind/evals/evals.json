@@ -1,0 +1,57 @@
+{
+  "skill_name": "build-ui-tailwind",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a Vite React Tailwind setup using current v4 conventions. Add a CSS entry with theme tokens and a responsive card grid.",
+      "expected_output": "A Vite integration using @tailwindcss/vite, a CSS-first entry with @theme tokens, no tailwind.config.js, and a card grid built from valid v4 utilities.",
+      "files": [],
+      "assertions": [
+        "The Vite config imports from @tailwindcss/vite and adds tailwindcss() to plugins.",
+        "The CSS entry contains @import \"tailwindcss\" and no @tailwind directives.",
+        "The CSS entry contains an @theme block defining at least one --color-* or --font-* variable.",
+        "No tailwind.config.js, tailwind.config.ts, or postcss.config.* file is created.",
+        "The install command lists tailwindcss and @tailwindcss/vite and does not list autoprefixer or postcss-import.",
+        "The response includes a build command (for example npm run build) to validate the setup."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Migrate a Tailwind v3 project that must temporarily retain tailwind.config.js because of a plugin. Explain how v4 loads it and migrate safelist, corePlugins, and separator behavior.",
+      "expected_output": "A transitional v4 plan with an explicit CSS @config directive, migration of unsupported legacy options, @source-based safelisting, and build validation.",
+      "files": [],
+      "assertions": [
+        "The response runs or recommends npx @tailwindcss/upgrade before manual migration steps.",
+        "The CSS entry contains both @import \"tailwindcss\" and an @config directive with a relative path to tailwind.config.js.",
+        "The response states that v4 does not automatically detect tailwind.config.js.",
+        "The safelist is replaced with an @source inline(...) directive in CSS.",
+        "The response states that corePlugins and separator are not supported through @config.",
+        "The response includes a build command to validate the generated CSS."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Audit the Tailwind project in evals/fixtures/v3-app for Tailwind v4 migration readiness. List what must change and what you would replace it with. Do not modify any files.",
+      "expected_output": "A read-only audit of the fixture that identifies the v3 dependency, @tailwind directives, legacy safelist/content config, the dynamic bg-${status}-500 class, and start-0, with v4 replacements, and that ignores the docs example.",
+      "files": [
+        "evals/fixtures/v3-app/docs/upgrade-notes.md",
+        "evals/fixtures/v3-app/package.json",
+        "evals/fixtures/v3-app/src/Badge.tsx",
+        "evals/fixtures/v3-app/src/index.css",
+        "evals/fixtures/v3-app/tailwind.config.js",
+        "evals/fixtures/v3-app/vite.config.ts"
+      ],
+      "assertions": [
+        "No file under evals/fixtures/v3-app is created, modified, or deleted.",
+        "The response identifies tailwindcss ^3.4.17 in package.json as v3.",
+        "The response flags the @tailwind base/components/utilities directives in src/index.css and replaces them with @import \"tailwindcss\".",
+        "The response replaces the safelist in tailwind.config.js with @source inline(...).",
+        "The response flags the bg-${status}-500 template class in src/Badge.tsx and proposes an explicit class map or @source inline safelist.",
+        "The response flags start-0 in src/Badge.tsx and proposes inset-s-0.",
+        "The response recommends @tailwindcss/vite for the Vite build.",
+        "The response does not report the end-4 example in docs/upgrade-notes.md as a source finding.",
+        "The response describes audit findings as heuristic or recommends confirming them with a build."
+      ]
+    }
+  ]
+}

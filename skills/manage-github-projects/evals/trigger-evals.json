@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Move issue #412 to In Progress on our project board.",
+    "should_trigger": true
+  },
+  {
+    "query": "Set priority to High and size L on issues 437 and 438 in the Homelab project.",
+    "should_trigger": true
+  },
+  {
+    "query": "What's the state of my project board? Which open issues have no size or status?",
+    "should_trigger": true
+  },
+  {
+    "query": "Make #437 a sub-issue of #100 and mark #441 as blocked by #437.",
+    "should_trigger": true
+  },
+  {
+    "query": "Triage the backlog in the project: add estimates and put everything unsized into the next iteration.",
+    "should_trigger": true
+  },
+  {
+    "query": "Add this new bug to the project and set its Status to Todo.",
+    "should_trigger": true
+  },
+  {
+    "query": "Create a draft item on the roadmap board for investigating SSO.",
+    "should_trigger": true
+  },
+  {
+    "query": "Which issues on the project have been stale the longest?",
+    "should_trigger": true
+  },
+  {
+    "query": "Open a GitHub issue for the login crash; no project board involved.",
+    "should_trigger": false
+  },
+  {
+    "query": "Review pull request #88 and leave comments.",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up a Jira board with swimlanes for our team.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a GitHub Actions workflow that labels new issues automatically.",
+    "should_trigger": false
+  },
+  {
+    "query": "Restructure this code project's folders into a src/ layout.",
+    "should_trigger": false
+  },
+  {
+    "query": "Migrate our Linear tickets into a Trello board.",
+    "should_trigger": false
+  },
+  {
+    "query": "Generate release notes from merged pull requests since v1.4.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain how GitHub Projects classic differs from Projects v2.",
+    "should_trigger": false
+  }
+]

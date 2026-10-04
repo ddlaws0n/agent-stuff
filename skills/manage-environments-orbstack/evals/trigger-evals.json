@@ -1,0 +1,66 @@
+[
+  {
+    "query": "https://api.myapp.orb.local gives a certificate error in my Node client but works in Safari. How do I fix OrbStack HTTPS?",
+    "should_trigger": true
+  },
+  {
+    "query": "Create an Ubuntu 24.04 OrbStack machine provisioned with my cloud-init.yml and tell me how to check it finished.",
+    "should_trigger": true
+  },
+  {
+    "query": "npm install inside my OrbStack container is super slow with the bind-mounted repo. What should I change?",
+    "should_trigger": true
+  },
+  {
+    "query": "How do I copy notes.txt from the home directory of my orb machine called dev to my Mac Desktop?",
+    "should_trigger": true
+  },
+  {
+    "query": "Since I connected to the corporate VPN, my *.orb.local container domains stop resolving but localhost ports still work.",
+    "should_trigger": true
+  },
+  {
+    "query": "Turn on OrbStack's built-in Kubernetes and expose a service to my Mac.",
+    "should_trigger": true
+  },
+  {
+    "query": "My docker context is orbstack and builds of an amd64-only image are really slow on my M3. Should I set DOCKER_DEFAULT_PLATFORM?",
+    "should_trigger": true
+  },
+  {
+    "query": "How do I connect VS Code Remote SSH to my orbctl Linux machine?",
+    "should_trigger": true
+  },
+  {
+    "query": "Docker Desktop on my Mac keeps using 8 GB of RAM. How do I lower its memory limit in settings?",
+    "should_trigger": false
+  },
+  {
+    "query": "colima start fails with a vz driver error on macOS. How do I fix it?",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up rootless Docker on my Debian 12 server and tune its storage driver.",
+    "should_trigger": false
+  },
+  {
+    "query": "Review this Dockerfile for multi-stage build best practices and smaller images.",
+    "should_trigger": false
+  },
+  {
+    "query": "podman machine init hangs on my MacBook. What can I check?",
+    "should_trigger": false
+  },
+  {
+    "query": "Create a Windows 11 VM in UTM on Apple Silicon.",
+    "should_trigger": false
+  },
+  {
+    "query": "My docker compose services cannot reach each other on an Ubuntu EC2 host. How do I debug the network?",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a GitHub Actions workflow that builds and pushes a multi-arch Docker image.",
+    "should_trigger": false
+  }
+]

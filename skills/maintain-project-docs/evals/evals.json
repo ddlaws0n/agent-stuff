@@ -1,0 +1,42 @@
+{
+  "skill_name": "maintain-project-docs",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Move docs/setup.md to docs/getting-started/installation.md; it's a better home for it.",
+      "expected_output": "The file is moved, every inbound relative link and anchor, the docs-site nav entry, and any agent-instruction path reference are updated, and AGENTS.md/CLAUDE.md content is otherwise unchanged.",
+      "assertions": [
+        "docs/getting-started/installation.md exists and docs/setup.md does not.",
+        "`git grep -n 'setup.md'` returns no references to the old path outside version history or changelogs.",
+        "The docs-site navigation config (for example mkdocs.yml) lists docs/getting-started/installation.md and not docs/setup.md.",
+        "Every relative link inside the moved file resolves from its new directory.",
+        "`git diff` for AGENTS.md and CLAUDE.md is empty or changes only lines containing the old path.",
+        "The final response lists the moved file, each file whose links were updated, and the link check performed."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Our setup instructions are scattered across README.md, docs/setup.md, and docs/dev-environment.md, and they disagree. Consolidate them.",
+      "expected_output": "An inventory of tracked project docs and a consolidation plan naming one canonical source, each proposed edit/move/delete with link impact, and a request for approval before any move or delete.",
+      "assertions": [
+        "`git status --porcelain` shows no deleted or renamed files after the response.",
+        "The response contains a plan with one row or item per proposed move, delete, or edit, each naming source, destination or canonical source, and link impact.",
+        "The plan names exactly one canonical setup document.",
+        "The response explicitly asks for approval before moving or deleting files.",
+        "The inventory contains no paths under node_modules/, vendor/, dist/, build/, or generated API docs directories."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We migrated to Node 22 last week. Refresh CONTRIBUTING.md and packages/cli/README.md to match.",
+      "expected_output": "Focused updates to both files with Node 18 commands removed from current guidance, commands verified against package.json engines and .nvmrc, and changed links checked.",
+      "assertions": [
+        "`git grep -n -i -E 'node ?18|nvm use 18'` returns no matches in CONTRIBUTING.md or packages/cli/README.md.",
+        "Neither file contains a details/summary block or 'legacy' section preserving Node 18 commands.",
+        "Every Node version written in the edited files matches the version in package.json engines or .nvmrc.",
+        "`git diff --stat` touches only CONTRIBUTING.md and packages/cli/README.md.",
+        "The final response lists the evidence files used and the checks run."
+      ]
+    }
+  ]
+}

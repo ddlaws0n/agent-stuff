@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Create an AGENTS.md for this repository so coding agents know how to build and test it.",
+    "should_trigger": true
+  },
+  {
+    "query": "Our AGENTS.md is stale and full of generic advice; audit it against the actual repo and fix it.",
+    "should_trigger": true
+  },
+  {
+    "query": "Regenerate AGENTS.md now that we moved from npm to pnpm and added a Rust service.",
+    "should_trigger": true
+  },
+  {
+    "query": "Write nested AGENTS.md files for each package in this Turborepo monorepo.",
+    "should_trigger": true
+  },
+  {
+    "query": "Review the AGENTS.md in packages/api and tell me what is wrong or missing.",
+    "should_trigger": true
+  },
+  {
+    "query": "Add the repo's lint, typecheck, and test commands plus gotchas to an agent instructions file at the root (AGENTS.md).",
+    "should_trigger": true
+  },
+  {
+    "query": "Improve our AGENTS.md: it invents a make target that doesn't exist and misses the migration workflow.",
+    "should_trigger": true
+  },
+  {
+    "query": "Set up agent guidance for contributors in this Django project; we use AGENTS.md with CLAUDE.md symlinked to it.",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a README for this project with install and usage instructions.",
+    "should_trigger": false
+  },
+  {
+    "query": "Create CONTRIBUTING.md describing our pull request and code review process.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a SKILL.md for a new agent skill that converts CSV to Parquet.",
+    "should_trigger": false
+  },
+  {
+    "query": "Draft an architecture decision record for switching to event sourcing.",
+    "should_trigger": false
+  },
+  {
+    "query": "What is the difference between AGENTS.md and a system prompt? Just explain it.",
+    "should_trigger": false
+  },
+  {
+    "query": "Configure Claude Code hooks so tests run after every edit.",
+    "should_trigger": false
+  },
+  {
+    "query": "Fix the failing unit test in src/parser.test.ts.",
+    "should_trigger": false
+  },
+  {
+    "query": "Generate API reference docs from our TypeScript types.",
+    "should_trigger": false
+  }
+]

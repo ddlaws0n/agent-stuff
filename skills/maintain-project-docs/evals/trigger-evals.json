@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Update CONTRIBUTING.md and the CLI package README for our new setup and test commands.",
+    "should_trigger": true
+  },
+  {
+    "query": "Create a SECURITY.md using this repository's supported release policy and private reporting address.",
+    "should_trigger": true
+  },
+  {
+    "query": "Consolidate the duplicate setup guides in docs/ into one page.",
+    "should_trigger": true
+  },
+  {
+    "query": "Fix stale commands and broken links across our Markdown docs.",
+    "should_trigger": true
+  },
+  {
+    "query": "Add an ADR for the database decision and link it from the existing architecture index.",
+    "should_trigger": true
+  },
+  {
+    "query": "Move the guides under docs/how-to/ into docs/guides/ and fix everything that points at them.",
+    "should_trigger": true
+  },
+  {
+    "query": "Reorganize package documentation and identify the canonical source for duplicated API examples.",
+    "should_trigger": true
+  },
+  {
+    "query": "We dropped Node 18 support; clean the old setup instructions out of the README and docs.",
+    "should_trigger": true
+  },
+  {
+    "query": "Update the root AGENTS.md test commands while preserving its scoped operational rules.",
+    "should_trigger": false
+  },
+  {
+    "query": "Create an AGENTS.md for this repository so coding agents know how to build and test it.",
+    "should_trigger": false
+  },
+  {
+    "query": "Our CLAUDE.md is stale and references commands we removed; fix it.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add Google-style docstrings to every public function in src/api/.",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up TypeDoc to generate API reference documentation for the SDK.",
+    "should_trigger": false
+  },
+  {
+    "query": "Summarize what our README says about deployment.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a SKILL.md for a new agent skill that converts CSV to Parquet.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write the GitHub release notes for v2.3 from the merged pull requests.",
+    "should_trigger": false
+  }
+]

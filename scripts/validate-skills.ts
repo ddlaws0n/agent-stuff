@@ -15,6 +15,14 @@ const FRONTMATTER_KEYS = [
   "allowed-tools",
 ];
 const METADATA_KEYS = new Set(["author", "version"]);
+const EVAL_KEYS = new Set([
+  "id",
+  "name",
+  "prompt",
+  "expected_output",
+  "files",
+  "assertions",
+]);
 const SKILL_ENTRIES = new Set([
   "SKILL.md",
   "LICENSE",
@@ -287,6 +295,10 @@ async function validateEvals(
       ) {
         errors.push(`${prefix} assertions must be nonempty strings`);
       }
+      // Unknown keys (e.g. "expectations") would otherwise be silently skipped.
+      const unknown = Object.keys(item).filter((key) => !EVAL_KEYS.has(key));
+      if (unknown.length > 0)
+        errors.push(`${prefix} has unknown keys: ${unknown.join(", ")}`);
     }
   } catch (error) {
     errors.push(`${name}: invalid evals/evals.json: ${String(error)}`);

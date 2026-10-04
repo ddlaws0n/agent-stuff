@@ -1,0 +1,26 @@
+/*
+  CSS-side Tailwind v4.3 patterns. Paste into the Tailwind CSS entry file after
+  @import "tailwindcss"; see references/PATTERN_LIBRARY.md for when to use them.
+*/
+
+/* CSS-side reusable button with compound variant (comma @variant form needs v4.3+) */
+.button-primary {
+  border-radius: var(--radius-lg);
+  background: var(--color-sky-600);
+  color: white;
+  padding-inline: --spacing(4);
+  padding-block: --spacing(2);
+
+  @variant hover, focus-visible {
+    background: var(--color-sky-700);
+  }
+
+  @variant disabled {
+    opacity: 0.5;
+  }
+}
+
+/* Custom functional utility with its own name (never redefine built-ins such as tab-*) */
+@utility indent-step-* {
+  text-indent: calc(var(--spacing) * --value(integer, --default(4)));
+}

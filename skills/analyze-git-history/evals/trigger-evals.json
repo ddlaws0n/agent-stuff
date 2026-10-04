@@ -1,0 +1,66 @@
+[
+  {
+    "query": "I just inherited this legacy repo. Where should I start reading the code?",
+    "should_trigger": true
+  },
+  {
+    "query": "Which files in src/ change the most and keep getting bug fixes?",
+    "should_trigger": true
+  },
+  {
+    "query": "What's our bus factor on packages/payments? Who actually knows that code?",
+    "should_trigger": true
+  },
+  {
+    "query": "Do a tech-debt audit of this codebase using git history before I refactor anything.",
+    "should_trigger": true
+  },
+  {
+    "query": "Find churn hotspots and revert/hotfix patterns in this repository over the last year.",
+    "should_trigger": true
+  },
+  {
+    "query": "Is the billing service actively maintained, or did the original authors leave?",
+    "should_trigger": true
+  },
+  {
+    "query": "I'm new to this monorepo. Give me a risk map of the api package before I make changes.",
+    "should_trigger": true
+  },
+  {
+    "query": "Which parts of this repo are riskiest to modify, based on commit history?",
+    "should_trigger": true
+  },
+  {
+    "query": "Who wrote line 42 of src/auth.ts? Run git blame for me.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a conventional commit message for my staged changes.",
+    "should_trigger": false
+  },
+  {
+    "query": "Scan this repo's dependencies for known CVEs.",
+    "should_trigger": false
+  },
+  {
+    "query": "Review this pull request diff for bugs.",
+    "should_trigger": false
+  },
+  {
+    "query": "Help me rebase my feature branch onto main and resolve the conflicts.",
+    "should_trigger": false
+  },
+  {
+    "query": "Our GitHub Actions build is failing on the test step; fix it.",
+    "should_trigger": false
+  },
+  {
+    "query": "Generate a CHANGELOG from the commits since v2.0.0.",
+    "should_trigger": false
+  },
+  {
+    "query": "Undo my last commit but keep the changes in my working tree.",
+    "should_trigger": false
+  }
+]

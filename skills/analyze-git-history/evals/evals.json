@@ -1,0 +1,55 @@
+{
+  "skill_name": "analyze-git-history",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm onboarding to a legacy Rails repo. Before I start reading source, can you tell me which areas look riskiest from git history? The app code is under app/.",
+      "expected_output": "A git-history risk map scoped to app/ with churn hotspots, ownership concentration, bug-fix hotspots, velocity shape, firefighting commits, caveats, and a recommended first-code-reading path.",
+      "assertions": [
+        "Every git log, git shortlog, or scan command in the transcript is limited to app/ (a pathspec or --scope app).",
+        "`git status --porcelain` in the target repository is empty after the run and HEAD is unchanged.",
+        "The output has a 'Top risk files' table whose top-ranked file appears in both the churn and bug-fix hotspot lists.",
+        "Each top risk file is given a confidence label of High, Medium, or Low.",
+        "The output has a 'Caveats' section that mentions squash merges or identities.",
+        "The output ends with a numbered first-code-reading path naming at least one file or directory.",
+        "The output never describes code or files as 'bad'."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This is a big monorepo. I only care about packages/billing. Use git history to work out whether it's scary to modify and where to look first.",
+      "expected_output": "A scoped monorepo analysis for packages/billing that avoids repo-wide conclusions and highlights files with overlapping churn, bug, ownership, and hotfix signals.",
+      "assertions": [
+        "Every git log, git shortlog, or scan command in the transcript is limited to packages/billing.",
+        "Every file in the 'Top risk files' table starts with packages/billing/.",
+        "The output names the monorepo scope as a caveat or as an explicit choice.",
+        "`git status --porcelain` in the target repository is empty after the run and HEAD is unchanged.",
+        "The output never describes code or files as 'bad'."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Can you find bug hotspots in this repo? The team often uses vague commit messages like 'update stuff' and squashes PRs.",
+      "expected_output": "A cautious analysis that runs bug-hotspot heuristics but lowers confidence because vague messages and squash merges weaken bug-density and authorship signals.",
+      "assertions": [
+        "The output labels its bug-hotspot findings Low or Medium confidence and attributes that to vague commit messages.",
+        "The output says that squash merges collapse each PR into one commit, or hide co-authors, which affects ownership counts.",
+        "The output recommends a concrete validation step, such as reading recent diffs of named files or searching issue IDs.",
+        "`git status --porcelain` in the target repository is empty after the run and HEAD is unchanged.",
+        "The output never describes code or files as 'bad'."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Our CI checkout is a --depth 50 clone of the service repo. From git history, which files under src/ are the riskiest?",
+      "expected_output": "A risk map that leads with the shallow-history limitation, lowers confidence, and does not unshallow or fetch without permission.",
+      "assertions": [
+        "The output states that the clone is shallow or the history is truncated.",
+        "The transcript contains no `git fetch` and no `--unshallow` command.",
+        "`git rev-parse --is-shallow-repository` still prints true after the run.",
+        "No finding about ownership or velocity is labeled High confidence.",
+        "The output never describes code or files as 'bad'."
+      ]
+    }
+  ]
+}

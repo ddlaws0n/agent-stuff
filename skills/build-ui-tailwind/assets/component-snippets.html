@@ -1,0 +1,103 @@
+<!--
+  Tailwind v4.3 component snippets. Each section heading matches a pattern in
+  references/PATTERN_LIBRARY.md, which explains when to use it. Adapt tokens,
+  colors, and layout to the project rather than pasting unchanged.
+-->
+
+<!-- Hero over image: masks + text shadow + logical spacing -->
+<section class="relative isolate overflow-hidden bg-mauve-950 text-white">
+  <img
+    src="/hero.jpg"
+    alt=""
+    class="absolute inset-0 -z-10 size-full object-cover opacity-70 mask-b-from-65% mask-b-to-100%"
+  />
+  <div class="mx-auto max-inline-5xl pbs-24 pbe-32 px-6">
+    <p class="text-sm font-medium text-mauve-200">Modern CSS-first UI</p>
+    <h1 class="mbs-4 text-5xl font-semibold tracking-tight text-shadow-md/40">
+      Build with Tailwind v4.3
+    </h1>
+  </div>
+</section>
+
+<!-- Colored glow shadow -->
+<div class="rounded-xl bg-white p-6 drop-shadow-lg/25 drop-shadow-sky-500">
+  ...
+</div>
+
+<!-- Logical positioning (RTL-safe) -->
+<div class="relative">
+  <span class="absolute inset-s-0 top-0 size-3 rounded-full bg-red-500"></span>
+</div>
+
+<!-- Responsive cards: container queries + wrap-anywhere -->
+<div class="@container rounded-2xl border p-4">
+  <div class="grid gap-4 @md:grid-cols-2 @xl:grid-cols-3">
+    <article class="min-w-0 rounded-xl bg-white p-4 shadow-sm">
+      <h2 class="text-lg font-semibold wrap-anywhere">
+        very.long.identifier@example.com
+      </h2>
+      <p class="mbs-2 text-sm text-slate-600 wrap-break-word">
+        Description text...
+      </p>
+    </article>
+  </div>
+</div>
+
+<!-- Size container only when block-size units matter -->
+<div class="@container-size block-96 rounded-xl border">
+  <div class="block-[50cqb] bg-mist-100">
+    Height follows container block size
+  </div>
+</div>
+
+<!-- Safe alignment in a constrained, scrollable container -->
+<div class="flex items-center-safe justify-center-safe overflow-auto">...</div>
+
+<!-- Last-baseline alignment for wrapping heading/metadata rows -->
+<div class="grid grid-cols-2 items-baseline-last">...</div>
+
+<!-- Pointer-aware controls -->
+<div
+  class="grid grid-cols-6 gap-2 pointer-coarse:grid-cols-3 pointer-coarse:gap-4"
+>
+  <button class="rounded-lg border px-3 py-2 pointer-coarse:py-4">A</button>
+  <button class="rounded-lg border px-3 py-2 pointer-coarse:py-4">B</button>
+</div>
+
+<!-- Form validation after user interaction -->
+<label class="grid gap-2 text-sm">
+  <span>Email</span>
+  <input
+    required
+    type="email"
+    class="rounded-md border px-3 py-2 user-invalid:border-red-500 user-invalid:ring-2 user-invalid:ring-red-500/20 user-valid:border-green-600"
+  />
+</label>
+
+<!-- Numbers and OpenType features -->
+<span class="tabular-nums">218.40</span>
+<p class="font-features-['ss01','cv02']">...</p>
+
+<!-- Stable scrolling panel -->
+<aside
+  class="max-block-96 overflow-auto scrollbar-thin scrollbar-gutter-stable scrollbar-thumb-slate-400/60 scrollbar-track-transparent"
+>
+  <nav class="grid gap-1 p-2">...</nav>
+</aside>
+
+<!-- Code/log panel with tab size -->
+<pre
+  class="overflow-auto rounded-xl bg-slate-950 p-4 text-sm text-slate-100 tab-4 scrollbar-thin"
+>
+function example() {
+	return "real tabs render predictably";
+}
+</pre>
+
+<!-- Layout-affecting zoom for previews and minimaps -->
+<div class="zoom-75">...</div>
+
+<!-- Neutral palette usage -->
+<div class="bg-taupe-50 text-taupe-950 dark:bg-taupe-950 dark:text-taupe-100">
+  ...
+</div>

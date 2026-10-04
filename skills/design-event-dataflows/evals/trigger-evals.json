@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Design Kafka event contracts, partition keys, idempotent consumers, and replay rules for subscription upgrades.",
+    "should_trigger": true
+  },
+  {
+    "query": "Choose between transactional outbox and CDC for publishing order facts and rebuilding downstream projections.",
+    "should_trigger": true
+  },
+  {
+    "query": "Map our Postgres-to-Flink-to-Snowflake pipeline with freshness, retention, schema evolution, and reconciliation semantics.",
+    "should_trigger": true
+  },
+  {
+    "query": "Define commands versus immutable domain events for entitlement changes, including authorization and expiry.",
+    "should_trigger": true
+  },
+  {
+    "query": "Create a data contract for personal-data events with tombstones, tenant isolation, replay, and legal-hold rules.",
+    "should_trigger": true
+  },
+  {
+    "query": "We publish inventory updates on Google Pub/Sub; how should we use ordering keys and dedupe so per-SKU updates apply in order?",
+    "should_trigger": true
+  },
+  {
+    "query": "Should our payment events go on SQS FIFO or standard? Design message group IDs and consumer idempotency.",
+    "should_trigger": true
+  },
+  {
+    "query": "Plan a backfill of two years of orders into a new Elasticsearch projection while live Kafka events keep flowing, without duplicates at cutover.",
+    "should_trigger": true
+  },
+  {
+    "query": "A consumer duplicated payments after a timeout in production; triage the incident and preserve evidence.",
+    "should_trigger": false
+  },
+  {
+    "query": "Kafka consumer lag has been spiking every night since Tuesday. Why is this happening?",
+    "should_trigger": false
+  },
+  {
+    "query": "Review our entire data platform architecture and write an ADR comparing storage technologies.",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up a three-broker Kafka cluster on Kubernetes with Strimzi and configure TLS listeners.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a Flink SQL job that computes a 5-minute tumbling window count of page views.",
+    "should_trigger": false
+  },
+  {
+    "query": "Refactor these dbt models so the revenue mart builds incrementally.",
+    "should_trigger": false
+  },
+  {
+    "query": "Put one low-value background job on SQS; replay and ordering do not matter.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add an onClick handler to this React button.",
+    "should_trigger": false
+  }
+]

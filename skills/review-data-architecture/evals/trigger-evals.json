@@ -1,0 +1,66 @@
+[
+  {
+    "query": "Turn our multi-region order platform proposal into an ADR comparing Postgres, DynamoDB, and Spanner across consistency, failover, cost, and team operability.",
+    "should_trigger": true
+  },
+  {
+    "query": "Review the architecture for our customer-360 system; we need to choose sources of truth, serving stores, caches, and a migration path.",
+    "should_trigger": true
+  },
+  {
+    "query": "We're splitting a monolith and need a data architecture recommendation that protects checkout invariants without overcomplicating operations.",
+    "should_trigger": true
+  },
+  {
+    "query": "Compare three storage architectures for a write-heavy SaaS workload with p99 latency, RPO/RTO, and cross-region requirements.",
+    "should_trigger": true
+  },
+  {
+    "query": "Critique this system design and identify which guarantees are real versus assumed before we approve the ADR.",
+    "should_trigger": true
+  },
+  {
+    "query": "Should we put a Redis cache in front of our inventory service, and what happens to stock accuracy if the cache and Postgres disagree?",
+    "should_trigger": true
+  },
+  {
+    "query": "Plan a zero-downtime migration from a single MySQL instance to a sharded setup; how do we pick the shard key and handle cross-shard queries?",
+    "should_trigger": true
+  },
+  {
+    "query": "Is Aurora Serverless or self-managed Postgres on EC2 the better fit for our fintech ledger given our two-person ops team?",
+    "should_trigger": true
+  },
+  {
+    "query": "A Kafka consumer charged two customers twice after a timeout last night; help us triage the incident.",
+    "should_trigger": false
+  },
+  {
+    "query": "Since the failover this morning our replica is missing writes and dashboards disagree with the primary. Find the cause.",
+    "should_trigger": false
+  },
+  {
+    "query": "Define the event contract, partition key, replay policy, and consumer idempotency for subscription upgrades.",
+    "should_trigger": false
+  },
+  {
+    "query": "Design the outbox table and CDC connector config so order events reach our analytics topic in order per customer.",
+    "should_trigger": false
+  },
+  {
+    "query": "This Postgres query takes 4 seconds; which index should I add?",
+    "should_trigger": false
+  },
+  {
+    "query": "Move our existing ADRs into docs/decisions, renumber them, and fix the broken links in the README.",
+    "should_trigger": false
+  },
+  {
+    "query": "Review the component architecture of our React app: state management, routing, and code splitting.",
+    "should_trigger": false
+  },
+  {
+    "query": "Estimate the monthly list price of an r7g.large database instance without recommending an architecture.",
+    "should_trigger": false
+  }
+]

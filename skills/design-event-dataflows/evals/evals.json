@@ -1,0 +1,35 @@
+{
+  "skill_name": "design-event-dataflows",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Design an event-driven dataflow for CustomerUpgradedSubscription. It needs to update billing, CRM, product entitlements, analytics warehouse, and Slack notifications. We use Postgres and Kafka.",
+      "expected_output": "A log-centric design with source of truth, explicit message categories, event contract, producer semantics, ordering and idempotency, data governance, consumer responsibilities, replay controls, and failure-mode checks.",
+      "files": [],
+      "assertions": [
+        "Output names Postgres (or a specific Postgres table) as the source of truth for the upgrade fact.",
+        "Output labels at least one message as a domain event and at least one downstream message (e.g. Slack or entitlement action) as a command or notification.",
+        "Output recommends a transactional outbox or CDC and states what happens if the DB commit succeeds but the Kafka publish fails.",
+        "Output specifies a partition key tied to a customer or subscription ID.",
+        "Output states a dedupe or idempotency key for each side-effecting consumer.",
+        "Output states that Slack notifications are not replayed (or must be suppressed) during replay.",
+        "Output includes a data classification or retention/deletion rule for the event payload."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We are building a new pipeline: product usage events go to Kafka, then Flink, then Snowflake, then an executive dashboard. The product UI reads usage counts from Postgres. Design the dataflow so dashboard numbers and UI numbers can be reconciled, and define the event contract for usage events.",
+      "expected_output": "A dataflow design covering operational versus analytical sources, freshness bounds, lag observability, replay and rebuild of Snowflake tables, reconciliation against Postgres, a usage-event contract, and retention/deletion of usage data.",
+      "files": [],
+      "assertions": [
+        "Output distinguishes occurred_at (event time) from a recorded or emitted/processing timestamp.",
+        "Output states an expected freshness or lag bound for the dashboard relative to the UI.",
+        "Output defines a lag or freshness metric with an alert.",
+        "Output proposes a reconciliation check comparing Snowflake aggregates to Postgres counts.",
+        "Output describes how Snowflake tables are rebuilt or backfilled from the log or a source snapshot.",
+        "Output names an event ID used to deduplicate usage events in Flink or Snowflake.",
+        "Output states how user deletion propagates to retained usage events."
+      ]
+    }
+  ]
+}
