@@ -1,0 +1,9 @@
+.local/
+dist/
+coverage/
+eval-results/
+eval/results/
+bun.lock
+# Evaluation inputs are byte-for-byte fixtures.
+skills/*/evals/files/
+skills/*/evals/fixtures/

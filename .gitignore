@@ -11,3 +11,6 @@ coverage/
 .env.*
 !.env.example
 !.env.schema
+
+# Claude Code session logs
+.claude/logs/
