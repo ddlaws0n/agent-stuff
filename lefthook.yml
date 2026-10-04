@@ -1,0 +1,23 @@
+# Installed by `bun install` (the prepare script).
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format
+      glob: "*.{ts,js,json,md,yml,yaml}"
+      run: bunx prettier --write --ignore-unknown {staged_files}
+      stage_fixed: true
+    - name: lint
+      glob: "*.ts"
+      run: bunx oxlint --type-aware --deny-warnings {staged_files}
+    - name: skills
+      glob: "{skills,templates}/**"
+      run: bun run skills:check && bun run skills:lint
+
+pre-push:
+  parallel: true
+  jobs:
+    - name: check
+      run: bun run check
+    - name: security scan
+      glob: "skills/**"
+      run: bun run skills:scan

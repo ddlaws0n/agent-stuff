@@ -1,0 +1,3 @@
+[environment]
+# Skill tests import their skill's scripts by path.
+extra-paths = ["skills/analyze-har-workflows/scripts"]
