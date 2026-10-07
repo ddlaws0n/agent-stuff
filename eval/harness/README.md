@@ -14,7 +14,7 @@ The image follows [Pi's plain-Docker starter](https://pi.dev/docs/latest/contain
 
 `docker-run.sh` uses `prepare.py`, the host Bun `run.ts` orchestrator/collector, and `grade.py`. Historical results are retained, but the old host-subagent collector and workflow launcher are not supported. Docker smoke verifies tools without model calls; live evals require a working 1Password session and consume API credits.
 
-This prepares only case 1 from each skill, not the full 11-case corpus. Adapt `CASES`/fixture builders and grading before adding other cases. The original prompts and assertions live under `skills/*/evals/`.
+This prepares only case 1 of the three skills in `CASES` (`prepare.py`), not the full corpus. Adapt `CASES`/fixture builders and grading before adding other cases. The original prompts and assertions live under `skills/*/evals/`.
 
 The project-board fixture has a synthetic, read-only `bin/gh` that rejects writes and unknown commands. The container excludes the real `gh` executable and GitHub credentials, but it still has network access for the model. Keep project-board cases read-only until a network-deny or allowlisted-egress boundary is tested. The runner prepends the mock directory to each child's PATH.
 
@@ -22,6 +22,4 @@ The project-board fixture has a synthetic, read-only `bin/gh` that rejects write
 
 ## Verification status
 
-As of 3 October 2026, the Docker smoke test and fixture/model-selection/grader tests pass. All six OpenRouter cells in `review-20261003` completed; execution, collection, redaction plumbing, model verification, and regrading were exercised. Grader fixes accept new CI filenames, tolerate Markdown board tables, detect logged mock mutation attempts, and require pilot assertions before execution.
-
-The automated result is 13/14 with skill and 12/14 without. Transcript review also found a CI network probe against the task instructions and a rejected baseline board mutation. Scores do not capture every protocol deviation. Historical results use a separate provider cohort; human feedback remains pending. See [the verification snapshot](../../docs/evals.md#verification-snapshot--3-october-2026) for scope and limitations, and the ignored `eval/results/review-20261003/summary.md` for the reviewed run.
+See [the verification snapshot](../../docs/evals.md#verification-snapshot--3-october-2026) for the latest reviewed run, its scope, and limitations.

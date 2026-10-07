@@ -48,13 +48,13 @@ References: [Agent Skills specification](https://agentskills.io/specification), 
 
 ## Verification snapshot — 3 October 2026
 
-- Repository gate, tooling build, and CLI discovery passed for all five skills: 18 Bun tests and 15 Python tests (five workflow-validator, seven harness, three HAR). Shell scripts pass syntax checks.
-- Docker smoke passed with Pi 0.87.1, Python 3.11.2, and uv 0.10.0. After 1Password authorization, all six cells of `review-20261003` completed on `openrouter/z-ai/glm-5.3-flash:high`, with provider/model and completion verified by the collector.
-- Live execution exposed grader defects: CI may create a new file rather than modify `existing.yml`; board case 1 lacked assertions; Markdown formatting caused board false negatives. These were repaired with regression tests and saved outputs were regraded without additional model calls. The original transcripts/outputs were retained.
-- The new pilot's automated totals are **13/14 with skill and 12/14 without**, one task each for three skills. Skill runs used more tokens in every pair. The with-skill AGENTS.md loses a lexical check for omitting the lockfile filename; both documents describe actual fixture scripts. Both CI outputs pass five checks. The board baseline omits separate missing-field totals and attempts a mock mutation that is rejected. Human usefulness review is pending.
-- **Protocol deviation:** the with-skill CI run attempts a GitHub network probe despite the no-network instruction and invokes `uv` for dependency resolution; its final claim of no network access is unsupported. Automated workflow scores do not capture this. Docker bridge networking allows outbound traffic, so instructions alone are not an egress boundary. No live GitHub mutation was performed; mutation cases remain unevaluated.
-- The historical direct-provider `pilot-1` remains a separate cohort: 14/14 with skill, 13/14 without. Agent review found grounded AGENTS.md outputs, added timeout/concurrency in the skill CI output, and correct synthetic board reports. Historical human feedback is pending; do not pool these scores with the OpenRouter pilot.
-- Varlock and HAR paired task-quality runs and trigger-selection testing remain unevaluated.
-- The grader uses text patterns and command-presence checks. Formatting can cause false negatives, command mentions do not prove success, and `@` action references do not verify provenance or SHA pinning. Review outputs/transcripts alongside scores before making a quality or safety claim.
+Scope: the five skills in the repository on that date, and a three-skill pilot (case 1 each of `create-agentsmd`, `create-github-actions`, `manage-github-projects`). Skills added later have not been through paired evals.
 
-Generated transcripts, outputs, timings, grading, and the reviewed summary stay in ignored `eval/results/review-20261003/`; they are not included in commits.
+- The repository gate, tooling build, CLI discovery, and the Docker smoke test passed. All six cells of `review-20261003` completed on `openrouter/z-ai/glm-5.3-flash:high`, with provider/model verified by the collector.
+- Automated totals: **13/14 with skill, 12/14 without**. Skill runs used more tokens in every pair. Grader defects found during the run (new CI filenames, missing board assertions, Markdown false negatives) were fixed with regression tests and outputs regraded without new model calls.
+- **Protocol deviation:** the with-skill CI run probed the GitHub network despite a no-network instruction and then claimed no network access. Scores do not capture this; Docker bridge networking is not an egress boundary. No live GitHub mutation was performed, and mutation cases remain unevaluated.
+- The historical direct-provider `pilot-1` (14/14 with skill, 13/14 without) is a separate cohort; do not pool it with the OpenRouter pilot.
+- Human usefulness review, trigger-selection testing, and paired runs for the remaining skills are pending.
+- The grader uses text patterns and command-presence checks: formatting can cause false negatives, and command mentions do not prove success or verify SHA pinning. Review transcripts before making quality or safety claims.
+
+Evidence stays in ignored `eval/results/review-20261003/`.
