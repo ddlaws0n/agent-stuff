@@ -20,9 +20,7 @@ metadata:
 
 # HAR workflow analysis
 
-## Goal
-
-Analyze a HAR capture to infer how a website task works and whether it can be scripted. Common tasks include filling forms, uploading files, changing account settings, creating/updating/deleting records, checkout flows, admin actions, and other user-triggered workflows.
+Infer from a HAR capture how a user-triggered website action works (forms, uploads, settings, record CRUD, checkout, admin actions) and whether it can be scripted.
 
 Never paste or load an entire HAR into the model. HAR files often contain cookies, bearer tokens, CSRF tokens, personal data, file contents, and large static assets. Extract a compact working set first. Treat even script outputs as sensitive: redaction is best-effort, not a guarantee of anonymity. Keep outputs local and out of shared repositories, and do not publish or upload the HAR or analysis without the user's permission.
 
@@ -118,7 +116,7 @@ Prioritize requests with these signals:
 - A successful visible action may be a `204`, `302`, or background polling response rather than the largest JSON response.
 - WebSocket/SSE messages may not be fully represented in standard HAR. If the workflow depends on socket frames, state that the HAR is insufficient and recommend browser instrumentation.
 - Ignore noisy third-party telemetry unless it carries the primary action. Analytics requests can contain action names but are rarely the automation endpoint.
-- When the HAR is huge, use script filters and request indices. Do not paste or load the whole file into the agent context. If a request depends on unseen body values, describe the limitation rather than copying raw data into the report.
+- If a request depends on unseen body values, describe the limitation rather than copying raw data into the report.
 
 ## Scripts
 
@@ -127,7 +125,7 @@ Prioritize requests with these signals:
 - `summarize` writes `summary.json` (counts and top candidates), `entries.jsonl` (one request/response shape per entry), `candidates.jsonl` (likely user actions by heuristic score), and `endpoints.tsv` (normalized endpoint patterns).
 - `extract --indices` writes `selected.json` with details for chosen request indices.
 
-It needs Python 3.10+; `uv run` installs `ijson` for streaming, and plain `python3` loads HARs under 100 MiB in memory.
+`uv run` installs `ijson` for streaming; plain `python3` loads HARs under 100 MiB in memory.
 
 ## References
 

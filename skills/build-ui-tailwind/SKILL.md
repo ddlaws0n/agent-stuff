@@ -70,4 +70,4 @@ Baseline: Tailwind CSS v4.3.0 (released 2026-05-08); the latest patch at the tim
 - Use `tabular-nums` before `font-features-['tnum']`.
 - Use masks for decorative reveals and fades, never to hide important content. Use `scrollbar-none` sparingly because hidden scrollbars reduce affordance.
 - Tailwind v4 is the preprocessor in most setups; do not layer Sass, Less, or Stylus on top unless the project already requires it.
-- Patch releases fix source scanning, JSX/MDX extraction, arbitrary values, and canonicalization, so prefer the latest v4.3 patch over a pinned older one.
+- Prefer the latest v4.3 patch over a pinned older one; patches fix source scanning, JSX/MDX extraction, and arbitrary values.

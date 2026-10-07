@@ -10,9 +10,8 @@ description: >-
   test/build matrices, environment-gated deploys, or workflow failure fixes.
 license: MIT
 compatibility: >-
-  Provider-agnostic Agent Skill. Requires repository file access. Optional
-  network access plus Python 3.11+ and uv/pipx to run bundled scripts for
-  action-release lookup and workflow validation.
+  Optional network access plus Python 3.11+ and uv or pipx to run the bundled
+  action-release lookup and workflow validation scripts.
 metadata:
   author: ddlaws0n
   version: "0.1.2"
@@ -20,7 +19,7 @@ metadata:
 
 # Create GitHub Actions workflows
 
-Use this skill to design, edit, audit, and validate production-quality GitHub Actions workflows. Optimize for secure trust boundaries, minimal permissions, maintainable YAML, clear failure modes, and action versions verified from live metadata when network access is available.
+Design, edit, audit, and validate GitHub Actions workflows. Optimize for secure trust boundaries, minimal permissions, maintainable YAML, clear failure modes, and action versions verified from live metadata when network access is available.
 
 ## Workflow
 
@@ -70,13 +69,12 @@ Split workflows when trust boundaries differ. A workflow that handles untrusted 
 
 ## Security rules
 
-- Set `permissions:` explicitly. Start with `contents: read`; add scopes only where needed and preferably at job level.
+- Set `permissions:` explicitly. Start with `contents: read`; add scopes only where needed, preferably at job level. Never use top-level `permissions: write-all`.
 - Do not use `pull_request_target` to check out, build, test, or run untrusted PR code. Use it only for hardened metadata-only automation unless the design is intentionally privileged and reviewed.
 - Prefer OIDC/federated identity over long-lived cloud credentials. Grant `id-token: write` only to the job that needs OIDC.
 - Store staging/production secrets in GitHub Environments and use required reviewers for sensitive environments.
 - Treat PR title, body, labels, branch names, issue comments, and other event text as untrusted. Pass them through `env:` and quote shell variables instead of interpolating `${{ github.event... }}` directly inside `run:`.
 - Pin third-party actions explicitly. For high-risk, privileged, or deployment workflows, prefer full commit SHAs and record the human-readable version in a comment.
-- Avoid broad workflow-level write permissions. Grant write scopes only to the job that publishes, comments, releases, deploys, or requests OIDC.
 - Use `persist-credentials: false` on checkout when subsequent steps do not need `GITHUB_TOKEN`-backed Git authentication.
 
 ## Maintainability rules
@@ -95,34 +93,7 @@ Split workflows when trust boundaries differ. A workflow that handles untrusted 
 
 ### PR-safe CI skeleton
 
-Use the latest verified stable action versions for the target repository. The versions below are examples; verify with `scripts/fetch-action-release.py` when possible.
-
-```yaml
-name: CI
-
-on:
-  pull_request:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-```
+Start from `assets/node-ci.yml` and swap the setup, install, and test steps for other stacks. Keep its explicit read-only `permissions`, stale-run `concurrency`, job `timeout-minutes`, and `persist-credentials: false`. Its action versions are examples; verify them with `scripts/fetch-action-release.py` when possible.
 
 ### Safe handling of untrusted text
 
@@ -134,13 +105,9 @@ jobs:
     printf 'Pull request title: %s\n' "$PR_TITLE"
 ```
 
-### Deployment with OIDC
-
-See `references/workflow-patterns.md`.
-
 ## Scripts
 
-- `scripts/fetch-action-release.py` — Fetches latest GitHub Action release/tag context and emits text or JSON for version selection.
+- `scripts/fetch-action-release.py` — Fetches latest GitHub Action release/tag context and emits text or JSON for version selection. Sends `GITHUB_TOKEN` from the environment, if set, to avoid API rate limits.
 - `scripts/validate-workflows.py` — Performs heuristic static checks for workflow YAML, top- or job-level permissions, timeouts, action and reusable-workflow pinning, dangerous triggers, cache keys, and unsafe shell interpolation. Use `--require-sha` for privileged workflows.
 
 ## References
@@ -154,7 +121,6 @@ See `references/workflow-patterns.md`.
 - PyYAML and some generic YAML parsers treat `on` as a boolean unless configured. Use GitHub-Actions-aware parsing when validating workflow files.
 - `pull_request_target` runs in the context of the base repository and can access configured token permissions/secrets. Never combine it casually with checkout or execution of PR-controlled code.
 - `workflow_run` is also a trust-boundary transition. Treat downstream privileged workflows as deploy/release workflows, not normal CI.
-- A top-level `permissions: write-all` is almost never appropriate. Prefer job-level permissions for publish/deploy/comment jobs.
 - `github.ref` differs across `pull_request`, `pull_request_target`, `push`, tags, and reusable workflows. Be explicit about whether a workflow should run against the merge ref, head SHA, tag, or protected branch.
 - Scheduled workflows run on the default branch and can go stale if dependencies or secrets change without PR coverage.
 - `actions/cache` restore keys can restore stale dependencies. Lockfile-based keys reduce cross-branch surprises.
