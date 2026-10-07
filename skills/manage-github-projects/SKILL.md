@@ -25,27 +25,11 @@ metadata:
 
 # Manage GitHub Projects
 
-A skill for working with **GitHub Projects v2** — the board/table product that
-layers custom fields (Status, Priority, Size, Estimate, Iteration, …) on top of
-issues. The Projects GraphQL API is fiddly: single-select fields need opaque
-option IDs, items paginate in pages of 100, and labels/assignees/milestones live
-on the _issue_ not the _project item_. This skill bundles one helper script that
-absorbs all of that, so you spend your time on the triage decision instead of
-the API bookkeeping.
-
-## When to use
-
-- Reporting on board state: field coverage, stale issues, anomalies, what's
-  un-sized or unprioritized
-- Setting project fields: Status, Priority, Size (t-shirt), Estimate (number),
-  Iteration, and any custom single-select/number/text/date field
-- Managing repo-level metadata: labels, assignees, milestone
-- Linking issues: parent/child sub-issues, "blocks"/"duplicate"/"relates"
-- Creating issues (repo issues auto-added to the project, plus in-project drafts)
-- Removing items from a board or closing issues
-
-**Don't use this for:** plain `gh issue` work with no project-board involvement
-(just use `gh` directly), or GitHub Projects _classic_ (v1) — this targets v2.
+GitHub Projects v2 layers custom fields (Status, Priority, Size, Estimate,
+Iteration, …) on top of issues. Its GraphQL API needs opaque option IDs,
+paginates items 100 at a time, and keeps labels, assignees, and milestones on
+the _issue_, not the _project item_. The bundled script absorbs that
+bookkeeping. For plain `gh issue` work with no board, use `gh` directly.
 
 ## Workflow
 
@@ -56,8 +40,8 @@ the API bookkeeping.
 
 ## Scripts
 
-Everything runs through `scripts/ghpm.py`. Run it with `uv run` (preferred) or
-`python3`. Auth is inherited from `gh` — needs the `project` scope
+Everything runs through `scripts/ghpm.py` with `uv run` (preferred) or
+`python3`. Auth is inherited from `gh`, which needs the `project` scope
 (`gh auth refresh -s project` once).
 
 ```bash
@@ -66,7 +50,8 @@ uv run <skill-dir>/scripts/ghpm.py <command> [options]
 
 `<skill-dir>` is this skill's installed directory, which varies by agent and
 scope. Run the script by absolute path from inside the target repository so
-`--repo` can be omitted and auto-detected from the git remote.
+`--repo` can be omitted and auto-detected from the git remote. Examples below
+abbreviate the invocation to `ghpm.py`.
 
 **Global options** (placed _before_ the subcommand):
 
@@ -79,24 +64,20 @@ scope. Run the script by absolute path from inside the target repository so
 | `--repo OWNER/NAME` | Override the repo (default: git remote origin) |
 | `--dry-run` | Print the mutation, don't send it |
 
-If neither `--project-number` nor `--project-name` is given, the script picks the
-repo's first open linked project. When in doubt, run `fields` first to confirm
-you're talking to the right board.
-
-## Commands
+Without `--project-number` or `--project-name`, the script picks the repo's
+first open linked project.
 
 ### Inspecting
 
 ```bash
 ghpm.py fields                          # field config: names, types, option IDs
 ghpm.py items                           # all items + values as JSON
-ghpm.py report                          # coverage + staleness (the session-style report)
+ghpm.py report                          # coverage + staleness
 ```
 
-`report` is the right starting point for "what's the state of my board". It
-prints state totals, per-Status breakdown for OPEN issues, field coverage
-(how many OPEN issues are missing each single-select field), the 10 stalest
-open issues, and the anomaly list (open issues with no Status).
+`report` prints state totals, the per-Status breakdown of OPEN issues, field
+coverage (OPEN issues missing each single-select field), the 10 stalest open
+issues, and open issues with no Status.
 
 ### Setting project fields
 
@@ -110,19 +91,17 @@ ghpm.py set 437 "Start Date"=2026-09-15
 ghpm.py clear 437 Priority
 ```
 
-Field names and option values are **case-sensitive, exact-match** against what's
-defined in the project. Run `fields` to see the legal values before bulk-setting.
-The script translates `High` → its option ID, `3` → number, `2026-09-15` → date,
-`Sprint 42` → iteration ID automatically.
+The script translates option names, numbers, dates, and iteration titles into
+the IDs and types the API needs.
 
-### Repo-level metadata (NOT project fields)
+### Repo-level metadata (not project fields)
 
-Labels, assignees, and milestone are properties of the _issue_, not the project
-item — `updateProjectV2ItemFieldValue` cannot touch them. Use these instead:
+`updateProjectV2ItemFieldValue` cannot touch labels, assignees, or milestone;
+use these instead:
 
 ```bash
 ghpm.py label 437 bug --remove          # or omit --remove to add
-ghpm.py assign 437 ddlawson             # --remove to unassign
+ghpm.py assign 437 @me                  # any login; --remove to unassign
 ghpm.py milestone 437 "v2.0"            # '' (empty string) clears it
 ```
 
@@ -136,15 +115,14 @@ ghpm.py link 100 437 --relation duplicate     # labels #437 "duplicate"
 ghpm.py link 100 437 --relation relates       # labels #437 "relates"
 ```
 
-Only `subissue` creates a true GitHub parent/child link (visible in the issue
-sidebar, queryable via `addSubIssue`). `blocks`/`duplicate`/`relates` have no
-first-class GraphQL link — the convention is a label plus a body cross-reference.
-The script tells you this when it uses the label path.
+Only `subissue` creates a true GitHub parent/child link. `blocks`, `duplicate`,
+and `relates` have no first-class GraphQL link, so the script adds a label plus
+a body cross-reference and says so.
 
-### Creating & removing
+### Creating and removing
 
 ```bash
-ghpm.py create "Fix the flux capacitor" --body "..." --label bug --assignee me --milestone v2.0
+ghpm.py create "Fix the flux capacitor" --body "..." --label bug --assignee @me --milestone v2.0
 ghpm.py create-draft "Investigate warp drive feasibility" --body "..."
 ghpm.py add-to-project 437               # add existing issue to this board
 ghpm.py close 437                        # confirms unless --yes
@@ -152,49 +130,36 @@ ghpm.py remove-from-project 437          # removes from board, keeps issue open;
 ghpm.py delete-draft PVTI_lADO...        # drafts have no number; pass item ID. --yes to skip
 ```
 
-`create` makes a repo issue and immediately adds it to the current project. To
-set its fields after creation, follow with `set` commands.
+`create` makes a repo issue and adds it to the current project; follow with
+`set` commands to fill its fields.
 
-## Safety model
-
-- **Non-destructive writes** (set, clear, label, assign, milestone, link,
-  create, create-draft, add-to-project) execute immediately and print a
-  confirmation line. This matches how triage actually flows — you're moving a
-  card, not deleting data.
-- **Destructive ops** (close, remove-from-project, delete-draft) prompt for
-  confirmation unless `--yes` is passed.
-- **`--dry-run`** works everywhere. Use it when the user is unsure or when
-  operating in bulk. It prints the exact mutation/input and sends nothing.
-
-When operating on many issues at once, prefer a loop with `--dry-run` first,
-eyeball the plan, then re-run without it. Example triage pattern:
+For bulk changes, loop with `--dry-run` first, review the plan, then re-run
+without it:
 
 ```bash
 for n in 437 438 441; do
-  uv run ghpm.py --dry-run set "$n" Priority=High
+  uv run <skill-dir>/scripts/ghpm.py --dry-run set "$n" Priority=High
 done
-# review output, then drop --dry-run
 ```
-
-## Field naming reality check
-
-Project fields are user-defined, so names vary wildly: `Status` vs `status` vs
-`📊 Status`, `Size` vs `T-shirt` vs `Estimate`. **Never assume** a field name or
-option label — always resolve from `fields` output first. The same applies to
-option values: a board's priority ladder might be `P0/P1/P2` or
-`Low/Medium/High` or `🔴/🟡/🟢`. The script refuses to guess and errors with the
-legal values if you pass a wrong one, which is the safe behavior.
-
-## When something isn't supported
-
-The script covers the common surface. For anything else (custom field types like
-`TRACKS`/`LINKED_PULL_REQUESTS`, bulk workflows, project settings, archived
-items), drop down to raw GraphQL — see `references/graphql-reference.md` for the
-full query/mutation catalog including the inline-fragment shapes for every field
-value type. Auth stays the same (`gh api graphql`).
 
 ## References
 
-- `references/graphql-reference.md` — full query/mutation catalog, the
-  pagination pattern, the footguns (single-select option IDs, issue-number vs
-  item-ID, add-then-update ordering, repo-level vs project-level mutations).
+- `references/graphql-reference.md`: read when the script does not cover the
+  task (field types like `TRACKS`/`LINKED_PULL_REQUESTS`, project settings,
+  archived items) and you must drop to raw `gh api graphql`, or when debugging
+  a raw response. It holds the query/mutation catalog, inline-fragment shapes
+  for every field value type, the pagination pattern, and the footguns
+  (option IDs, issue number vs item ID, add-then-update ordering, repo-level vs
+  project-level mutations).
+
+## Gotchas
+
+- Field names and option values are user-defined, case-sensitive, and
+  exact-match: `Status` vs `📊 Status`, `Size` vs `T-shirt`, `P0/P1/P2` vs
+  `Low/Medium/High`. Never assume them; resolve from `fields` first. The script
+  refuses to guess and lists the legal values on a mismatch.
+- Non-destructive writes (`set`, `clear`, `label`, `assign`, `milestone`,
+  `link`, `create`, `create-draft`, `add-to-project`) execute immediately.
+  Destructive ones (`close`, `remove-from-project`, `delete-draft`) prompt
+  unless `--yes` is passed; get the user's confirmation before passing it.
+- `--dry-run` works for every command and sends nothing.

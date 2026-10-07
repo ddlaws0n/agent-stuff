@@ -21,7 +21,7 @@ metadata:
 
 # Varlock environment management
 
-Use this skill to help users design, migrate, validate, or troubleshoot Varlock-backed environment configuration. Treat `.env.schema` as the safe, committed source of truth for config names, descriptions, types, validation rules, environment loading, and secret resolver references. Do **not** ask the user to paste secret values.
+Treat `.env.schema` as the safe, committed source of truth for config names, descriptions, types, validation rules, environment loading, and secret resolver references. Do **not** ask the user to paste secret values.
 
 ## Workflow
 
@@ -33,21 +33,12 @@ Use this skill to help users design, migrate, validate, or troubleshoot Varlock-
 2. **Inspect current config without exposing secrets**
    - List environment-file names and inspect `.env.schema`, manifests, ignore rules, and code references; do not read, print, search, diff, or copy the contents of populated `.env*` files into agent context.
    - Use `varlock load --agent --format json-full` for redacted per-key validation errors and sources, or `varlock explain <KEY>` to debug one key. `varlock load --agent` alone returns a redacted flat JSON map; `--show-all` only changes the pretty failure view.
-   - `--agent` only redacts items correctly marked sensitive. Review sensitivity annotations before trusting diagnostics. Never capture plain `--format json`, `json-full`, `env`, `shell`, `printenv`, `reveal`, or the output of a command that intentionally prints secrets in an agent transcript.
+   - `--agent` only redacts items correctly marked sensitive. Review sensitivity annotations before trusting diagnostics. Never capture `--format json`, `json-full`, `env`, or `shell` output without `--agent`, nor `printenv`, `reveal`, or any command that intentionally prints secrets, in an agent transcript.
    - If raw values are required for local validation, ask the user to inspect them outside the agent transcript and report only redacted diagnostics.
 
 3. **Create or improve `.env.schema`**
    - Before `varlock init --agent`, inspect repository state and preserve existing `.env.example`/manifest changes; init is non-interactive and may remove `.env.example` or install dependencies. Review its diff and generated schema against existing config references afterward.
-   - Add root decorators first, usually:
-     ```env-spec
-     # @currentEnv=$APP_ENV
-     # @defaultSensitive=false @defaultRequired=infer
-     # @generateTsTypes(path=./env.d.ts)
-     # ---
-     # @type=enum(development, preview, production, test)
-     APP_ENV=development
-     ```
-   - The current docs prefer `@generateTsTypes`. Older releases (for example v1.6.0) only support the legacy `@generateTypes(lang=ts, path=...)`; use that only when a project cannot upgrade, and verify the actual installed CLI.
+   - Add root decorators first, starting from the recommended header in `references/schema-patterns.md` (`@currentEnv=$APP_ENV`, `@defaultSensitive`, `@defaultRequired=infer`, `@generateTsTypes`). Use the legacy `@generateTypes(lang=ts, path=...)` only when the project cannot upgrade an older CLI (for example v1.6.0).
    - Add every app dependency as a config item with a useful description, explicit `@type` when ambiguous, `@required` rules, and `@sensitive` for credentials.
    - Store non-sensitive defaults directly. Store secrets as empty required items, encrypted local values, `exec(...)`, or plugin resolver references. Choose `@defaultSensitive` intentionally: `false` requires explicit secret markings; `true` protects by default but can misclassify flags, ports, and environment names (which cannot safely be redacted).
 
