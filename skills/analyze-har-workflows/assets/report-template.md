@@ -77,6 +77,6 @@ with httpx.Client(follow_redirects=True) as client:
 
 ## Evidence reviewed
 
-- Summary: `[private analysis directory]/summary.json`
-- Candidates: `[private analysis directory]/candidates.jsonl`
-- Selected entries: `[indices]`
+- Brief: `[private analysis directory]/brief.md`
+- Requests inspected with `show`: `[indices]`
+- Gaps: [missing bodies, absent cookies or tokens, unseen bootstrap]

@@ -12,68 +12,23 @@ description: >-
 license: MIT
 compatibility: >-
   Requires Python 3.10+. uv is recommended for streaming large HARs via the
-  bundled script's ijson dependency; Python alone supports small HARs.
+  bundled scripts' ijson dependency; Python alone supports small HARs.
 metadata:
   author: ddlaws0n
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # HAR workflow analysis
 
 Infer from a HAR capture how a user-triggered website action works (forms, uploads, settings, record CRUD, checkout, admin actions) and whether it can be scripted.
 
-Never paste or load an entire HAR into the model. HAR files often contain cookies, bearer tokens, CSRF tokens, personal data, file contents, and large static assets. Extract a compact working set first. Treat even script outputs as sensitive: redaction is best-effort, not a guarantee of anonymity. Keep outputs local and out of shared repositories, and do not publish or upload the HAR or analysis without the user's permission.
+Guardrails:
 
-## Workflow
-
-1. **Clarify the user task only if missing.** Useful details: what action was performed, approximate time in the recording, expected visible result, and target domain. If the prompt already gives enough context, proceed.
-2. **Choose a private work directory** outside shared or version-controlled folders, e.g. `ANALYSIS_DIR="$(mktemp -d)"`. Resolve `scripts/har_probe.py` relative to the installed skill directory; the commands below assume that directory is your working directory. Never run captured mutating requests just to validate a hypothesis.
-3. **Summarize by streaming the HAR:**
-
-   ```bash
-   uv run scripts/har_probe.py summarize /path/to/session.har --out "$ANALYSIS_DIR" --max-body-chars 2000 --top 200
-   ```
-
-   If `uv` is unavailable and the HAR is under 100 MiB, use the script's in-memory fallback:
-
-   ```bash
-   python3 scripts/har_probe.py summarize /path/to/session.har --out "$ANALYSIS_DIR" --max-body-chars 2000 --top 200
-   ```
-
-4. **Read only compact outputs first:**
-   - `$ANALYSIS_DIR/summary.json` for domains, counts, mime types, methods, status codes, and top candidate actions.
-   - `$ANALYSIS_DIR/candidates.jsonl` for likely user-action requests.
-   - `$ANALYSIS_DIR/endpoints.tsv` for repeated API patterns.
-   - `$ANALYSIS_DIR/entries.jsonl` only with bounded line filters (e.g. selected indices), never the whole file.
-5. **Select a small slice** of likely workflow requests by candidate score, method, domain, timestamp, endpoint pattern, GraphQL operation name, upload markers, or request body keys.
-6. **Extract details for selected request indices only:**
-
-   ```bash
-   uv run scripts/har_probe.py extract /path/to/session.har --indices 12,18,21-24 --out "$ANALYSIS_DIR/selected.json" --max-body-chars 12000
-   ```
-
-7. **Reconstruct the workflow:** identify page/API discovery calls, token acquisition, the primary mutating request, file upload handshakes, follow-up polling/status calls, and final confirmation.
-8. **Assess automation feasibility:** classify as `direct-http`, `http-with-token-refresh`, `browser-assisted`, `manual-only/blocked`, or `insufficient-evidence`. A capture of one successful action does not prove safe replay, access authorization, or supported API behavior. Do not provide ways to bypass challenges or access controls.
-9. **Produce the report** using the structure below. If writing a longer report, load `assets/report-template.md`.
-
-## Candidate selection heuristics
-
-Prioritize requests with these signals:
-
-- Methods: `POST`, `PUT`, `PATCH`, `DELETE`, or any request with `postData`.
-- Resource types: `fetch`, `xhr`, `document`, `websocket`; deprioritize `image`, `font`, `stylesheet`, analytics, and static assets.
-- Body types: JSON, GraphQL, form-urlencoded, multipart/form-data, binary upload metadata, or request body keys matching the user action.
-- URL terms: `create`, `update`, `save`, `submit`, `settings`, `profile`, `upload`, `complete`, `confirm`, `checkout`, `graphql`, `api`, `v1`, `v2`.
-- Responses: `2xx`, `3xx`, JSON bodies, redirects after form posts, created/updated IDs, status messages, validation errors, or polling URLs.
-- Temporal proximity to the user action when timestamps are available.
-
-## Automation decision rules
-
-- **direct-http:** stable API endpoint, replayable request structure, auth can be represented as cookies/headers, no dynamic one-time token beyond standard session or CSRF, no browser-only dependency.
-- **http-with-token-refresh:** endpoint is scriptable but requires first fetching a page or bootstrap API to obtain CSRF, nonce, presigned URL, or upload session ID.
-- **browser-assisted:** request depends on complex JS, dynamic challenge, WebAuthn, captchas, obfuscated signing, volatile tokens, or DOM state that is cheaper and safer to drive with Playwright than to reverse engineer.
-- **manual-only/blocked:** captcha, MFA/WebAuthn required at action time, clear anti-automation challenge, encrypted client payload with unknown signing key, or workflow depends on human review. Never suggest bypassing these controls.
-- **insufficient-evidence:** HAR lacks request/response bodies, missing earlier session bootstrap, relevant requests blocked/truncated, or task timing is unknown.
+- Never paste, `cat`, or load a whole HAR or a whole script output file into context. HARs hold cookies, tokens, personal data, and file contents. Read the brief and `show` output instead.
+- Never quote raw cookies, bearer or CSRF tokens, passwords, payment data, or uploaded file contents. Use placeholders such as `<session-cookie>` and `<csrf-token>`.
+- Never replay captured mutating requests to test a hypothesis, and never suggest bypassing captchas, challenges, or access controls.
+- Claim only what the capture shows. The brief lists what is absent (cookies, auth headers, CSRF values, challenge signals, response bodies): report an absent value as absent or user-supplied, never as present-but-hidden.
+- Treat script outputs as sensitive too: redaction is best-effort. Keep them in a private directory and out of shared repositories.
 
 ## Output
 
@@ -101,33 +56,63 @@ Prioritize requests with these signals:
 - Risks/unknowns:
 
 ## Minimal automation sketch
-[Use pseudocode or a concise script skeleton. Never include real secrets from the HAR.]
+[Pseudocode or a concise script skeleton with placeholders, never captured values.]
 
 ## Evidence reviewed
-[List compact summaries, selected request indices, and notable omissions.]
+[Brief, request indices inspected with `show`, and notable omissions.]
 ```
+
+## Workflow
+
+1. **Clarify only if missing:** the action performed, rough timing, expected result, target domain. If the prompt gives enough context, proceed.
+2. **Run the brief** from the skill directory, writing to a private directory:
+
+   ```bash
+   ANALYSIS_DIR="$(mktemp -d)"
+   uv run scripts/har_brief.py /path/to/session.har --out "$ANALYSIS_DIR"
+   ```
+
+   Without `uv`, use `python3` instead for HARs under 100 MiB. The brief (about 5 KB, printed and saved as `brief.md`) holds capture facts, the top workflows with step roles and times relative to the primary action, the field kinds the primary sends and returns, which fields differ between repeated calls, and a rule-based verdict hint.
+
+3. **Confirm the key steps** with the indices the brief suggests:
+
+   ```bash
+   uv run scripts/har_probe.py show /path/to/session.har --indices 12,18
+   ```
+
+   It prints headers by name, query and body field kinds, and response shape, at most 1500 characters per request.
+
+4. **Write the report** when the top workflow matches the user's action and `show` confirms it. Start from the verdict hint; if your verdict differs, say which evidence overrides it.
+5. **Go deeper only when needed:** the top workflow is not the user's action, links are timing-only, the capture holds several actions, or the verdict is uncertain. Then follow `references/deep-dive.md`.
+
+## Automation verdicts
+
+- **direct-http:** stable endpoint, replayable request, auth representable as cookies or headers, no dynamic value beyond a standard session or CSRF token, no browser-only dependency.
+- **http-with-token-refresh:** scriptable, but a page or bootstrap API must be fetched first for a CSRF token, nonce, presigned URL, job or upload ID, or other server-generated value.
+- **browser-assisted:** depends on complex JS, dynamic challenges, WebAuthn, obfuscated signing, volatile tokens, or DOM state cheaper to drive with Playwright than to reverse engineer.
+- **manual-only/blocked:** captcha, MFA/WebAuthn at action time, anti-automation challenge, encrypted payload with an unknown key, or human review.
+- **insufficient-evidence:** missing bodies, missing session bootstrap, blocked or truncated requests, or unknown task timing.
+
+One captured success does not prove safe replay, authorization, or supported API use.
 
 ## Gotchas
 
-- HAR captures often include secrets. Never quote raw cookies, bearer tokens, CSRF tokens, passwords, payment data, or uploaded file contents. Use placeholders like `<session-cookie>` and `<csrf-token>`. Even normalized URLs, hostnames, field names, and filenames may be sensitive: check selected outputs before sharing a report.
-- Do not assume a request is replayable just because it works once. Check token sources, nonce fields, timestamp fields, upload session IDs, signed URLs, and request ordering.
-- GraphQL often hides distinct actions behind one `/graphql` URL. Group by `operationName` and top-level query/mutation name, not URL alone.
-- Multipart uploads are usually multi-step: initiate upload, upload to storage/presigned URL, complete/attach file, poll processing. Include all required steps.
-- A successful visible action may be a `204`, `302`, or background polling response rather than the largest JSON response.
-- WebSocket/SSE messages may not be fully represented in standard HAR. If the workflow depends on socket frames, state that the HAR is insufficient and recommend browser instrumentation.
-- Ignore noisy third-party telemetry unless it carries the primary action. Analytics requests can contain action names but are rarely the automation endpoint.
-- If a request depends on unseen body values, describe the limitation rather than copying raw data into the report.
+- Field kinds such as `<numeric-string>`, `<code>`, or `<date>` stand in for hidden values. Describe a field only as far as its kind and name support; a `<numeric-string>` is not a date.
+- Times in the brief are seconds relative to the workflow's primary action, not to the start of the capture.
+- GraphQL hides distinct actions behind one URL: group by operation name, not URL.
+- Uploads are usually multi-step: initiate, upload to storage or a presigned URL, complete or attach, poll. Include every step.
+- The visible result may be a `202`, `204`, `302`, or a polling response rather than the largest JSON body.
+- WebSocket or SSE frames may be missing from a HAR. If the workflow depends on them, say the capture is insufficient.
+- Third-party telemetry can carry action names but is rarely the automation endpoint.
 
 ## Scripts
 
-`scripts/har_probe.py` streams a HAR and writes compact, best-effort-redacted outputs:
-
-- `summarize` writes `summary.json` (counts and top candidates), `entries.jsonl` (one request/response shape per entry), `candidates.jsonl` (likely user actions by heuristic score), and `endpoints.tsv` (normalized endpoint patterns).
-- `extract --indices` writes `selected.json` with details for chosen request indices.
-
-`uv run` installs `ijson` for streaming; plain `python3` loads HARs under 100 MiB in memory.
+- `scripts/har_brief.py`: one streaming pass that prints the capped brief and writes `brief.md`, `workflow.md` (every workflow as a table), and `graph.json` (typed edges with key locations and salted fingerprints, never values). `--indices` focuses on a request range.
+- `scripts/har_probe.py show`: compact view of chosen requests. `summarize` and `extract` write fuller outputs for the deep dive.
+- `scripts/har_graph.py`: the graph on its own (`graph.json`, `workflow.md`); the brief already runs it.
 
 ## References
 
-- Load `references/automation-signals.md` when the verdict is uncertain or the site uses GraphQL, uploads, CSRF, signed URLs, WebSockets, or anti-automation controls.
-- Load `assets/report-template.md` when the user asks for a polished deliverable or stakeholder-ready report.
+- Read `references/deep-dive.md` when the brief does not settle the workflow (see step 5).
+- Read `references/automation-signals.md` when the verdict is uncertain or the site uses GraphQL, uploads, CSRF, signed URLs, WebSockets, or anti-automation controls.
+- Load `assets/report-template.md` when the user asks for a polished or stakeholder-ready report.

@@ -9,6 +9,7 @@
 
 Usage:
   uv run scripts/har_probe.py summarize session.har --out har-analysis
+  uv run scripts/har_probe.py show session.har --indices 12,18
   uv run scripts/har_probe.py extract session.har --indices 12,18,21-24 --out selected.json
 
 Design goals:
@@ -44,13 +45,24 @@ EMAIL_RE = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
 JWT_RE = re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}")
 UUID_RE = re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}\b")
 HEX_LONG_RE = re.compile(r"\b[0-9a-fA-F]{16,}\b")
+DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+DATETIME_RE = re.compile(r"\d{4}-\d{2}-\d{2}[T ][\d:.]+(Z|[+-]\d{2}:?\d{2})?")
 STATIC_EXT_RE = re.compile(r"(?i)\.(?:png|jpe?g|gif|webp|svg|ico|css|js|map|woff2?|ttf|otf|mp4|webm|mp3|wav|pdf)(?:$|[?#])")
 ACTION_WORD_RE = re.compile(
     r"(?i)(api|graphql|mutation|create|update|patch|save|submit|upload|complete|attach|delete|remove|settings|profile|account|checkout|confirm|order|invite|user|admin)"
 )
 ANALYTICS_DOMAIN_RE = re.compile(
-    r"(?i)(google-analytics|googletagmanager|doubleclick|segment|amplitude|mixpanel|hotjar|sentry|datadog|newrelic|intercom|fullstory|clarity|optimizely|facebook|linkedin)"
+    r"(?i)(google-analytics|googletagmanager|doubleclick|segment|amplitude|mixpanel|hotjar|sentry|datadog|newrelic|intercom|fullstory|clarity|optimizely|facebook|linkedin"
+    r"|qualtrics|omtrdc|demdex|adobedc|tealium|contentsquare|glassbox|dynatrace|quantummetric|bat\.bing|awin|onetrust|cookielaw)"
 )
+# First-party telemetry often lives on the app's own domain.
+TELEMETRY_PATH_RE = re.compile(r"(?i)/(beacon|collect|track|tracking|telemetry|observability|rum|logs?|metrics|pixel|b/ss)(?:/|$|\?)")
+# Browser-default headers that rarely matter for replay; `show` omits them.
+QUIET_HEADERS = {
+    "user-agent", "accept-encoding", "accept-language", "connection", "host", "content-length", "priority", "pragma",
+    "te", "dnt", "upgrade-insecure-requests", "cache-control", "if-none-match", "if-modified-since",
+}
+PLAIN_HEADERS = {"content-type", "accept", "x-requested-with", "content-encoding"}
 
 
 def eprint(*args: Any) -> None:
@@ -71,6 +83,56 @@ def redact_scalar(value: Any) -> Any:
     return text
 
 
+def is_epoch(text: str) -> bool:
+    return len(text) in (10, 13) and text.isdigit() and text[0] == "1"
+
+
+def value_shape(value: Any) -> str:
+    """Name a captured value's kind (date, uuid, word, ...) so outputs keep its meaning without the value."""
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "epoch" if is_epoch(str(value)) else "integer"
+    if isinstance(value, float):
+        return "number"
+    text = str(value).strip()
+    if not text:
+        return "empty"
+    if JWT_RE.fullmatch(text):
+        return "jwt"
+    if UUID_RE.fullmatch(text):
+        return "uuid"
+    if EMAIL_RE.fullmatch(text):
+        return "email"
+    if re.match(r"(?i)https?://", text):
+        return "url"
+    if DATE_RE.fullmatch(text):
+        return "date"
+    if DATETIME_RE.fullmatch(text):
+        return "datetime"
+    if re.fullmatch(r"-?\d+", text):
+        return "epoch" if is_epoch(text) else "numeric-string"
+    if re.fullmatch(r"-?\d+\.\d+", text):
+        return "decimal-string"
+    if text.lower() in ("true", "false"):
+        return "boolean-string"
+    if HEX_LONG_RE.fullmatch(text):
+        return "hex"
+    if re.fullmatch(r"[A-Z]{2,4}", text):
+        return "code"
+    if re.fullmatch(r"[a-z][a-z_-]{1,31}", text):
+        return "word"
+    if re.search(r"\s", text):
+        return "text"
+    if len(text) >= 20 and re.fullmatch(r"[A-Za-z0-9._~+/=-]+", text):
+        return "token"
+    if re.fullmatch(r"[A-Za-z0-9_-]+", text) and re.search(r"\d", text):
+        return "id"
+    return "string"
+
+
 def redact_mapping(obj: Any) -> Any:
     """Keep body structure for analysis, but never emit captured leaf values."""
     if isinstance(obj, dict):
@@ -79,11 +141,65 @@ def redact_mapping(obj: Any) -> Any:
         return [redact_mapping(v) for v in obj[:200]]
     if obj is None:
         return None
-    if isinstance(obj, bool):
-        return "<boolean>"
-    if isinstance(obj, (int, float)):
-        return "<number>"
-    return "<string>"
+    return f"<{value_shape(obj)}>"
+
+
+def json_shapes(obj: Any, prefix: str = "", out: Optional[Dict[str, str]] = None, limit: int = 60) -> Dict[str, str]:
+    """Flatten JSON into {path: kind}, collapsing list items into `[]`."""
+    out = {} if out is None else out
+    if isinstance(obj, dict):
+        for k, v in list(obj.items())[:200]:
+            if len(out) >= limit:
+                break
+            json_shapes(v, f"{prefix}.{redact_scalar(k)}" if prefix else str(redact_scalar(k)), out, limit)
+    elif isinstance(obj, list):
+        if not obj:
+            out.setdefault(prefix + "[]", "empty-list")
+        for v in obj[:3]:
+            json_shapes(v, prefix + "[]", out, limit)
+    elif len(out) < limit:
+        out.setdefault(prefix or "$", value_shape(obj))
+    return out
+
+
+def body_shapes(post: Dict[str, Any], limit: int = 60) -> Dict[str, str]:
+    """{field: kind} for a request body (form params, urlencoded, JSON, multipart)."""
+    text = str(post.get("text") or "")
+    mime = str(post.get("mimeType") or "")
+    params = post.get("params")
+    if isinstance(params, list) and params:
+        return {str(redact_scalar(p["name"])): "file" if p.get("fileName") else value_shape(p.get("value"))
+                for p in params[:limit] if isinstance(p, dict) and p.get("name")}
+    if "x-www-form-urlencoded" in mime:
+        return {str(redact_scalar(k)): value_shape(v) for k, v in parse_qsl(text, keep_blank_values=True)[:limit]}
+    parsed = parse_json_maybe(text)
+    if parsed is not None:
+        return json_shapes(parsed, limit=limit)
+    if "multipart/form-data" in mime:
+        return {str(redact_scalar(k)): "part" for k in re.findall(r'name="([^"\r\n]+)"', text)[:limit]}
+    return {}
+
+
+def query_shapes(url: str) -> Dict[str, str]:
+    return {str(redact_scalar(k)): value_shape(v) for k, v in parse_qsl(urlparse(url).query, keep_blank_values=True)[:50]}
+
+
+def format_shapes(shapes: Dict[str, str], limit: int = 25) -> str:
+    items = [f"{k}=<{v}>" for k, v in list(shapes.items())[:limit]]
+    if len(shapes) > limit:
+        items.append(f"(+{len(shapes) - limit} more)")
+    return " ".join(items)
+
+
+def as_dict(value: Any) -> Dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def header_pairs(headers: Any) -> List[Tuple[str, str]]:
+    """(lowercase name, value) for each HAR header, in capture order."""
+    if not isinstance(headers, list):
+        return []
+    return [(str(h.get("name", "")).strip().lower(), str(h.get("value", ""))) for h in headers if isinstance(h, dict)]
 
 
 def headers_to_map(headers: Any) -> Dict[str, str]:
@@ -159,6 +275,9 @@ def normalize_path(path: str) -> str:
             parts.append("{hex}")
         elif len(part) > 48 and re.fullmatch(r"[A-Za-z0-9._~-]+", part):
             parts.append("{token}")
+        elif re.fullmatch(r"[A-Za-z0-9_~-]+", part) and (len(re.findall(r"\d", part)) >= 3 or (len(part) >= 8 and re.search(r"\d", part))):
+            # Prefixed or mixed IDs such as rec_7f3a91c2, upl_123, AB12345678.
+            parts.append("{id}")
         else:
             parts.append(part)
     return "/" + "/".join(parts)
@@ -252,7 +371,8 @@ def graphql_info(url: str, post_text: str) -> Dict[str, Any]:
 def iter_har_entries(path: Path) -> Iterator[Dict[str, Any]]:
     if ijson is not None:
         with path.open("rb") as f:
-            for entry in ijson.items(f, "log.entries.item"):
+            # use_float avoids Decimal values that json.dumps cannot serialize.
+            for entry in ijson.items(f, "log.entries.item", use_float=True):
                 yield entry
     else:
         # Fallback is intentionally only for small HARs.
@@ -296,6 +416,11 @@ def compact_entry(entry: Dict[str, Any], idx: int, max_body_chars: int = 0) -> D
         if parsed is not None:
             response_sample, response_truncated = truncate_text(json.dumps(redact_mapping(parsed), ensure_ascii=False, indent=2), max_body_chars)
 
+    request_out: Dict[str, Any] = {
+        "headers_present": sorted(req_headers.keys())[:80],
+        "content_type": req_headers.get("content-type", "").split(";", 1)[0],
+        "postData": post_info,
+    }
     out: Dict[str, Any] = {
         "index": idx,
         "startedDateTime": started,
@@ -309,11 +434,7 @@ def compact_entry(entry: Dict[str, Any], idx: int, max_body_chars: int = 0) -> D
             "normalized": norm["normalized"],
             "query_keys": norm["query_keys"],
         },
-        "request": {
-            "headers_present": sorted(req_headers.keys())[:80],
-            "content_type": req_headers.get("content-type", "").split(";", 1)[0],
-            "postData": post_info,
-        },
+        "request": request_out,
         "response": {
             "mime": mime.split(";", 1)[0],
             "body_chars": len(response_text),
@@ -387,10 +508,74 @@ def candidate_score(c: Dict[str, Any]) -> Tuple[int, List[str]]:
     if ANALYTICS_DOMAIN_RE.search(host):
         score -= 30
         reasons.append("third-party telemetry domain")
+    elif TELEMETRY_PATH_RE.search(path):
+        score -= 30
+        reasons.append("telemetry endpoint path")
+    if method == "OPTIONS":
+        score -= 40
+        reasons.append("CORS preflight")
+    if status == 0:
+        score -= 20
+        reasons.append("no response (blocked or aborted)")
     if method == "GET" and not post_info.get("has_body") and resource_type in {"image", "font", "stylesheet", "script"}:
         score -= 25
         reasons.append("static page asset")
     return score, reasons
+
+
+def header_summary(headers: Any) -> List[str]:
+    """Header names with safe values: kinds for custom headers, names only for cookies."""
+    out: List[str] = []
+    for lname, value in header_pairs(headers):
+        if not lname or lname in QUIET_HEADERS or lname.startswith(("sec-", ":")):
+            continue
+        if lname in ("cookie", "set-cookie"):
+            parts = value.split(";") if lname == "cookie" else value.split(";", 1)[:1]
+            names = [str(redact_scalar(p.split("=", 1)[0].strip())) for p in parts if p.strip()]
+            out.append(f"{lname}=<names: {', '.join(names[:12])}>")
+        elif lname == "authorization":
+            out.append(f"authorization=<{value.split(' ', 1)[0] if ' ' in value.strip() else 'credential'} redacted>")
+        elif SENSITIVE_KEY_RE.search(lname):
+            out.append(f"{lname}=<redacted>")
+        elif lname in ("origin", "referer", "location"):
+            out.append(f"{lname}={normalize_url(value)['normalized']}")
+        elif lname in PLAIN_HEADERS:
+            out.append(f"{lname}={str(redact_scalar(value.split(';', 1)[0]))[:60]}")
+        else:
+            out.append(f"{lname}=<{value_shape(value)}>")
+    return out
+
+
+def show_entry(entry: Dict[str, Any], idx: int, max_chars: int) -> str:
+    c = compact_entry(entry, idx)
+    score, reasons = candidate_score(c)
+    req = as_dict(entry.get("request"))
+    res = as_dict(entry.get("response"))
+    post = as_dict(req.get("postData"))
+    lines = [
+        f"#{idx} {c['method']} {c['status']} {c['resourceType'] or '-'} {c['url']['normalized']}",
+        f"  at {c['startedDateTime']}; score {score} ({'; '.join(reasons[:4])})",
+    ]
+    req_headers = header_summary(req.get("headers"))
+    if not any(h.startswith("cookie=") for h in req_headers) and isinstance(req.get("cookies"), list) and req["cookies"]:
+        req_headers.append(f"cookie=<names: {', '.join(str(redact_scalar(k.get('name'))) for k in req['cookies'][:12] if isinstance(k, dict))}>")
+    lines.append("  request headers: " + (" ".join(req_headers) or "none beyond browser defaults"))
+    if query := query_shapes(str(req.get("url", ""))):
+        lines.append("  query: " + format_shapes(query))
+    info = c["request"]["postData"]
+    if info.get("has_body"):
+        lines.append(f"  body: {info['mime'] or '-'}, {info['body_chars']} chars: {format_shapes(body_shapes(post)) or '(no fields parsed)'}")
+    if "graphql" in c:
+        lines.append(f"  graphql: {c['graphql'].get('operationName') or c['graphql'].get('query_head') or 'unnamed'}")
+    text = maybe_decode_content(as_dict(res.get("content")))
+    lines.append(f"  response: {c['response']['mime'] or '-'}, " + (f"{len(text)} chars" if text else "no body in capture"))
+    if res_headers := [h for h in header_summary(res.get("headers")) if h.startswith(("set-cookie=", "location="))]:
+        lines.append("  response headers: " + " ".join(res_headers))
+    parsed = parse_json_maybe(text)
+    if parsed is not None:
+        lines.append("  response fields: " + (format_shapes(json_shapes(parsed)) or "(empty)"))
+    out, _ = truncate_text("\n".join(lines), max_chars)
+    return out
 
 
 def parse_indices(spec: str) -> List[int]:
@@ -506,7 +691,11 @@ def cmd_summarize(args: argparse.Namespace) -> int:
             "resourceTypes": resource_counts.most_common(50),
             "response_mimes": mime_counts.most_common(50),
         },
-        "top_candidates": top_candidates[:20],
+        # One line per candidate; full details stay in candidates.jsonl.
+        "top_candidates": [
+            {"index": c["index"], "score": c["candidate_score"], "method": c["method"], "status": c["status"], "endpoint": c["url"]["normalized"]}
+            for c in top_candidates[:20]
+        ],
         "notes": [
             "Body samples contain key/type shapes only; non-JSON body values are omitted. Outputs remain sensitive and should not be shared without review.",
             "Candidate scores are heuristics. Confirm workflow sequence against the user's described action and timestamps.",
@@ -544,6 +733,23 @@ def cmd_extract(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_show(args: argparse.Namespace) -> int:
+    indices = set(parse_indices(args.indices))
+    if not indices:
+        raise SystemExit("--indices produced no request indices")
+    found = 0
+    max_idx = max(indices)
+    for idx, entry in enumerate(iter_har_entries(Path(args.har))):
+        if idx in indices:
+            print(show_entry(entry, idx, args.max_chars))
+            found += 1
+        if idx >= max_idx:
+            break
+    if found < len(indices):
+        print(f"({len(indices) - found} requested indices not in capture)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Stream and redact HAR files for agent-friendly workflow analysis.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -563,6 +769,12 @@ def build_parser() -> argparse.ArgumentParser:
     x.add_argument("--out", help="Output JSON file. If omitted, prints JSON to stdout.")
     x.add_argument("--max-body-chars", type=int, default=12000, help="Max JSON body shape chars per selected entry (default: 12000)")
     x.set_defaults(func=cmd_extract)
+
+    w = sub.add_parser("show", help="Print a compact, redacted view of selected requests (headers, field kinds, response shape).")
+    w.add_argument("har", help="Path to .har file")
+    w.add_argument("--indices", required=True, help="Comma/space-separated indices or ranges, e.g. 12,18,21-24")
+    w.add_argument("--max-chars", type=int, default=1500, help="Max output chars per request (default: 1500)")
+    w.set_defaults(func=cmd_show)
 
     return parser
 
