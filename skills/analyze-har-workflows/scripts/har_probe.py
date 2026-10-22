@@ -30,7 +30,7 @@ import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 from urllib.parse import parse_qsl, urlparse
 
 try:
@@ -144,44 +144,44 @@ def redact_mapping(obj: Any) -> Any:
     return f"<{value_shape(obj)}>"
 
 
-def json_shapes(obj: Any, prefix: str = "", out: Optional[Dict[str, str]] = None, limit: int = 60) -> Dict[str, str]:
+def json_shapes(obj: Any, prefix: str = "", out: Optional[Dict[str, str]] = None, limit: int = 60, shape: Callable[[Any], str] = value_shape) -> Dict[str, str]:
     """Flatten JSON into {path: kind}, collapsing list items into `[]`."""
     out = {} if out is None else out
     if isinstance(obj, dict):
         for k, v in list(obj.items())[:200]:
             if len(out) >= limit:
                 break
-            json_shapes(v, f"{prefix}.{redact_scalar(k)}" if prefix else str(redact_scalar(k)), out, limit)
+            json_shapes(v, f"{prefix}.{redact_scalar(k)}" if prefix else str(redact_scalar(k)), out, limit, shape)
     elif isinstance(obj, list):
         if not obj:
             out.setdefault(prefix + "[]", "empty-list")
         for v in obj[:3]:
-            json_shapes(v, prefix + "[]", out, limit)
+            json_shapes(v, prefix + "[]", out, limit, shape)
     elif len(out) < limit:
-        out.setdefault(prefix or "$", value_shape(obj))
+        out.setdefault(prefix or "$", shape(obj))
     return out
 
 
-def body_shapes(post: Dict[str, Any], limit: int = 60) -> Dict[str, str]:
+def body_shapes(post: Dict[str, Any], limit: int = 60, shape: Callable[[Any], str] = value_shape) -> Dict[str, str]:
     """{field: kind} for a request body (form params, urlencoded, JSON, multipart)."""
     text = str(post.get("text") or "")
     mime = str(post.get("mimeType") or "")
     params = post.get("params")
     if isinstance(params, list) and params:
-        return {str(redact_scalar(p["name"])): "file" if p.get("fileName") else value_shape(p.get("value"))
+        return {str(redact_scalar(p["name"])): "file" if p.get("fileName") else shape(p.get("value"))
                 for p in params[:limit] if isinstance(p, dict) and p.get("name")}
     if "x-www-form-urlencoded" in mime:
-        return {str(redact_scalar(k)): value_shape(v) for k, v in parse_qsl(text, keep_blank_values=True)[:limit]}
+        return {str(redact_scalar(k)): shape(v) for k, v in parse_qsl(text, keep_blank_values=True)[:limit]}
     parsed = parse_json_maybe(text)
     if parsed is not None:
-        return json_shapes(parsed, limit=limit)
+        return json_shapes(parsed, limit=limit, shape=shape)
     if "multipart/form-data" in mime:
         return {str(redact_scalar(k)): "part" for k in re.findall(r'name="([^"\r\n]+)"', text)[:limit]}
     return {}
 
 
-def query_shapes(url: str) -> Dict[str, str]:
-    return {str(redact_scalar(k)): value_shape(v) for k, v in parse_qsl(urlparse(url).query, keep_blank_values=True)[:50]}
+def query_shapes(url: str, shape: Callable[[Any], str] = value_shape) -> Dict[str, str]:
+    return {str(redact_scalar(k)): shape(v) for k, v in parse_qsl(urlparse(url).query, keep_blank_values=True)[:50]}
 
 
 def format_shapes(shapes: Dict[str, str], limit: int = 25) -> str:
@@ -546,7 +546,7 @@ def header_summary(headers: Any) -> List[str]:
     return out
 
 
-def show_entry(entry: Dict[str, Any], idx: int, max_chars: int) -> str:
+def show_entry(entry: Dict[str, Any], idx: int, max_chars: int, shape: Callable[[Any], str] = value_shape) -> str:
     c = compact_entry(entry, idx)
     score, reasons = candidate_score(c)
     req = as_dict(entry.get("request"))
@@ -560,11 +560,11 @@ def show_entry(entry: Dict[str, Any], idx: int, max_chars: int) -> str:
     if not any(h.startswith("cookie=") for h in req_headers) and isinstance(req.get("cookies"), list) and req["cookies"]:
         req_headers.append(f"cookie=<names: {', '.join(str(redact_scalar(k.get('name'))) for k in req['cookies'][:12] if isinstance(k, dict))}>")
     lines.append("  request headers: " + (" ".join(req_headers) or "none beyond browser defaults"))
-    if query := query_shapes(str(req.get("url", ""))):
+    if query := query_shapes(str(req.get("url", "")), shape=shape):
         lines.append("  query: " + format_shapes(query))
     info = c["request"]["postData"]
     if info.get("has_body"):
-        lines.append(f"  body: {info['mime'] or '-'}, {info['body_chars']} chars: {format_shapes(body_shapes(post)) or '(no fields parsed)'}")
+        lines.append(f"  body: {info['mime'] or '-'}, {info['body_chars']} chars: {format_shapes(body_shapes(post, shape=shape)) or '(no fields parsed)'}")
     if "graphql" in c:
         lines.append(f"  graphql: {c['graphql'].get('operationName') or c['graphql'].get('query_head') or 'unnamed'}")
     text = maybe_decode_content(as_dict(res.get("content")))
@@ -573,7 +573,7 @@ def show_entry(entry: Dict[str, Any], idx: int, max_chars: int) -> str:
         lines.append("  response headers: " + " ".join(res_headers))
     parsed = parse_json_maybe(text)
     if parsed is not None:
-        lines.append("  response fields: " + (format_shapes(json_shapes(parsed)) or "(empty)"))
+        lines.append("  response fields: " + (format_shapes(json_shapes(parsed, shape=shape)) or "(empty)"))
     out, _ = truncate_text("\n".join(lines), max_chars)
     return out
 
@@ -738,10 +738,22 @@ def cmd_show(args: argparse.Namespace) -> int:
     if not indices:
         raise SystemExit("--indices produced no request indices")
     found = 0
+    value_ids: Dict[str, int] = {}
+
+    def shape(value: Any) -> str:
+        kind = value_shape(value)
+        if not args.value_ids:
+            return kind
+        key = json.dumps(value, ensure_ascii=False, sort_keys=True)
+        identifier = value_ids.setdefault(key, len(value_ids) + 1)
+        return f"{kind}:v{identifier}"
+
+    if args.value_ids:
+        print("Value IDs compare sampled query/body fields within this command only; they are separate from graph fingerprints.")
     max_idx = max(indices)
     for idx, entry in enumerate(iter_har_entries(Path(args.har))):
         if idx in indices:
-            print(show_entry(entry, idx, args.max_chars))
+            print(show_entry(entry, idx, args.max_chars, shape=shape))
             found += 1
         if idx >= max_idx:
             break
@@ -774,6 +786,7 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("har", help="Path to .har file")
     w.add_argument("--indices", required=True, help="Comma/space-separated indices or ranges, e.g. 12,18,21-24")
     w.add_argument("--max-chars", type=int, default=1500, help="Max output chars per request (default: 1500)")
+    w.add_argument("--value-ids", action="store_true", help="Add per-command opaque IDs to query/body field kinds for value comparison without printing values.")
     w.set_defaults(func=cmd_show)
 
     return parser

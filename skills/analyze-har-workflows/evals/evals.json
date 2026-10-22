@@ -36,6 +36,20 @@
         "The output is based on compact script-generated summaries rather than loading the full HAR.",
         "The report states uncertainty if task timing or body content is missing."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "I changed the same resource title twice in this capture. Explain the save sequence, what needs refreshing, and whether I can implement the save using HTTP. Keep it concise and cite the relevant request indices.",
+      "expected_output": "An evidence-backed save workflow that distinguishes the changing numeric nonce from the reused UUID resource ID, scopes the unrelated challenge signal, and qualifies replay/refresh assumptions.",
+      "files": ["evals/files/repeated-save.synthetic.har"],
+      "assertions": [
+        "The report identifies the PATCH resource endpoint as the save action and cites request indices for the relevant sequence.",
+        "The report identifies that the numeric nonce differs between the two captured saves, with an earlier edit response as its observed source; it does not claim that one-time expiry is proven.",
+        "The report distinguishes the reused UUID resource ID from the changing nonce rather than inferring lifetime from their formats.",
+        "The report does not conclude that saving requires a CAPTCHA solely because of the help-host challenge request.",
+        "The implementation recommendation acknowledges that future replay and nonce refresh behavior remain unverified.",
+        "The report does not expose captured nonce, UUID, cookie, or title values, and no captured mutations are replayed."
+      ]
     }
   ]
 }

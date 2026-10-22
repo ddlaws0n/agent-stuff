@@ -194,6 +194,16 @@ class Graph:
         self.request_fanout: Counter[str] = Counter()
         self.referers: Dict[int, str] = {}
         self.redirects: Dict[int, str] = {}
+        self.coverage: Dict[str, Any] = {
+            "selection": "explicit indices" if self.seeds is not None else "heuristic ranking",
+            "requests": 0,
+            "candidates": 0,
+            "excluded_reasons": Counter(),
+            "missing_timestamps": 0,
+            "response_scans_skipped": 0,
+            "response_scans_truncated": 0,
+            "max_scan_chars": args.max_scan_chars,
+        }
 
     def fp(self, value: str) -> str:
         return hmac.new(self.salt, value.encode("utf-8", "replace"), hashlib.sha256).hexdigest()[:10]
@@ -209,6 +219,12 @@ class Graph:
             is_candidate = idx in self.seeds
         else:
             is_candidate = score >= self.args.min_score and not NOISE_REASONS.intersection(reasons)
+        self.coverage["requests"] += 1
+        self.coverage["candidates"] += int(is_candidate)
+        self.coverage["missing_timestamps"] += int(t is None)
+        if not is_candidate:
+            excluded = ["outside explicit indices"] if self.seeds is not None else sorted(NOISE_REASONS.intersection(reasons)) or ["below score threshold"]
+            self.coverage["excluded_reasons"].update(excluded)
         self.meta[idx] = {
             "index": idx,
             "t": t if t is not None else float(idx),
@@ -262,10 +278,13 @@ class Graph:
 
         # Response side: what this response hands out.
         if noise or har_probe.STATIC_EXT_RE.search(urlparse(url).path):
+            self.coverage["response_scans_skipped"] += 1
             return
         content = har_probe.as_dict(res.get("content"))
         mime = str(content.get("mimeType") or "").lower()
-        text = har_probe.maybe_decode_content(content)[: self.args.max_scan_chars]
+        text = har_probe.maybe_decode_content(content)
+        self.coverage["response_scans_truncated"] += int(len(text) > self.args.max_scan_chars)
+        text = text[: self.args.max_scan_chars]
         produced: List[Tuple[str, str, str]] = []
         if "json" in mime or text.lstrip()[:1] in ("[", "{"):
             produced.extend(body_values(text, "application/json", None, "response"))
@@ -338,7 +357,8 @@ class Graph:
                 f = self.fp(target)
                 producer = self.latest_before(self.producers.get(f, []), t, idx)
                 if producer:
-                    add(producer[1], idx, "signed-url", {"value": "url", "fp": f, "from": producer[2], "to": "request.url"})
+                    location = "request.url" if target == m["url"] else "request.url (without query)"
+                    add(producer[1], idx, "signed-url", {"value": "url", "fp": f, "from": producer[2], "to": location})
                     break
             ref = self.referers.get(idx)
             referer = self.latest_before(self.url_index.get(ref, []), t, idx) if ref else None
@@ -456,6 +476,13 @@ class Graph:
         for i, w in enumerate(workflows, 1):
             w["id"] = f"wf{i}"
         return {
+            "coverage": self.coverage,
+            "notes": [
+                "Workflow groups, primary indices, roles and edge kinds are heuristic suggestions.",
+                "Equal fingerprints identify matching values within this run; equality does not prove dependency or token lifetime.",
+                "Matching samples fields and arrays, filters generic/high-fanout values, and may miss unsupported body formats.",
+                "Missing timestamps use request order as a fallback; relative times involving them are unreliable.",
+            ],
             "nodes": len(nodes),
             "edges": [
                 {"from": s, "to": d, "kind": k, "evidence": ev}
@@ -478,12 +505,12 @@ def render_workflow(w: Dict[str, Any], link_kinds: Optional[Set[str]] = None) ->
     kinds = ", ".join(f"{k}:{v}" for k, v in sorted(w["edge_kinds"].items())) or "none"
     primary = primary_step(w)
     lines = [
-        f"## {w['id']}: primary #{w['primary_index']} {primary['method']} {primary['endpoint']} ({w['evidence']})",
+        f"## {w['id']}: candidate #{w['primary_index']} {primary['method']} {primary['endpoint']} ({w['evidence']})",
         "",
         f"{w['nodes']} requests over {(w['end_ms'] - w['start_ms']) / 1000:.1f}s; edges {kinds}",
         "",
         "<!-- prettier-ignore -->",
-        "| idx | s vs primary | method | status | endpoint | role | links in |",
+        "| idx | s vs candidate | method | status | endpoint | role hint | links in |",
         "|-|-|-|-|-|-|-|",
     ]
     previous = None

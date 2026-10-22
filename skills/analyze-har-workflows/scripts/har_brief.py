@@ -5,7 +5,7 @@
 #   "ijson>=3.2,<4",
 # ]
 # ///
-"""One-pass HAR brief: workflow graph, capture facts, field kinds, and a verdict hint.
+"""One-pass HAR brief: capture facts, field shapes, and possible request relationships.
 
 Usage:
   uv run scripts/har_brief.py session.har --out har-analysis
@@ -31,7 +31,7 @@ import har_graph  # noqa: E402  # ty: ignore[unresolved-import]
 import har_probe  # noqa: E402  # ty: ignore[unresolved-import]
 
 CSRF_RE = re.compile(r"(?i)(csrf|xsrf|authenticity[-_]?token|requestverificationtoken|anti[-_]?forgery)")
-# Interactive challenges block plain HTTP clients outright.
+# Detection identifies capture-wide signals, not dependencies of the user's action.
 CHALLENGE_RE = re.compile(
     r"(?i)(recaptcha|hcaptcha|captcha|turnstile|challenges\.cloudflare\.com|/cdn-cgi/challenge|arkoselabs|funcaptcha|geetest|friendlycaptcha)"
 )
@@ -40,8 +40,6 @@ BOT_MANAGEMENT_RE = re.compile(
     r"(?i)^(_abck|bm_sz|ak_bmsc|bm_sv|__cf_bm|cf_clearance|_px\w*|datadome|incap_ses\w*|visid_incap\w*|reese84|x-kpsdk-\w+|x-px-\w+|x-datadome\w*|x-acf-sensor-data)$"
 )
 BOT_HOST_RE = re.compile(r"(?i)(perimeterx|px-cdn|px-cloud|datadome|kasada|incapsula|imperva)")
-OPAQUE_VALUES = {"uuid", "token", "jwt", "hex", "url"}
-VALUE_LABELS = {"short": "short key", "numeric": "numeric key"}
 # Links worth confirming with `show`; shared-id and timing links are weaker hints.
 DRILL_KINDS = {"token", "created-id", "upload-id", "signed-url", "response-id", "redirect"}
 STANDARD_REQUEST_HEADERS = har_graph.SKIP_REQUEST_HEADERS | {"authorization", "x-requested-with"}
@@ -136,51 +134,18 @@ def workflow_edges(graph: Dict[str, Any], w: Dict[str, Any]) -> List[Dict[str, A
     return [e for e in graph["edges"] if e["from"] in members and e["to"] in members]
 
 
-def verdict_hint(graph: Dict[str, Any], facts: Facts) -> Tuple[str, List[str]]:
-    """Apply the skill's decision rules to graph and capture facts. A starting point, not a verdict."""
-    reasons: List[str] = []
-    if facts.challenges:
-        signals = ", ".join(f"{k} (#{v[0]})" for k, v in list(facts.challenges.items())[:3])
-        return "browser-assisted or manual-only/blocked", [f"interactive challenge signals: {signals}"]
-    if not graph["workflows"]:
-        return "insufficient-evidence", ["no candidate action requests; rerun with --indices around the user's action"]
-    top = graph["workflows"][0]
-    primary = har_graph.primary_step(top)
-    if primary["status"] == 0 or primary["status"] >= 400:
-        reasons.append(f"primary #{top['primary_index']} returned status {primary['status']}")
-    flows: Dict[Tuple[bool, int, str, str, str], List[int]] = defaultdict(list)
-    for e in workflow_edges(graph, top):
-        if e["kind"] in ("temporal", "repeat", "referer", "redirect", "shared-id"):
-            continue
-        ev = e["evidence"][0]
-        is_opaque = e["kind"] in ("token", "signed-url", "upload-id") or ev.get("value") in OPAQUE_VALUES
-        flows[(is_opaque, e["from"], str(ev.get("value")), str(ev.get("from")), str(ev.get("to")))].append(e["to"])
-    opaque, stable = [], []
-    for (is_opaque, src, value, src_loc, dst_loc), dsts in flows.items():
-        line = f"#{', #'.join(map(str, dsts))} {'sends' if len(dsts) == 1 else 'send'} a {VALUE_LABELS.get(value, value)} from #{src} ({src_loc} -> {dst_loc})"
-        (opaque if is_opaque else stable).append(line)
-    if reasons:
-        verdict = "insufficient-evidence"
-    elif opaque:
-        verdict = "http-with-token-refresh"
-        reasons.append("server-generated values from earlier responses feed later requests:")
-        reasons += [f"  {line}" for line in opaque[:4]]
-    else:
-        verdict = "direct-http"
-        if stable:
-            reasons.append("only stable lookup keys (short/numeric) flow between steps:")
-            reasons += [f"  {line}" for line in stable[:3]]
-        else:
-            reasons.append("no values flow from earlier responses into the primary action")
-    if top["primary_index"] in facts.missing_bodies:
-        reasons.append(f"caveat: primary #{top['primary_index']} has no response body in the capture")
-    if top["evidence"] == "temporal-only":
-        reasons.append("low confidence: the top workflow is linked only by timing")
-    if facts.bot_signals:
-        reasons.append(f"risk: bot-management signals ({', '.join(list(facts.bot_signals)[:4])}) may reject scripted clients")
-    if facts.streams:
-        reasons.append(f"WebSocket/SSE traffic (#{facts.streams[0]}) may not be fully captured")
-    return verdict, reasons
+def matching_values(graph: Dict[str, Any], w: Dict[str, Any]) -> List[str]:
+    """Expose equality evidence without inferring a value's purpose or lifetime."""
+    lines = []
+    for edge in workflow_edges(graph, w):
+        for ev in edge["evidence"]:
+            if not ev.get("fp"):
+                continue
+            lines.append(
+                f"- Same value <{ev['value']}:{ev['fp']}>: "
+                f"#{edge['from']} {ev.get('from', 'earlier request')} -> #{edge['to']} {ev['to']}"
+            )
+    return lines
 
 
 def fact_lines(facts: Facts) -> List[str]:
@@ -190,8 +155,7 @@ def fact_lines(facts: Facts) -> List[str]:
     if facts.cookie_requests:
         cookies = f"Cookie on {facts.cookie_requests}/{facts.total} requests; names: {', '.join(sorted(facts.cookie_names)[:10])}"
     else:
-        cookies = ("none in capture (no Cookie headers or HAR cookies). If the site needs login, the export probably dropped them: "
-                   "treat the session as user-supplied and don't invent cookie names")
+        cookies = "none in capture (no Cookie headers or HAR cookies); session requirements unknown"
     return [
         f"- Cookies: {cookies}",
         f"- Set-Cookie: {', '.join(sorted(facts.set_cookie_names)[:10]) or 'none'}",
@@ -219,7 +183,7 @@ def differing_fields(w: Dict[str, Any], facts: Facts) -> List[str]:
         prints = [facts.req_prints.get(i, {}) for i in members]
         keys = sorted({k for p in prints for k in p})
         differ = [k for k in keys if len({p.get(k) for p in prints}) > 1]
-        what = f"differ in {', '.join(differ[:8])}" if differ else "send identical fields"
+        what = f"compared query/body fields differ in {', '.join(differ[:8])}" if differ else "no differences detected in compared query/body fields"
         lines.append(f"- #{', #'.join(map(str, members))} {method} {endpoint}: {what}")
     return lines
 
@@ -230,16 +194,20 @@ def render_brief(graph: Dict[str, Any], facts: Facts, har: Path, out: Path, top:
         f"# HAR brief: {har.name}",
         "",
         f"{facts.total} requests across {len(facts.hosts)} hosts (most: {app_host}); {facts.candidates} action candidates. "
-        f"Outputs in {out}: brief.md, workflow.md, graph.json. Links and roles are heuristics; no captured values are shown.",
+        f"Outputs in {out}: brief.md, workflow.md, graph.json. Groups, roles and link kinds are hints; matches show equality, not causality or lifetime.",
         "",
-        "## Capture facts",
+        "## Coverage",
+        "",
+        f"- Selection: {graph['coverage']['selection']}; {facts.candidates}/{facts.total} requests selected as action candidates.",
+        f"- Exclusion reasons (may overlap): {dict(graph['coverage']['excluded_reasons']) or 'none'}",
+        f"- Response scans skipped: {graph['coverage']['response_scans_skipped']}; cut at scan limit: {graph['coverage']['response_scans_truncated']}; missing timestamps: {graph['coverage']['missing_timestamps']}.",
+        "- Matching filters generic/high-fanout values and caps fields/arrays; no match does not establish independence. Shapes omit values and sample fields/arrays.",
+        "",
+        "## Capture-wide facts (signals may be unrelated to the user's action)",
         "",
         *fact_lines(facts),
         "",
     ]
-    verdict, reasons = verdict_hint(graph, facts)
-    head += [f"## Verdict hint: {verdict}", "", *[f"- {r}" if not r.startswith("  ") else f"  - {r.strip()}" for r in reasons],
-             "", "Rule-based starting point: confirm with `show`, and say why if your verdict differs.", ""]
     body: List[str] = []
     multi = [w for w in graph["workflows"] if w["nodes"] > 1]
     # Full tables for linked workflows; timing-only groups are usually page chatter.
@@ -254,6 +222,11 @@ def render_brief(graph: Dict[str, Any], facts: Facts, har: Path, out: Path, top:
         if facts.res_fields.get(p):
             body.append(f"Primary #{p} returns: {har_probe.format_shapes(facts.res_fields[p], 8)}")
         body += differing_fields(w, facts)
+        matches = matching_values(graph, w)
+        if matches:
+            body += ["Matching values (per-run placeholders):", *matches[:6]]
+            if len(matches) > 6:
+                body.append(f"- {len(matches) - 6} more matches in graph.json")
         body.append("")
     if rest := [w for w in multi if w not in full]:
         body += ["## Other workflows", ""]
@@ -279,7 +252,7 @@ def render_brief(graph: Dict[str, Any], facts: Facts, har: Path, out: Path, top:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="Summarize a HAR into a capped brief: workflows, capture facts, field kinds, verdict hint.")
+    parser = argparse.ArgumentParser(description="Summarize a HAR into bounded evidence: capture facts, field shapes, and request relationships.")
     parser.add_argument("har", help="Path to .har file")
     parser.add_argument("--out", required=True, help="Output directory for brief.md, graph.json, and workflow.md")
     har_graph.add_graph_args(parser)

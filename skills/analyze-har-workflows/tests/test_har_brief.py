@@ -1,4 +1,4 @@
-"""Capture facts, verdict hints, field kinds, and privacy for the one-pass HAR brief."""
+"""Capture facts, matching values, coverage, and privacy for the one-pass HAR brief."""
 
 import json
 import subprocess
@@ -38,7 +38,7 @@ def run_brief(entries, *extra):
 
 
 class HarBriefTests(unittest.TestCase):
-    def test_async_job_chain_hints_token_refresh_and_states_absent_auth(self):
+    def test_async_job_chain_exposes_matches_and_states_absent_auth(self):
         entries = [
             entry(0, "POST", "https://app.example.com/api/search", status=202, body={"origin": "1234", "direction": "outbound"}, res_body={"tokens": [JOB_A]}),
             entry(1, "POST", "https://app.example.com/api/search", status=202, body={"origin": "5678", "direction": "inbound"}, res_body={"tokens": [JOB_B]}),
@@ -46,8 +46,8 @@ class HarBriefTests(unittest.TestCase):
         ]
         stdout, saved = run_brief(entries)
         self.assertEqual(stdout, saved)
-        self.assertIn("## Verdict hint: http-with-token-refresh", stdout)
-        self.assertIn("#2 sends a uuid from #0", stdout)
+        self.assertNotIn("Verdict hint", stdout)
+        self.assertIn("#0 response.json:$.tokens[] -> #2 request.json:$.ids[]", stdout)
         self.assertIn("Cookies: none in capture", stdout)
         self.assertIn("Authorization header: none", stdout)
         self.assertIn("Captcha/challenge signals: none detected", stdout)
@@ -58,7 +58,7 @@ class HarBriefTests(unittest.TestCase):
         for value in (JOB_A, JOB_B, "1234", "outbound", "2026-01-02"):
             self.assertNotIn(value, stdout)
 
-    def test_lookup_keys_hint_direct_http_and_name_cookies_csrf_and_bot_risk(self):
+    def test_lookup_keys_expose_matches_and_name_cookies_csrf_and_bot_signals(self):
         cookie = "sid=secret-cookie-1; _abck=sensor-value-2"
         entries = [
             entry(0, "GET", "https://app.example.com/api/areas", req_headers=[("Cookie", cookie)], res_body=[{"key": "L219", "label": "Town"}]),
@@ -66,23 +66,53 @@ class HarBriefTests(unittest.TestCase):
                   body={"area": "L219"}),
         ]
         stdout, _ = run_brief(entries)
-        self.assertIn("## Verdict hint: direct-http", stdout)
+        self.assertIn("#0 response.json:$[].key -> #1 request.json:$.area", stdout)
         self.assertIn("Cookie on 2/2 requests; names: _abck, sid", stdout)
         self.assertIn("CSRF/XSRF values: x-csrf-token (#1)", stdout)
         self.assertIn("Bot-management signals: _abck", stdout)
-        self.assertIn("risk: bot-management signals", stdout)
+        self.assertNotIn("direct-http", stdout)
         self.assertIn("x-appl (1)", stdout)
         for value in ("secret-cookie-1", "sensor-value-2", "csrf-abcdef123456", "a1b2c3d4e5f6", "L219", "Town"):
             self.assertNotIn(value, stdout)
 
-    def test_challenge_hints_browser_assisted(self):
+    def test_unrelated_challenge_is_a_capture_signal_without_verdict(self):
         entries = [
             entry(0, "GET", "https://www.google.com/recaptcha/api2/anchor?k=site-key-123", res_mime="text/html"),
             entry(1, "POST", "https://app.example.com/api/login", body={"user": "someone"}),
         ]
         stdout, _ = run_brief(entries)
-        self.assertIn("## Verdict hint: browser-assisted or manual-only/blocked", stdout)
+        self.assertIn("Captcha/challenge signals:", stdout)
+        self.assertIn("recaptcha", stdout)
+        self.assertNotIn("browser-assisted", stdout)
         self.assertNotIn("site-key-123", stdout)
+
+    def test_numeric_nonce_and_uuid_resource_expose_locations_without_lifecycle_claims(self):
+        entries = [
+            entry(0, "GET", "https://app.example.com/api/bootstrap", res_body={"nonce": 987654, "resourceId": JOB_A}),
+            entry(1, "POST", "https://app.example.com/api/save", body={"nonce": 987654, "resourceId": JOB_A}, res_body={"ok": True}),
+        ]
+        stdout, _ = run_brief(entries)
+        for field in ("nonce", "resourceId"):
+            self.assertIn(f"#0 response.json:$.{field} -> #1 request.json:$.{field}", stdout)
+        for claim in ("direct-http", "http-with-token-refresh", "stable lookup", "server-generated"):
+            self.assertNotIn(claim, stdout)
+        for value in ("987654", JOB_A):
+            self.assertNotIn(value, stdout)
+
+    def test_missing_body_and_no_matches_do_not_produce_replayability_claim(self):
+        stdout, _ = run_brief([entry(0, "POST", "https://app.example.com/api/save", body={"title": "Private title"})])
+        self.assertIn("missing #0", stdout)
+        self.assertIn("no match does not establish independence", stdout)
+        self.assertNotIn("direct-http", stdout)
+
+    def test_coverage_reports_exclusions_and_response_scan_limit(self):
+        entries = [
+            entry(0, "GET", "https://app.example.com/app.js", res_mime="application/javascript"),
+            entry(1, "POST", "https://app.example.com/api/save", body={"a": 1}, res_body={"long": "x" * 200}),
+        ]
+        stdout, _ = run_brief(entries, "--max-scan-chars", "40")
+        self.assertIn("1/2 requests selected", stdout)
+        self.assertIn("Response scans skipped: 1; cut at scan limit: 1", stdout)
 
     def test_brief_respects_length_cap(self):
         entries = [entry(i, "POST", f"https://app.example.com/api/thing{i}/save", body={"n": i}) for i in range(40)]

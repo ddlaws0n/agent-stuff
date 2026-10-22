@@ -1,5 +1,7 @@
 # HAR Workflow Analysis: [task/site]
 
+Adapt or omit sections to fit the question. List only observed headers and dynamic values; distinguish required, inferred, and unknown prerequisites. Example rows below are prompts, not capture facts.
+
 ## Executive summary
 
 - **Observed task:** [What the user did]
@@ -19,9 +21,7 @@
 
 ```http
 [METHOD] [normalized URL]
-Authorization: <redacted-if-present>
-Cookie: <session-cookie-if-needed>
-X-CSRF-Token: <csrf-token-if-needed>
+[Observed header name]: <placeholder>
 Content-Type: [mime]
 ```
 
@@ -71,9 +71,8 @@ with httpx.Client(follow_redirects=True) as client:
 
 ## Unknowns and validation plan
 
-1. [Run with fresh session to confirm tokens can be refreshed.]
-2. [Test minimal payload versus full captured payload.]
-3. [Verify server-side result via GET endpoint or UI.]
+1. [Specific missing evidence and what would resolve it.]
+2. [Proposed future validation, with authorization required for mutations. Do not execute captured mutations as an analysis check.]
 
 ## Evidence reviewed
 

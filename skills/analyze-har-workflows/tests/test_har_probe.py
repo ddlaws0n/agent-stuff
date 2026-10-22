@@ -1,6 +1,7 @@
 """Deterministic smoke and privacy regressions for the bundled HAR helper."""
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -45,6 +46,31 @@ class HarProbeTests(unittest.TestCase):
     def test_prefixed_ids_are_normalized(self):
         self.assertEqual(har_probe.normalize_path("/api/records/rec_7f3a91c2/files/upl_123"), "/api/records/{id}/files/{id}")
         self.assertEqual(har_probe.normalize_path("/oauth2/v2/settings"), "/oauth2/v2/settings")
+
+    def test_value_ids_compare_submitted_values_and_verification_reads_privately(self):
+        fixture = ROOT / "evals/files/repeated-save.synthetic.har"
+        result = subprocess.run([
+            sys.executable, str(ROOT / "scripts/har_probe.py"), "show", str(fixture),
+            "--indices", "0-5", "--value-ids", "--max-chars", "2500",
+        ], capture_output=True, text=True, check=True)
+        blocks = re.split(r"(?m)^#\d+ ", result.stdout)[1:]
+
+        def identifier(index, field):
+            match = re.search(rf"\b{field}=<[^:>]+:(v\d+)>", blocks[index])
+            self.assertIsNotNone(match, (index, field))
+            return match.group(1)
+
+        self.assertEqual(identifier(0, "nonce"), identifier(1, "nonce"))
+        self.assertEqual(identifier(3, "nonce"), identifier(4, "nonce"))
+        self.assertNotEqual(identifier(0, "nonce"), identifier(3, "nonce"))
+        self.assertEqual(identifier(0, "resourceId"), identifier(3, "resourceId"))
+        self.assertEqual(identifier(1, "title"), identifier(2, "title"))
+        self.assertEqual(identifier(4, "title"), identifier(5, "title"))
+        self.assertNotEqual(identifier(1, "title"), identifier(4, "title"))
+        self.assertEqual(identifier(1, "version"), identifier(2, "version"))
+        self.assertNotEqual(identifier(1, "version"), identifier(4, "version"))
+        for secret in ("547892", "932871", "3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d", "Private first title", "Private second title", "synthetic-session-secret-4242"):
+            self.assertNotIn(secret, result.stdout)
 
     def test_value_shapes_name_kinds_without_values(self):
         cases = {

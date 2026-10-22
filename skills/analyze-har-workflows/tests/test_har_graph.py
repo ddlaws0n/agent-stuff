@@ -143,6 +143,17 @@ class HarGraphTests(unittest.TestCase):
         edge = next(e for e in graph["edges"] if (e["from"], e["to"]) == (0, 1) and e["kind"] == "created-id")
         self.assertEqual(edge["evidence"][0]["from"], "response.json:$.requestId")
 
+    def test_url_match_identifies_when_query_was_ignored(self):
+        target = "https://storage.example.com/object"
+        entries = [
+            entry(0, "POST", "https://app.example.com/api/uploads", body={}, res_body={"url": target}),
+            entry(1, "PUT", target + "?upload=secret-signature-12345"),
+        ]
+        _, graph, _ = run_graph(entries)
+        edge = next(e for e in graph["edges"] if e["kind"] == "signed-url")
+        self.assertEqual(edge["evidence"][0]["to"], "request.url (without query)")
+        self.assertNotIn("secret-signature-12345", json.dumps(graph))
+
     def test_cache_busters_do_not_link(self):
         entries = [
             entry(0, "GET", "https://app.example.com/api/a?cache=55555"),
@@ -150,6 +161,22 @@ class HarGraphTests(unittest.TestCase):
         ]
         _, graph, _ = run_graph(entries, "--indices", "0-1", "--gap-ms", "0")
         self.assertEqual(graph["edges"], [])
+
+    def test_coverage_counts_missing_timestamps_and_excluded_candidates(self):
+        entries = [
+            entry(0, "GET", "https://app.example.com/app.js", res_mime="application/javascript"),
+            entry(1, "POST", "https://app.example.com/api/save", body={"nonce": 987654}, res_body={"long": "x" * 100}),
+        ]
+        entries[1].pop("startedDateTime")
+        _, graph, _ = run_graph(entries, "--indices", "1", "--max-scan-chars", "40")
+        coverage = graph["coverage"]
+        self.assertEqual(coverage["requests"], 2)
+        self.assertEqual(coverage["candidates"], 1)
+        self.assertEqual(coverage["selection"], "explicit indices")
+        self.assertEqual(coverage["excluded_reasons"], {"outside explicit indices": 1})
+        self.assertEqual(coverage["missing_timestamps"], 1)
+        self.assertEqual(coverage["response_scans_truncated"], 1)
+        self.assertEqual(coverage["response_scans_skipped"], 1)
 
     def test_fixtures_build(self):
         for fixture in (ROOT / "evals" / "files").glob("*.har"):
