@@ -62,5 +62,13 @@
   {
     "query": "Write the GitHub release notes for v2.3 from the merged pull requests.",
     "should_trigger": false
+  },
+  {
+    "query": "Update .github/copilot-instructions.md to match our new test command.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add an entry to CHANGELOG.md under Unreleased for the login fix.",
+    "should_trigger": false
   }
 ]

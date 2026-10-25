@@ -13,7 +13,6 @@ If the target exists, switch to `references/updating.md` unless the user explici
 - `README.md`: overview, prerequisites, setup, minimal usage, links.
 - `CONTRIBUTING.md`: contributor setup, checks, change and review process.
 - `SECURITY.md`: supported versions, reporting channel, response expectations.
-- `CHANGELOG.md`: release history under the project's chosen convention.
 - ADR: context, decision, alternatives, consequences, status.
 - Guide: goal, prerequisites, steps, verification, troubleshooting.
 - Reference: precise inputs, outputs, constraints, and examples.
