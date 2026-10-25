@@ -28,6 +28,7 @@ Uses the [`skills` CLI](https://github.com/vercel-labs/skills). Some skills need
 | [`manage-secrets-varlock`](skills/manage-secrets-varlock/SKILL.md) | Manage schema-driven environment configuration and secrets with Varlock. |
 | [`review-data-architecture`](skills/review-data-architecture/SKILL.md) | Review data-intensive architecture decisions by guarantees, failure modes, and operational cost. |
 | [`triage-distributed-failures`](skills/triage-distributed-failures/SKILL.md) | Triage production anomalies in distributed systems with evidence timelines and approval-gated repair. |
+| [`update-changelog`](skills/update-changelog/SKILL.md) | Maintain CHANGELOG.md under Keep a Changelog: deduplicated Unreleased entries and dated release sections with compare links. |
 
 ## Develop
 

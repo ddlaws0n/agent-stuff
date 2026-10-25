@@ -1,0 +1,70 @@
+[
+  {
+    "query": "Add a changelog entry for the login fix under Unreleased.",
+    "should_trigger": true
+  },
+  {
+    "query": "Cut the 1.4.0 release with today's date and a compare link.",
+    "should_trigger": true
+  },
+  {
+    "query": "Turn the user-facing commits since the last tag into changelog entries.",
+    "should_trigger": true
+  },
+  {
+    "query": "Initialize a Keep a Changelog file.",
+    "should_trigger": true
+  },
+  {
+    "query": "We merged four PRs this week. Update CHANGELOG.md so the Unreleased section reflects them.",
+    "should_trigger": true
+  },
+  {
+    "query": "Prepare the 2.0.0-rc.1 section in our changelog and fix the Unreleased compare link.",
+    "should_trigger": true
+  },
+  {
+    "query": "The Unreleased section of CHANGELOG.md lists the same bug fix twice. Keep one entry.",
+    "should_trigger": true
+  },
+  {
+    "query": "Move everything under Unreleased into a dated 3.1.0 heading and leave a fresh Unreleased block.",
+    "should_trigger": true
+  },
+  {
+    "query": "We use changesets; add a changeset.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write the GitHub release notes for v2.3 from merged PRs.",
+    "should_trigger": false
+  },
+  {
+    "query": "Update CONTRIBUTING's release-process section.",
+    "should_trigger": false
+  },
+  {
+    "query": "Fix the semantic-release config so it stops generating an empty CHANGELOG.md.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a release announcement blog post for the 1.4.0 launch.",
+    "should_trigger": false
+  },
+  {
+    "query": "Refresh the README install instructions and fix its broken links.",
+    "should_trigger": false
+  },
+  {
+    "query": "Tag v1.4.0, bump package.json, and push the release.",
+    "should_trigger": false
+  },
+  {
+    "query": "Rewrite our AGENTS.md so it points to the release checklist.",
+    "should_trigger": false
+  },
+  {
+    "query": "Regenerate CHANGELOG.md by running git-cliff.",
+    "should_trigger": false
+  }
+]
