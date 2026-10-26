@@ -4,19 +4,15 @@ Use for a new documentation file or structure. Shared scope, evidence, validatio
 
 ## 1. Establish purpose and location
 
-Identify the audience, the task the document enables, its authoritative sources, and the intended location. Inspect existing documentation before choosing a path so the new file does not duplicate an existing source of truth. Infer names and locations from repository conventions, and confirm the path is project-owned.
+Identify the audience, the task the document enables, its authoritative sources, and the intended location. Inspect existing documentation before choosing a path so the new file does not duplicate an existing source of truth. Resolve the path as `SKILL.md` Gotchas describe, and confirm it is project-owned.
 
 If the target exists, switch to `references/updating.md` unless the user explicitly requests a replacement.
 
 ## 2. Choose the document contract
 
-- `README.md`: overview, prerequisites, setup, minimal usage, links.
-- `CONTRIBUTING.md`: contributor setup, checks, change and review process.
-- `SECURITY.md`: supported versions, reporting channel, response expectations.
-- ADR: context, decision, alternatives, consequences, status.
-- Guide: goal, prerequisites, steps, verification, troubleshooting.
-- Reference: precise inputs, outputs, constraints, and examples.
-- Package README: local purpose, API, setup, tests, ownership.
+Read `references/standard.md` § Content contracts for the doc type; § How to apply says when to create a type and which choices (license, security contact) are the user's.
+
+A package README has no separate contract: local purpose, API, setup, tests, and ownership, from the README template.
 
 ## 3. Draft
 

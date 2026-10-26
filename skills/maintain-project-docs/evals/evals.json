@@ -37,6 +37,79 @@
         "`git diff --stat` touches only CONTRIBUTING.md and packages/cli/README.md.",
         "The final response lists the evidence files used and the checks run."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Record the decision to adopt Postgres over SQLite as an ADR. The repo's docs/manifest.json sets paths.decisions to \"adr\" and adr/ already holds 0001 through 0006.",
+      "expected_output": "A new light-MADR record at adr/0007-<slug>.md in the manifest's directory, with the standard's status line and section order, and no file created under docs/decisions/.",
+      "assertions": [
+        "adr/0007-<slug>.md exists, and no file was created under docs/decisions/.",
+        "The title is `# 0007 <Title>` and the next line is `Status: proposed|accepted · YYYY-MM-DD` with exactly one status value.",
+        "The sections `## Context`, `## Decision`, `## Consequences` appear in that order, with `## Alternatives considered` only after them.",
+        "No existing ADR in adr/ was modified, renumbered, or deleted.",
+        "The template's leading `Synced from` comment and every bracketed placeholder are removed."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The OIDC migration is finished. Wrap up docs/plans/oidc-migration.md.",
+      "expected_output": "The plan's lasting decisions are recorded in a new ADR, and deleting the plan is proposed with its link impact and held for approval before anything is removed.",
+      "assertions": [
+        "A new ADR containing the plan's lasting decisions exists at the repository's ADR path, with the Status line and sections in the standard's order.",
+        "docs/plans/oidc-migration.md still exists before the user approves, and the response lists its deletion with inbound link impact.",
+        "The response asks for approval before deleting the plan."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "docs/operations.md mixes a service list and a procedure. Split it into docs/reference/services.md, which becomes the canonical service list, and docs/runbooks/restart-media.md. I approve the split and deleting docs/operations.md once its content is in the new files. Setup: build the repository with `sh evals/fixtures/build-repo.sh <dir>` and work inside it.",
+      "expected_output": "The split preserves the restart procedure, re-verifies the moved service facts against services/media/compose.yml instead of carrying them over, corrects the 0.0.0.0 binding and the network list or replaces them with a link to the compose file, and reports the binding correction as a security-relevant claim.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "docs/reference/services.md and docs/runbooks/restart-media.md exist, docs/operations.md does not, and README.md links to no missing file.",
+        "`git grep -n '0.0.0.0' -- docs README.md` returns nothing that describes Jellyfin's binding.",
+        "docs/reference/services.md either states that Jellyfin publishes on 127.0.0.1 and 192.168.10.5 and joins the media and proxy networks, or omits those values and links to services/media/compose.yml.",
+        "docs/runbooks/restart-media.md contains the pull, up -d, and health-check commands from the original file.",
+        "The final response lists the Jellyfin binding correction under security-relevant claims, citing services/media/compose.yml."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "docs/runbooks/emergency-deploy.md tells people to print the deploy token. Fix that step. Setup: build the repository with `sh evals/fixtures/build-repo.sh <dir>` and work inside it.",
+      "expected_output": "Step 3 no longer prints or exports the token by hand, and instead names the approved route (op run with deploy.env.tpl, as scripts/deploy.sh requires) or escalation to the CODEOWNERS team.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "docs/runbooks/emergency-deploy.md no longer contains `op read` or `export DEPLOY_TOKEN=`.",
+        "The failure step in docs/runbooks/emergency-deploy.md names `op run --env-file=deploy.env.tpl -- scripts/deploy.sh` or escalation to `@acme/platform-oncall`, and does not end the procedure without a route forward.",
+        "`git diff --stat` touches only docs/runbooks/emergency-deploy.md.",
+        "The final response cites scripts/deploy.sh, deploy.env.tpl, or .github/CODEOWNERS as the evidence for the replacement."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Consolidate everything under docs/ to match our docs standard. Plan it first; I'll approve before anything changes. Setup: build the repository with `sh evals/fixtures/build-repo.sh <dir>` and work inside it.",
+      "expected_output": "A consolidation plan that leaves docs/ai-review/review.md out of scope because .github/workflows/ai-review.yml reads it, with no files changed before approval.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "`git status --porcelain` is empty after the response.",
+        "The plan proposes no edit, move, or delete of docs/ai-review/review.md.",
+        "The response names docs/ai-review/review.md as configuration read by .github/workflows/ai-review.yml.",
+        "The response asks for approval before any change."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Bring services/windmill/PLAN.md in line with the plan standard. I approve moving it to docs/plans/windmill.md. Setup: build the repository with `sh evals/fixtures/build-repo.sh <dir>` and work inside it.",
+      "expected_output": "The plan moves to docs/plans/windmill.md with the standard's status line and section order, keeps both draft code blocks verbatim in optional sections after Open questions, and updates the README link.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "docs/plans/windmill.md exists, services/windmill/PLAN.md does not, and README.md links to docs/plans/windmill.md.",
+        "The line after the title of docs/plans/windmill.md matches `Status: active|blocked · <owner> · updated: YYYY-MM-DD`.",
+        "`## Goal`, `## Milestones`, `## Next step`, `## Decisions so far`, and `## Open questions` appear in that order.",
+        "Both fenced blocks from the original (the yaml compose draft and the caddy block) appear verbatim in docs/plans/windmill.md, after `## Open questions`.",
+        "The 2026-08-02 Postgres decision appears under `## Decisions so far`, and the worker-count question under `## Open questions`.",
+        "The final response lists any deliberately removed content with a `git show` pointer, or states that nothing was removed."
+      ]
     }
   ]
 }
