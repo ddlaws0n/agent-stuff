@@ -10,6 +10,8 @@
     "lint": "oxlint --type-aware --deny-warnings",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "standard:sync": "bun run ./scripts/sync-standard.ts",
+    "standard:check": "bun run ./scripts/sync-standard.ts --check",
     "skills:check": "bun run ./scripts/validate-skills.ts",
     "skills:lint": "agnix --strict skills",
     "skills:spec": "for skill in skills/*/; do uvx --from skills-ref==0.1.1 agentskills validate \"$skill\" || exit 1; done",
@@ -18,7 +20,7 @@
     "test": "bun test",
     "test:python": "bun run ./scripts/test-skills.ts",
     "test:eval": "uv run python -B -m unittest discover -s eval/harness -p 'test_*.py'",
-    "check": "bun run typecheck && bun run lint && bun run format:check && bun run skills:check && bun run skills:lint && bun run skills:spec && bun run test && bun run test:python && bun run test:eval"
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun run standard:check && bun run skills:check && bun run skills:lint && bun run skills:spec && bun run test && bun run test:python && bun run test:eval"
   },
   "dependencies": {
     "yaml": "^2.9.1"
