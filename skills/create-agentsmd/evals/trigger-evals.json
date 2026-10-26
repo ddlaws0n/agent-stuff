@@ -84,6 +84,10 @@
     "should_trigger": true
   },
   {
+    "query": "Move our repeated release procedure out of AGENTS.md into a repo-local skill under .agents/skills/.",
+    "should_trigger": true
+  },
+  {
     "query": "Fix broken links across our docs.",
     "should_trigger": false
   },
@@ -97,6 +101,10 @@
   },
   {
     "query": "Set Claude Code permissions and allowed tools in .claude/settings.json.",
+    "should_trigger": false
+  },
+  {
+    "query": "Adopt our project docs standard in this existing repo.",
     "should_trigger": false
   }
 ]

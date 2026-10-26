@@ -4,10 +4,11 @@ description: >-
   Creates or improves AGENTS.md files with concise, evidence-backed guidance
   derived from the repository: setup, commands, conventions, architecture
   constraints, validation, gotchas, folder routing into docs, nested package
-  files, size budgets, and bridges such as a CLAUDE.md that imports AGENTS.md or
-  Gemini CLI settings. Use when the user asks to create, write, regenerate,
-  review, audit, or improve AGENTS.md or CLAUDE.md instructions, add bridge or
-  nested files, update existing agent files such as GEMINI.md or
+  files, repo-local skills in .agents/skills, size budgets, and bridges such as
+  a CLAUDE.md that imports AGENTS.md or Gemini CLI settings. Use when the user
+  asks to create, write, regenerate, review, audit, or improve AGENTS.md or
+  CLAUDE.md instructions, add bridge or nested files, add repo-local skills,
+  update existing agent files such as GEMINI.md or
   .github/copilot-instructions.md, or slim an oversized instruction file. Do not
   use for human-facing docs such as README or CHANGELOG (use
   maintain-project-docs or update-changelog). Do not invent commands or copy
@@ -28,6 +29,7 @@ Create the smallest `AGENTS.md` that materially helps coding agents work correct
 
 - Find the repository root and any existing `AGENTS.md` files.
 - Also look for `CLAUDE.md`, `CLAUDE.local.md`, `GEMINI.md`, and `.github/copilot-instructions.md`. Audit or fix the file the user names in place. Add `AGENTS.md` or a bridge only when asked; if they ask for a bridge and no `AGENTS.md` exists, create `AGENTS.md` first.
+- If `docs/manifest.json` exists, honor its paths and budgets. An existing repo keeps its conventions unless the user asks to migrate (standard.md § How to apply, § Manifest).
 - Determine whether the request is to create, replace, audit, or improve instructions.
 - When updating an existing file, preserve useful project-specific guidance unless current repository evidence contradicts it.
 - In a monorepo, keep root guidance cross-cutting. Use nested `AGENTS.md` files only for materially different subproject commands, conventions, or constraints; do not repeat root guidance.
@@ -82,16 +84,7 @@ Exclude:
 
 ### 5. Draft an adaptive document
 
-Do not force a fixed template. Use only the sections this repository needs. A strong document often includes some subset of:
-
-- `# AGENTS.md`
-- `## Scope` or a one-sentence project overview
-- `## Setup and development`
-- `## Validation and testing`
-- `## Architecture and conventions`
-- `## Generated files and migrations`
-- `## Security and safety`
-- `## Repository gotchas`
+Do not force a fixed template. Use only the sections this repository needs, in the order of standard.md § AGENTS.md contract: purpose and damaging constraints, commands, task table, folder routing, gotchas.
 
 Writing rules:
 
@@ -100,8 +93,9 @@ Writing rules:
 - Prefer short bullets and compact tables over explanatory prose.
 - Link to existing repository docs with relative paths instead of duplicating long instructions.
 - For nested files, state the directory scope when useful and include only guidance specific to that subtree.
-- Where nested files exist, make the root file route to them, for example "Working under `packages/api/`? Read `packages/api/AGENTS.md` first." Codex and pi load `AGENTS.md` only from the launch directory and its ancestors at startup.
-- Keep the root file a map. Claude recommends under ~200 lines, and Codex's default `project_doc_max_bytes` is 32 KiB for the combined root-to-cwd chain (configurable). Move task-specific detail into linked docs.
+- Keep the root file a map within standard.md § Context tiers and budgets: route to every nested file and move detail into linked docs.
+- Move a repeated procedure the agent needs on demand into a repo-local skill at `.agents/skills/<name>/SKILL.md`, and task-scoped rules that outgrow the root file into `.agents/rules/<slug>.md` routed from the task table (standard.md § Content contracts).
+- When removing an unsafe instruction, name the approved way to do the job or who to escalate to (standard.md § Trust and safety).
 - Avoid provider-specific features or filenames unless the repository explicitly depends on them or an agent that cannot read `AGENTS.md` natively needs a bridge (see `references/bridges.md`).
 
 ### 6. Verify before finishing
@@ -114,7 +108,7 @@ Check the finished instructions against the repository:
 - No placeholders, generic boilerplate, stale claims, or duplicated inherited guidance remain.
 - No secrets or credential values are included.
 - Existing high-value instructions were not accidentally lost during an update.
-- Relative links and routing paths resolve, and the root file fits the size budget.
+- Task-table and routing targets resolve, and the files fit standard.md § Context tiers and budgets.
 
 When practical, run fast, local, non-destructive validation commands that are already supported by the current environment. Do **not** install dependencies, start long-running servers, deploy, mutate external systems, or run destructive migrations solely to validate `AGENTS.md` unless the user explicitly asks.
 
@@ -130,6 +124,7 @@ After writing or updating the file, briefly state:
 ## References
 
 - Read `references/bridges.md` before creating, changing, or removing a `CLAUDE.md`, Gemini CLI setting, or other bridge.
+- `references/standard.md`: the project docs standard. Read § AGENTS.md contract, § Context tiers and budgets, and § Agent loading reference for section order, budgets, routing, and bridges; § Manifest and § How to apply for a repo's manifest and new-versus-existing rules.
 
 ## Gotchas
 

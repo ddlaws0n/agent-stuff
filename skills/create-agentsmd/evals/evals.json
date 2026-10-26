@@ -41,7 +41,7 @@
       "assertions": [
         "The root AGENTS.md in the response is under 25 lines and still contains `pnpm install` and `pnpm check`",
         "The response includes docs/ files containing the migration and release details, including `pnpm db:migrate:test`, `pnpm release:dry-run`, and the rules never to edit an applied migration and never to publish from a laptop",
-        "Every docs/ path linked from the root file appears as an output file in the response",
+        "The root file has a table with `Task` and `Read first` columns whose targets are Markdown links to the output docs/ files, and every linked path appears as an output file in the response",
         "Every command in the output appears in the original file",
         "The response does not create a CLAUDE.md, GEMINI.md, or other bridge file"
       ]
