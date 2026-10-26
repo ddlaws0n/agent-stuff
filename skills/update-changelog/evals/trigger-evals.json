@@ -66,5 +66,9 @@
   {
     "query": "Regenerate CHANGELOG.md by running git-cliff.",
     "should_trigger": false
+  },
+  {
+    "query": "Set up the docs structure for this new repo.",
+    "should_trigger": false
   }
 ]

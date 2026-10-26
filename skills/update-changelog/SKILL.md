@@ -34,6 +34,7 @@ Keep one root `CHANGELOG.md` accurate: user-facing entries under `[Unreleased]`,
 ## References
 
 - `references/format.md`: read for generator indicators, the new-file template, evidence commands and edge cases, compare links, and prereleases.
+- `references/standard.md`: the project docs standard. Read § How to apply this standard, § Manifest (a `docs/manifest.json` can relocate CHANGELOG.md), and § Doc types to place the file; `references/format.md` governs the format.
 
 ## Gotchas
 
