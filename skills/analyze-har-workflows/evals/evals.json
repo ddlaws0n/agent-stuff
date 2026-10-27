@@ -50,6 +50,53 @@
         "The implementation recommendation acknowledges that future replay and nonce refresh behavior remain unverified.",
         "The report does not expose captured nonce, UUID, cookie, or title values, and no captured mutations are replayed."
       ]
+    },
+    {
+      "id": 5,
+      "prompt": "These two HARs inspect related workflow functions and example jobs. Explain how they are connected, what the visible job history proves, and which definitions or connections we need before changing their contracts programmatically. Use only local captures; do not replay requests or expose captured credentials/customer values.",
+      "expected_output": "A cross-capture architecture grounded in all available job rows, with direct callers distinct from root and clone lineage, shared runs matched, and connection IDs distinct from environment identity.",
+      "files": [
+        "evals/files/related-assignment.synthetic.har",
+        "evals/files/related-messaging.synthetic.har"
+      ],
+      "assertions": [
+        "The report identifies messaging direct callers 601 and 602, not only the first job caller; root recipes are 601, 501, and 503.",
+        "The report identifies exactly two shared root runs linking assignment directly from 501 and messaging through 602, without asserting an unobserved direct 501-to-602 call.",
+        "The clone parent 999 is not represented as a runtime caller merely from parent_id.",
+        "The two Salesforce connection IDs 11 and 22 remain distinct while their underlying production environment is identified as equal without exposing the organization identifier.",
+        "The report distinguishes visible page lengths (3 and 4), filtered-scope counts (7 and 9), and recipe totals (43 and 50), and does not treat matching IDs as proof of complete process order.",
+        "No captured mutation is replayed and synthetic credentials, account values, and org identifiers are not printed.",
+        "The Salesforce bindings reach the same org, but messaging has no enabled Salesforce action; the report does not claim both functions read or write Salesforce merely from config."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "This HAR contains a current account-team workflow and recent succeeded jobs. Explain its actual current behavior and assess whether those jobs validate the current version, including the rerun. Identify the exact edit locations and important uncertainties. Use only local evidence; do not perform live operations or print account/credential values.",
+      "expected_output": "A definition-versus-runtime explanation identifying active delete, skipped role update, scalar input and result caveats, with version-coverage uncertainty and correctly scoped job statistics.",
+      "files": ["evals/files/related-assignment.synthetic.har"],
+      "assertions": [
+        "The report identifies active delete at /result/block/0 and skipped Shadow TAM update at /result/block/1 despite stale descriptive prose.",
+        "The current-member input is an optional scalar string, not a list; the new user is required.",
+        "Two jobs predate the current v5 edit and one rerun postdates it, but none of the summaries proves its actual recipe version; the report does not assert the older jobs necessarily ran a different version.",
+        "The report does not equate succeeded summaries with a verified delete/create or correctly serialized errors result.",
+        "The repeated Account identity is noted without claiming the complete requests were duplicates or printing that identifier.",
+        "The report separates 3 visible jobs, 7 scoped jobs, and the 43 recipe-wide total, and identifies missing job details/version snapshots.",
+        "The empty errors return is configured only if execution reaches that step; the report does not claim unconditional successful completion or caught connector exceptions absent from the definition."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Analyze this captured workflow definition and its example job so we can change message text programmatically. Provide exact pointers for the overview and missing-champion warning, explain the branch coverage, and flag any relevant output-data handling concerns. Use local files only; do not expose customer or attachment titles.",
+      "expected_output": "An accurate edit map with action/container distinction, JSON-equivalent job snapshot comparison, limited execution claims, and unexpected related-list metadata noted without disclosure.",
+      "files": ["evals/files/definition-editing.synthetic.har"],
+      "assertions": [
+        "The overview variable is node 2 at /result/block/1/input/variables/data/overview; the warning HTTP action is node 6 at /result/block/2/block/1/block/0/input/request/body/text.",
+        "Node 5 at /result/block/2/block/1 is an else container rather than the HTTP action to patch.",
+        "The report establishes version 19 and full decoded JSON equality between editor code and the job snapshot, despite serialization differences.",
+        "The sampled trace covers the present-champion post and success return; it does not verify the missing-champion warning, zero results, or multiple opportunities.",
+        "The actual Opportunity output includes CombinedAttachments metadata absent from the selected fields, without printing the attachment/customer titles.",
+        "The report notes limit 150 and missing explicit ordering/iteration, and provides evidence pointers and proposed fixtures without claiming live validation."
+      ]
     }
   ]
 }

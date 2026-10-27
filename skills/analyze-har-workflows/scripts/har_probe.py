@@ -29,6 +29,7 @@ import json
 import re
 import sys
 from collections import Counter, defaultdict
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 from urllib.parse import parse_qsl, urlparse
@@ -39,7 +40,7 @@ except Exception:  # pragma: no cover - fallback for small files only
     ijson = None
 
 SENSITIVE_KEY_RE = re.compile(
-    r"(?i)(authorization|cookie|set-cookie|csrf|xsrf|token|secret|password|passwd|pwd|api[-_]?key|session|jwt|otp|mfa|credit|card|cvv|ssn)"
+    r"(?i)(authorization|cookie|set-cookie|csrf|xsrf|token|nonce|signature|webhook|secret|password|passwd|pwd|api[-_]?key|session|jwt|otp|mfa|credit|card|cvv|ssn)"
 )
 EMAIL_RE = re.compile(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", re.I)
 JWT_RE = re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}")
@@ -138,7 +139,10 @@ def redact_mapping(obj: Any) -> Any:
     if isinstance(obj, dict):
         return {str(redact_scalar(k)): redact_mapping(v) for k, v in obj.items()}
     if isinstance(obj, list):
-        return [redact_mapping(v) for v in obj[:200]]
+        items = [redact_mapping(v) for v in obj[:200]]
+        if len(obj) > 200:
+            items.append({"_har_probe_omitted_items": len(obj) - 200})
+        return items
     if obj is None:
         return None
     return f"<{value_shape(obj)}>"
@@ -371,8 +375,8 @@ def graphql_info(url: str, post_text: str) -> Dict[str, Any]:
 def iter_har_entries(path: Path) -> Iterator[Dict[str, Any]]:
     if ijson is not None:
         with path.open("rb") as f:
-            # use_float avoids Decimal values that json.dumps cannot serialize.
-            for entry in ijson.items(f, "log.entries.item", use_float=True):
+            # Preserve arbitrary-size integer IDs; convert Decimal timings at output.
+            for entry in ijson.items(f, "log.entries.item"):
                 yield entry
     else:
         # Fallback is intentionally only for small HARs.
@@ -407,6 +411,9 @@ def compact_entry(entry: Dict[str, Any], idx: int, max_body_chars: int = 0) -> D
     response_sample = ""
     request_truncated = False
     response_truncated = False
+    time_ms = entry.get("time")
+    if isinstance(time_ms, Decimal):
+        time_ms = float(time_ms)
     if max_body_chars and post_text and "json" in str(post_info.get("mime", "")).lower():
         parsed = parse_json_maybe(post_text)
         if parsed is not None:
@@ -426,7 +433,7 @@ def compact_entry(entry: Dict[str, Any], idx: int, max_body_chars: int = 0) -> D
         "startedDateTime": started,
         "method": method,
         "status": status,
-        "time_ms": entry.get("time"),
+        "time_ms": time_ms,
         "resourceType": resource_type,
         "url": {
             "host": norm["host"],

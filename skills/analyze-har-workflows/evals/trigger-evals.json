@@ -62,5 +62,17 @@
   {
     "query": "Set up request logging middleware in our Next.js app.",
     "should_trigger": false
+  },
+  {
+    "query": "These HARs show an automation builder, workflow configuration, and example jobs. Reconstruct the functions and their callers so we can edit them programmatically.",
+    "should_trigger": true
+  },
+  {
+    "query": "Read workflow.har and determine whether the job history ran the current recipe version or an older definition.",
+    "should_trigger": true
+  },
+  {
+    "query": "Design a new Workato recipe from this business description; I have no HAR or network capture.",
+    "should_trigger": false
   }
 ]

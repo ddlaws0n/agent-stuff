@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -151,6 +152,25 @@ class HarProbeTests(unittest.TestCase):
             har.write_text(json.dumps({"log": {"entries": [entry]}}))
             subprocess.run([sys.executable, str(ROOT / "scripts" / "har_probe.py"), "summarize", str(har), "--out", tmp], capture_output=True, text=True, check=True)
             self.assertEqual(json.loads((Path(tmp) / "entries.jsonl").read_text())["time_ms"], 1.5)
+
+    def test_streaming_and_fallback_preserve_large_integer_metadata(self):
+        self.assertIsNotNone(har_probe.ijson, "streaming regression requires the test dependency")
+        entry = {"time": 1.25, "_recordId": 2**80, "request": {}, "response": {}}
+        with tempfile.TemporaryDirectory() as tmp:
+            har = Path(tmp) / "numbers.har"
+            har.write_text(json.dumps({"log": {"entries": [entry]}}))
+            for reader in (har_probe.ijson, None):
+                with self.subTest(streaming=reader is not None), patch.object(har_probe, "ijson", reader):
+                    parsed = next(har_probe.iter_har_entries(har))
+                    self.assertEqual(parsed["_recordId"], 2**80)
+                    compact = har_probe.compact_entry(parsed, 0)
+                    self.assertEqual(json.loads(json.dumps(compact))["time_ms"], 1.25)
+
+    def test_redacted_array_reports_omitted_items(self):
+        result = har_probe.redact_mapping({"jobs": list(range(203))})
+        self.assertEqual(len(result["jobs"]), 201)
+        self.assertEqual(result["jobs"][-1], {"_har_probe_omitted_items": 3})
+        self.assertEqual(har_probe.redact_mapping([True, False]), ["<boolean>", "<boolean>"])
 
     def test_fixtures_stream_and_limit_candidates(self):
         for fixture in (ROOT / "evals" / "files").glob("*.har"):
