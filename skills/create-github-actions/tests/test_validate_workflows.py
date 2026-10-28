@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -15,6 +17,34 @@ SPEC.loader.exec_module(MODULE)
 
 
 class ValidateWorkflowsTests(unittest.TestCase):
+    def test_json_cli_contract_for_valid_and_malformed_workflows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "workflow.yml"
+            for contents, status in [("name: Valid\non: push\npermissions: {}\nconcurrency: fixture\njobs:\n  test:\n    runs-on: ubuntu-latest\n    timeout-minutes: 1\n    steps: []\n", 0),
+                                     ("jobs: [", 1)]:
+                with self.subTest(contents=contents):
+                    path.write_text(contents)
+                    result = subprocess.run([sys.executable, "-B", str(MODULE_PATH), str(path), "--format", "json"],
+                                            capture_output=True, text=True, timeout=15)
+                    self.assertEqual(result.returncode, status, result.stderr)
+                    report = json.loads(result.stdout)
+                    self.assertEqual(report["files_checked"], 1)
+                    self.assertEqual(report["errors"], status)
+                    self.assertIsInstance(report["warnings"], int)
+                    self.assertIsInstance(report["findings"], list)
+                    if status:
+                        self.assertEqual(report["findings"][0]["severity"], "error")
+                        self.assertIn("code", report["findings"][0])
+
+    def test_missing_input_and_bad_arguments_have_usage_status(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for arguments in [[str(Path(directory) / "missing.yml"), "--format", "json"], ["--unsupported"]]:
+                result = subprocess.run([sys.executable, "-B", str(MODULE_PATH), *arguments],
+                                        capture_output=True, text=True, timeout=15)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, "")
+                self.assertTrue(result.stderr.strip())
+
     def validate(self, text: str, *, require_sha: bool = False):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "workflow.yml"

@@ -119,6 +119,7 @@ EOF
 }
 
 agents_md() { # a verbose, rule-by-rule AGENTS.md of exactly 300 lines
+  # shellcheck disable=SC2016 # literal Markdown backticks
   printf '%s\n' '# AGENTS.md' '' 'Widgets CLI. Follow every rule below.' '' '## Commands' '' \
     '- Install: `bun install`' '- Test: `bun test`' '- Lint: `bun run lint`'
   i=1

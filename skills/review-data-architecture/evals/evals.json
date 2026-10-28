@@ -1,5 +1,9 @@
 {
   "skill_name": "review-data-architecture",
+  "pressure": {
+    "required": false,
+    "reason": "Architecture review creates recommendations and ADRs without executing external changes; incident routing and small-question cases exercise its boundaries."
+  },
   "evals": [
     {
       "id": 1,
@@ -13,7 +17,8 @@
         "Output states that the Redis-cached order status can be stale and names an invalidation or TTL approach.",
         "Output includes a table comparing at least two options with a failure-modes column.",
         "Output lists at least two concrete validation steps, such as a duplicate-delivery test or a failure drill."
-      ]
+      ],
+      "tags": ["normal"]
     },
     {
       "id": 2,
@@ -26,7 +31,8 @@
         "Output asks for or assumes a specific freshness target, such as minutes or hours.",
         "Output includes a table comparing at least three of the named stores with a failure-modes column.",
         "Output gives exactly one primary recommendation and lists the conditions under which it would change."
-      ]
+      ],
+      "tags": ["normal"]
     },
     {
       "id": 3,
@@ -37,7 +43,8 @@
         "Output names triage-distributed-failures or explicitly says this is incident triage, not an architecture review.",
         "Output does not contain a trade-off matrix table.",
         "Output does not recommend migrating to a different database."
-      ]
+      ],
+      "tags": ["boundary", "refusal"]
     },
     {
       "id": 4,
@@ -49,7 +56,8 @@
         "Output is under 350 words.",
         "Output does not contain an Executive summary heading or a trade-off matrix table.",
         "Output names at least one assumption that would change the recommendation."
-      ]
+      ],
+      "tags": ["boundary"]
     },
     {
       "id": 5,
@@ -62,7 +70,8 @@
         "Output references the 15-minute staleness tolerance.",
         "Output addresses replication lag or data freshness for the chosen option.",
         "The Validation plan contains at least one checkbox item."
-      ]
+      ],
+      "tags": ["normal"]
     }
   ]
 }
