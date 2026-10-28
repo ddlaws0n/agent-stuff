@@ -296,17 +296,6 @@ def compact_entry(entry: Dict[str, Any], idx: int, max_body_chars: int = 0) -> D
         if parsed is not None:
             response_sample, response_truncated = truncate_text(json.dumps(redact_mapping(parsed), ensure_ascii=False, indent=2), max_body_chars)
 
-    request: Dict[str, Any] = {
-        "headers_present": sorted(req_headers.keys())[:80],
-        "content_type": req_headers.get("content-type", "").split(";", 1)[0],
-        "postData": post_info,
-    }
-    response: Dict[str, Any] = {
-        "mime": mime.split(";", 1)[0],
-        "body_chars": len(response_text),
-        "headers_present": sorted(res_headers.keys())[:80],
-        "redirectURL": normalize_url(str(res.get("redirectURL")))["normalized"] if res.get("redirectURL") else "",
-    }
     out: Dict[str, Any] = {
         "index": idx,
         "startedDateTime": started,
@@ -320,17 +309,26 @@ def compact_entry(entry: Dict[str, Any], idx: int, max_body_chars: int = 0) -> D
             "normalized": norm["normalized"],
             "query_keys": norm["query_keys"],
         },
-        "request": request,
-        "response": response,
+        "request": {
+            "headers_present": sorted(req_headers.keys())[:80],
+            "content_type": req_headers.get("content-type", "").split(";", 1)[0],
+            "postData": post_info,
+        },
+        "response": {
+            "mime": mime.split(";", 1)[0],
+            "body_chars": len(response_text),
+            "headers_present": sorted(res_headers.keys())[:80],
+            "redirectURL": normalize_url(str(res.get("redirectURL")))["normalized"] if res.get("redirectURL") else "",
+        },
     }
     if gql.get("is_graphql"):
         out["graphql"] = gql
     if request_sample:
-        request["sample"] = request_sample
-        request["sample_truncated"] = request_truncated
+        out["request"]["sample"] = request_sample
+        out["request"]["sample_truncated"] = request_truncated
     if response_sample:
-        response["sample"] = response_sample
-        response["sample_truncated"] = response_truncated
+        out["response"]["sample"] = response_sample
+        out["response"]["sample_truncated"] = response_truncated
     return out
 
 
