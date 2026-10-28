@@ -14,7 +14,7 @@ compatibility: >-
   Optional Python 3.9+ run via uv for the bundled audit script.
 metadata:
   author: ddlaws0n
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Build UI with Tailwind CSS v4
