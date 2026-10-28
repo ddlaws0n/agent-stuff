@@ -13,7 +13,7 @@ compatibility: >-
   bundled scripts' ijson dependency; Python alone supports small HARs.
 metadata:
   author: ddlaws0n
-  version: "0.5.0"
+  version: "0.5.1"
 ---
 
 # HAR workflow analysis

@@ -428,6 +428,12 @@ def compact_entry(entry: Dict[str, Any], idx: int, max_body_chars: int = 0) -> D
         "content_type": req_headers.get("content-type", "").split(";", 1)[0],
         "postData": post_info,
     }
+    response_out: Dict[str, Any] = {
+        "mime": mime.split(";", 1)[0],
+        "body_chars": len(response_text),
+        "headers_present": sorted(res_headers.keys())[:80],
+        "redirectURL": normalize_url(str(res.get("redirectURL")))["normalized"] if res.get("redirectURL") else "",
+    }
     out: Dict[str, Any] = {
         "index": idx,
         "startedDateTime": started,
@@ -442,21 +448,16 @@ def compact_entry(entry: Dict[str, Any], idx: int, max_body_chars: int = 0) -> D
             "query_keys": norm["query_keys"],
         },
         "request": request_out,
-        "response": {
-            "mime": mime.split(";", 1)[0],
-            "body_chars": len(response_text),
-            "headers_present": sorted(res_headers.keys())[:80],
-            "redirectURL": normalize_url(str(res.get("redirectURL")))["normalized"] if res.get("redirectURL") else "",
-        },
+        "response": response_out,
     }
     if gql.get("is_graphql"):
         out["graphql"] = gql
     if request_sample:
-        out["request"]["sample"] = request_sample
-        out["request"]["sample_truncated"] = request_truncated
+        request_out["sample"] = request_sample
+        request_out["sample_truncated"] = request_truncated
     if response_sample:
-        out["response"]["sample"] = response_sample
-        out["response"]["sample_truncated"] = response_truncated
+        response_out["sample"] = response_sample
+        response_out["sample_truncated"] = response_truncated
     return out
 
 
