@@ -34,7 +34,7 @@
         "The response includes a draft of `docs/manifest.json` that lists only the deviation(s), not doc types already at their canonical paths",
         "The response asks for approval before writing the manifest or changing any other file, and says moves happen only on request"
       ],
-      "tags": ["dry-run"]
+      "tags": ["boundary"]
     },
     {
       "id": 3,
