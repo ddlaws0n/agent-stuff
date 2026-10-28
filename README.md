@@ -38,7 +38,7 @@ bun install       # also installs git hooks
 bun run check     # typecheck, lint, format, skill validation, tests
 ```
 
-New skills start from [`templates/skill-template/`](templates/skill-template/SKILL.md); see [docs/authoring.md](docs/authoring.md) and [docs/evals.md](docs/evals.md). Contributor and agent guidance is in [AGENTS.md](AGENTS.md).
+New skills start from [`templates/skill-template/`](templates/skill-template/SKILL.md); see [docs/authoring.md](docs/authoring.md) and [docs/evals.md](docs/evals.md). See [CONTRIBUTING.md](CONTRIBUTING.md) for the PR process and [AGENTS.md](AGENTS.md) for agent guidance.
 
 ## License
 
