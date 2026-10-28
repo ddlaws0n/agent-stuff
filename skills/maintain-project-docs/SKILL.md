@@ -49,7 +49,7 @@ Create and maintain accurate project-owned documentation without expanding scope
 - `references/updating.md`: read for focused edits to existing documents and docs-vs-code freshness checks.
 - `references/consolidating.md`: read before planning any move, delete, merge, or multi-file rewrite; it holds the plan format.
 - `references/standard.md`: the project docs standard. Read § How to apply this standard, § Layout, § Doc types, and § Content contracts for where a document lives and what it must contain, § Manifest for path and budget overrides, and § Trust and safety for plans and generated docs.
-- `assets/readme-template.md`, `assets/contributing-template.md`, `assets/security-template.md`, `assets/guide-template.md`, `assets/adr-template.md`, `assets/plan-template.md`, `assets/glossary-template.md`, `assets/runbook-template.md`, `assets/architecture-template.md`: read only the template for the requested document type. Remove unused sections, every placeholder, and the leading `Synced from` comment of the last five before finishing.
+- `assets/readme-template.md`, `assets/contributing-template.md`, `assets/security-template.md`, `assets/guide-template.md`, `assets/adr-template.md`, `assets/plan-template.md`, `assets/glossary-template.md`, `assets/runbook-template.md`, `assets/architecture-template.md`: read only the template for the requested document type. Remove unused sections, every placeholder, and any leading `Synced from` comment before finishing.
 
 ## Gotchas
 
