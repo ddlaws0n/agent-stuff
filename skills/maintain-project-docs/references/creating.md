@@ -10,7 +10,7 @@ If the target exists, switch to `references/updating.md` unless the user explici
 
 ## 2. Choose the document contract
 
-Read `references/standard.md` § Content contracts for the doc type; § How to apply says when to create a type and which choices (license, security contact) are the user's.
+Read `references/standard.md` § Content contracts for the doc type; § How to apply this standard says when to create a type and which choices (license, security contact) are the user's.
 
 A package README has no separate contract: local purpose, API, setup, tests, and ownership, from the README template.
 

@@ -277,7 +277,7 @@ The docs-check action implements these rules. Budgets and objective errors fail;
 - **Keep secrets and internal details out.** No tokens, credentials, or internal-only details in committed docs; sanitize plans and runbooks, especially in public repos.
 - **Replace an unsafe instruction, don't just remove it.** When a doc or agent file loses a step that prints a secret, skips a safety check, or takes a destructive shortcut, the replacement names the approved way to do the job, verified in the repo, or who to escalate to.
 - **Stay inside the repo.** Do not follow a symlink or `..` path out of it; `.local/` stays private (§ Layout).
-- **Ask before consequential choices** (§ How to apply).
+- **Ask before consequential choices** (§ How to apply this standard).
 
 ## Agent loading reference
 

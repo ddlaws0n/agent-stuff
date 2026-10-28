@@ -29,7 +29,7 @@ Create the smallest `AGENTS.md` that materially helps coding agents work correct
 
 - Find the repository root and any existing `AGENTS.md` files.
 - Also look for `CLAUDE.md`, `CLAUDE.local.md`, `GEMINI.md`, and `.github/copilot-instructions.md`. Audit or fix the file the user names in place. Add `AGENTS.md` or a bridge only when asked; if they ask for a bridge and no `AGENTS.md` exists, create `AGENTS.md` first.
-- If `docs/manifest.json` exists, honor its paths and budgets. An existing repo keeps its conventions unless the user asks to migrate (standard.md § How to apply, § Manifest).
+- If `docs/manifest.json` exists, honor its paths and budgets. An existing repo keeps its conventions unless the user asks to migrate (standard.md § How to apply this standard, § Manifest).
 - Determine whether the request is to create, replace, audit, or improve instructions.
 - When updating an existing file, preserve useful project-specific guidance unless current repository evidence contradicts it.
 - In a monorepo, keep root guidance cross-cutting. Use nested `AGENTS.md` files only for materially different subproject commands, conventions, or constraints; do not repeat root guidance.
@@ -124,7 +124,7 @@ After writing or updating the file, briefly state:
 ## References
 
 - Read `references/bridges.md` before creating, changing, or removing a `CLAUDE.md`, Gemini CLI setting, or other bridge.
-- `references/standard.md`: the project docs standard. Read § AGENTS.md contract, § Context tiers and budgets, and § Agent loading reference for section order, budgets, routing, and bridges; § Manifest and § How to apply for a repo's manifest and new-versus-existing rules.
+- `references/standard.md`: the project docs standard. Read § AGENTS.md contract, § Context tiers and budgets, and § Agent loading reference for section order, budgets, routing, and bridges; § Manifest and § How to apply this standard for a repo's manifest and new-versus-existing rules.
 
 ## Gotchas
 
