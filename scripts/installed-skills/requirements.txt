@@ -1,5 +1,5 @@
 # Test environment for installed entry points; runtime metadata remains in each script.
 httpx==0.28.1
 ijson==3.5.1
-packaging==25.0
+packaging==26.3
 pyyaml==6.0.3
