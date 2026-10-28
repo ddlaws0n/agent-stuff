@@ -7,7 +7,7 @@
 #   generated   release-please owns CHANGELOG.md; one feat commit after v4.1.0
 #   embargoed   tag v3.1.0 + two ordinary commits and an undisclosed CVE fix
 #   history     tag v5.2.0 + squash/merge duplicate, a revert, and a hostile commit body
-# Identity and dates are fixed; no network, hooks, or global config are used.
+# Identity and dates are fixed; no network, hooks, or global or system git config are used.
 set -eu
 
 case_name=${1:?usage: build-repo.sh <case> <dir>}
@@ -16,6 +16,7 @@ mkdir -p "$dir"
 [ -z "$(ls -A "$dir")" ] || { echo "error: $dir is not empty" >&2; exit 1; }
 cd "$dir"
 
+export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_AUTHOR_NAME="Eval Author" GIT_AUTHOR_EMAIL="author@example.com"
 export GIT_COMMITTER_NAME="Eval Author" GIT_COMMITTER_EMAIL="author@example.com"
 git() { command git -c init.defaultBranch=main -c core.hooksPath=/dev/null \
