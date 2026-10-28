@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/git-risk-scan.sh [OPTIONS]
+Usage: bash scripts/git-risk-scan.sh [OPTIONS]
 
 Build a first-pass git history risk map for an unfamiliar codebase.
 
@@ -21,8 +21,8 @@ Options:
 Exit codes: 0 report printed, 2 bad option, 3 not a git work tree, 4 no commits.
 
 Examples:
-  scripts/git-risk-scan.sh --path ../my-repo --scope src
-  scripts/git-risk-scan.sh --path . --scope packages/api --since "18 months ago" --limit 30
+  bash scripts/git-risk-scan.sh --path ../my-repo --scope src
+  bash scripts/git-risk-scan.sh --path . --scope packages/api --since "18 months ago" --limit 30
 USAGE
 }
 
