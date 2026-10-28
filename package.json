@@ -14,6 +14,8 @@
     "lint:workflows": "uv run skills/create-github-actions/scripts/validate-workflows.py .github/workflows --require-sha --strict",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "standard:sync": "bun run ./scripts/sync-standard.ts",
+    "standard:check": "bun run ./scripts/sync-standard.ts --check",
     "skills:check": "bun run ./scripts/validate-skills.ts",
     "skills:lint": "agnix --strict skills",
     "skills:spec": "for skill in skills/*/; do uvx --from skills-ref==0.1.1 agentskills validate \"$skill\" || exit 1; done",
@@ -25,7 +27,7 @@
     "test:installed": "bun run ./scripts/test-installed-skills.ts",
     "test:tooling:python": "uv run python -B scripts/run-python-tests.py scripts/installed-skills",
     "test:eval": "uv run python -B scripts/run-python-tests.py eval/harness",
-    "check": "bun run typecheck && bun run typecheck:python && bun run lint && bun run lint:python && bun run lint:shell && bun run lint:workflows && bun run format:check && bun run skills:check && bun run skills:lint && bun run skills:spec && bun run test && bun run test:python && bun run test:tooling:python && bun run test:eval"
+    "check": "bun run typecheck && bun run typecheck:python && bun run lint && bun run lint:python && bun run lint:shell && bun run lint:workflows && bun run format:check && bun run standard:check && bun run skills:check && bun run skills:lint && bun run skills:spec && bun run test && bun run test:python && bun run test:tooling:python && bun run test:eval"
   },
   "dependencies": {
     "yaml": "^2.9.1"

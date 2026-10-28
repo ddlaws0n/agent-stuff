@@ -62,5 +62,49 @@
   {
     "query": "Generate API reference docs from our TypeScript types.",
     "should_trigger": false
+  },
+  {
+    "query": "Our CLAUDE.md is stale and references commands we removed; fix it.",
+    "should_trigger": true
+  },
+  {
+    "query": "AGENTS.md is 400 lines and Codex truncates it; restructure with pointers into docs/.",
+    "should_trigger": true
+  },
+  {
+    "query": "Set up AGENTS.md at root with a CLAUDE.md bridge.",
+    "should_trigger": true
+  },
+  {
+    "query": "Our .github/copilot-instructions.md contradicts AGENTS.md on the test command; update it so they agree.",
+    "should_trigger": true
+  },
+  {
+    "query": "Make Gemini CLI read our AGENTS.md instead of maintaining a separate GEMINI.md.",
+    "should_trigger": true
+  },
+  {
+    "query": "Move our repeated release procedure out of AGENTS.md into a repo-local skill under .agents/skills/.",
+    "should_trigger": true
+  },
+  {
+    "query": "Fix broken links across our docs.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add an entry to CHANGELOG.md under Unreleased for the login fix.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain how Claude Code loads CLAUDE.md files and what @imports do. Just explain, no changes.",
+    "should_trigger": false
+  },
+  {
+    "query": "Set Claude Code permissions and allowed tools in .claude/settings.json.",
+    "should_trigger": false
+  },
+  {
+    "query": "Adopt our project docs standard in this existing repo.",
+    "should_trigger": false
   }
 ]

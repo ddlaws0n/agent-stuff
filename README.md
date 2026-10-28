@@ -22,12 +22,14 @@ Uses the [`skills` CLI](https://github.com/vercel-labs/skills). Some skills need
 | [`create-agentsmd`](skills/create-agentsmd/SKILL.md) | Create repository-grounded agent instructions. |
 | [`create-github-actions`](skills/create-github-actions/SKILL.md) | Create and review secure GitHub Actions workflows. |
 | [`design-event-dataflows`](skills/design-event-dataflows/SKILL.md) | Design event contracts, ordering, outbox/CDC, and replayable projections for log-centric dataflows. |
+| [`init-project-docs`](skills/init-project-docs/SKILL.md) | Bring a repository onto the project docs standard: scaffold the baseline for a new repo, or produce a gap report and manifest for an existing one. |
 | [`maintain-project-docs`](skills/maintain-project-docs/SKILL.md) | Create, update, and consolidate project Markdown documentation against the repository. |
 | [`manage-environments-orbstack`](skills/manage-environments-orbstack/SKILL.md) | Configure, migrate, and troubleshoot OrbStack containers and Linux machines on macOS. |
 | [`manage-github-projects`](skills/manage-github-projects/SKILL.md) | Manage GitHub Projects v2 boards and their issues via `gh` and Python. |
 | [`manage-secrets-varlock`](skills/manage-secrets-varlock/SKILL.md) | Manage schema-driven environment configuration and secrets with Varlock. |
 | [`review-data-architecture`](skills/review-data-architecture/SKILL.md) | Review data-intensive architecture decisions by guarantees, failure modes, and operational cost. |
 | [`triage-distributed-failures`](skills/triage-distributed-failures/SKILL.md) | Triage production anomalies in distributed systems with evidence timelines and approval-gated repair. |
+| [`update-changelog`](skills/update-changelog/SKILL.md) | Maintain CHANGELOG.md under Keep a Changelog: deduplicated Unreleased entries and dated release sections with compare links. |
 
 ## Develop
 

@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ddlaws0n/agent-stuff/main/standard/manifest.schema.json",
+  "title": "Project docs manifest",
+  "description": "Optional docs/manifest.json. Records only deviations from the project docs standard (standard.md, section Manifest): where a doc type lives when it is not canonical, budget overrides with reasons, generated-doc regeneration commands, and exclusions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": {
+      "description": "Manifest format version.",
+      "const": 1
+    },
+    "paths": {
+      "description": "Where this repo keeps a doc type when that differs from the canonical path: a directory or glob per type, not each file. Omit types that sit at their canonical path.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "readme": { "$ref": "#/$defs/pathOrPaths" },
+        "agents": { "$ref": "#/$defs/pathOrPaths" },
+        "claude": { "$ref": "#/$defs/pathOrPaths" },
+        "skills": { "$ref": "#/$defs/pathOrPaths" },
+        "rules": { "$ref": "#/$defs/pathOrPaths" },
+        "contributing": { "$ref": "#/$defs/pathOrPaths" },
+        "security": { "$ref": "#/$defs/pathOrPaths" },
+        "changelog": { "$ref": "#/$defs/pathOrPaths" },
+        "license": { "$ref": "#/$defs/pathOrPaths" },
+        "architecture": { "$ref": "#/$defs/pathOrPaths" },
+        "glossary": { "$ref": "#/$defs/pathOrPaths" },
+        "decisions": { "$ref": "#/$defs/pathOrPaths" },
+        "plans": { "$ref": "#/$defs/pathOrPaths" },
+        "guides": { "$ref": "#/$defs/pathOrPaths" },
+        "runbooks": { "$ref": "#/$defs/pathOrPaths" },
+        "reference": { "$ref": "#/$defs/pathOrPaths" },
+        "research": { "$ref": "#/$defs/pathOrPaths" },
+        "records": { "$ref": "#/$defs/pathOrPaths" },
+        "generated": {
+          "description": "Where generated docs live when not docs/generated/. Regeneration commands go in the top-level generated list.",
+          "$ref": "#/$defs/pathOrPaths"
+        }
+      }
+    },
+    "budgets": {
+      "description": "Overrides of the context budgets. Each override needs a reason.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "description": "Always-loaded tier: root AGENTS.md plus its bridge.",
+          "$ref": "#/$defs/rootBudget"
+        },
+        "chain": {
+          "description": "Combined bytes of the AGENTS.md files from the root to one directory.",
+          "$ref": "#/$defs/chainBudget"
+        },
+        "routed": {
+          "description": "Routed tier: nested AGENTS.md and task-table targets.",
+          "$ref": "#/$defs/lineBudget"
+        },
+        "onDemand": {
+          "description": "On-demand tier: docs, ADRs, active plans.",
+          "$ref": "#/$defs/lineBudget"
+        },
+        "files": {
+          "description": "Per-file overrides, for example one long reference doc.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/fileBudget" }
+        }
+      }
+    },
+    "generated": {
+      "description": "One entry per generated doc with the command that regenerates it. Locations go in paths.generated. Commands are data: checks display them and run them only in a disposable CI checkout.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "command"],
+        "properties": {
+          "path": { "$ref": "#/$defs/path" },
+          "command": { "type": "string", "pattern": "\\S" }
+        }
+      }
+    },
+    "components": {
+      "description": "Globs of component directories (services, stacks, packages) that each need a README.md.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/path" }
+    },
+    "exclude": {
+      "description": "Paths or globs the checks skip, in addition to the defaults (.git/, node_modules/, .local/).",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/path" }
+    },
+    "planStaleDays": {
+      "description": "Warn when a plan's updated date is older than this many days.",
+      "type": "integer",
+      "minimum": 1,
+      "default": 30
+    }
+  },
+  "$defs": {
+    "path": {
+      "description": "Repo-relative path or glob with forward slashes. No leading slash or ~, no drive letter, no backslash, no .. segment.",
+      "type": "string",
+      "pattern": "^(?![/~])(?![A-Za-z]:)(?!.*\\\\)(?!(?:.*/)?\\.\\.(?:/|$)).+$"
+    },
+    "pathOrPaths": {
+      "anyOf": [
+        { "$ref": "#/$defs/path" },
+        {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/path" }
+        }
+      ]
+    },
+    "reason": {
+      "description": "Why the override is justified.",
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "limit": { "type": "integer", "minimum": 1 },
+    "rootBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "anyOf": [{ "required": ["lines"] }, { "required": ["bytes"] }],
+      "properties": {
+        "lines": { "$ref": "#/$defs/limit" },
+        "bytes": { "$ref": "#/$defs/limit" },
+        "reason": { "$ref": "#/$defs/reason" }
+      }
+    },
+    "chainBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bytes", "reason"],
+      "properties": {
+        "bytes": { "$ref": "#/$defs/limit" },
+        "reason": { "$ref": "#/$defs/reason" }
+      }
+    },
+    "lineBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lines", "reason"],
+      "properties": {
+        "lines": { "$ref": "#/$defs/limit" },
+        "reason": { "$ref": "#/$defs/reason" }
+      }
+    },
+    "fileBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "reason"],
+      "anyOf": [{ "required": ["lines"] }, { "required": ["bytes"] }],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "lines": { "$ref": "#/$defs/limit" },
+        "bytes": { "$ref": "#/$defs/limit" },
+        "reason": { "$ref": "#/$defs/reason" }
+      }
+    }
+  }
+}

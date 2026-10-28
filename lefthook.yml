@@ -12,6 +12,9 @@ pre-commit:
     - name: skills
       glob: "{skills,templates}/**"
       run: bun run skills:check && bun run skills:lint
+    - name: standard
+      glob: "{standard,skills}/**"
+      run: bun run standard:check
 
 pre-push:
   parallel: true
