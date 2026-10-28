@@ -5,6 +5,11 @@ import { join } from "node:path";
 import { changedSkills, versionError } from "./check-skill-versions";
 import {
   paddedTables,
+  catalogSize,
+  legacyHarEvals,
+  pythonMetadataErrors,
+  skillWarnings,
+  triggerOverlapWarnings,
   validateRepository,
   validateSkill,
 } from "./validate-skills";
@@ -36,7 +41,14 @@ async function fixture(
     Bun.write(join(directory, "LICENSE"), "MIT License\n"),
     writeEvals(directory, {
       skill_name: "sample",
-      evals: [{ id: 1, prompt: "Do it", expected_output: "Done" }],
+      evals: [
+        {
+          id: 1,
+          prompt: "Do it",
+          expected_output: "Done",
+          assertions: ["The output exists"],
+        },
+      ],
     }),
     writeTriggers(directory, TRIGGERS),
   ]);
@@ -50,6 +62,33 @@ afterEach(async () => {
 });
 
 async function writeEvals(directory: string, data: unknown): Promise<void> {
+  // Most fixtures target unrelated checks; give them a normal/boundary corpus.
+  // Schema-failure fixtures below write their exact JSON directly.
+  if (
+    data &&
+    typeof data === "object" &&
+    "evals" in data &&
+    Array.isArray(data.evals)
+  ) {
+    const evals = data.evals.map((item: unknown, index: number) =>
+      item && typeof item === "object"
+        ? { tags: [index === 0 ? "normal" : "boundary"], ...item }
+        : item,
+    );
+    if (evals.length === 1)
+      evals.push({
+        id: 999,
+        prompt: "Handle a boundary",
+        expected_output: "Boundary explained",
+        tags: ["boundary"],
+        assertions: ["The boundary is reported"],
+      });
+    data = {
+      pressure: { required: false, reason: "Fixture has no approval gate." },
+      ...data,
+      evals,
+    };
+  }
   await Bun.write(join(directory, "evals", "evals.json"), JSON.stringify(data));
 }
 
@@ -75,6 +114,28 @@ test("accepts a valid skill and eval corpus", async () => {
     ],
   });
   expect(await validateSkill(directory)).toEqual([]);
+});
+
+test("description length and late trigger guidance are advisory", async () => {
+  const description = `Does ${"a".repeat(330)}. Use when ${"b".repeat(300)}.`;
+  const directory = await fixture(
+    FRONTMATTER.replace(DESCRIPTION, `description: >-\n  ${description}`),
+  );
+  expect(await validateSkill(directory)).toEqual([]);
+  expect(await skillWarnings(directory)).toEqual([
+    expect.stringContaining("editorial target: 600"),
+    expect.stringContaining("editorial target: first 300"),
+  ]);
+  const size = catalogSize([
+    {
+      name: "sample",
+      description: "Does a task.",
+      path: "/skills/sample/SKILL.md",
+    },
+  ]);
+  expect(size.namesAndDescriptions).toBe(18);
+  expect(size.paths).toBe(23);
+  expect(size.rendered).toBeGreaterThan(size.namesAndDescriptions + size.paths);
 });
 
 test("rejects mismatched name, unquoted version and missing license", async () => {
@@ -222,6 +283,80 @@ test("requires sections for bundled scripts and references", async () => {
   expect(await validateSkill(directory)).toEqual([
     'sample: SKILL.md needs a "## Scripts" section',
     'sample: SKILL.md needs a "## References" section',
+    "sample: bundled scripts need discoverable tests (tests/**/test_*.py)",
+  ]);
+});
+
+test("parses PEP 723 TOML and checks the documented Python minimum", () => {
+  const source =
+    '# /// script\n# requires-python = ">=3.10"\n# dependencies = []\n# ///\n';
+  expect(pythonMetadataErrors(source, "Requires Python 3.10+.")).toEqual([]);
+  expect(pythonMetadataErrors(source, "Requires Python 3.11+.")).toEqual([
+    "requires-python must match compatibility minimum (>=3.11)",
+  ]);
+  expect(
+    pythonMetadataErrors(
+      source.replace(">=3.10", "broken"),
+      "Requires Python 3.10+.",
+    ),
+  ).not.toEqual([]);
+  expect(
+    pythonMetadataErrors(source.replace("[]", "["), "Requires Python 3.10+."),
+  ).toEqual(["PEP 723 metadata must be valid TOML"]);
+  expect(
+    pythonMetadataErrors(
+      '# /// script\n# requires-python = ">=3.10"',
+      "Requires Python 3.10+.",
+    ),
+  ).toEqual(["needs one complete PEP 723 script block"]);
+});
+
+test("checks real bundled command examples but exempts path mentions, fictional paths and helper modules", async () => {
+  const directory = await fixture(
+    FRONTMATTER,
+    `${BODY}\n## Scripts\n\nSee \`scripts/tool.sh\`.\n- \`scripts/tool.sh show\` describes the selected command.\n\n\`bash scripts/tool.sh --help\`\n\n\`\`\`bash\nscripts/tool.sh --help\n\`\`\`\n\n## References\n\nSee \`references/examples.md\`.\n`,
+  );
+  await Bun.write(
+    join(directory, "scripts", "tool.sh"),
+    "#!/bin/bash\nexit 0\n",
+  );
+  await Bun.write(
+    join(directory, "scripts", "helpers.py"),
+    "def utility():\n    return 1\n",
+  );
+  await Bun.write(
+    join(directory, "tests", "test_tool.py"),
+    "import unittest\n",
+  );
+  await Bun.write(
+    join(directory, "references", "examples.md"),
+    "```bash\n./scripts/deploy.sh --dry-run\n```\n",
+  );
+  expect(await validateSkill(directory)).toEqual([
+    expect.stringContaining("run scripts/tool.sh through its interpreter"),
+  ]);
+  await Bun.write(
+    join(directory, "scripts", "helpers.py"),
+    'if __name__ == "__main__":\n    print("hello")\n',
+  );
+  expect(await validateSkill(directory)).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining(
+        "helpers.py needs one complete PEP 723 script block",
+      ),
+    ]),
+  );
+});
+
+test("explicit no-argument execution requires an interpreter while plain path references are valid", async () => {
+  const directory = await fixture(
+    FRONTMATTER,
+    `${BODY}\n## Scripts\n\nSee \`scripts/tool.sh\`.\n\n\`scripts/tool.sh\`\n\nRun \`scripts/tool.sh\`.\n`,
+  );
+  await Bun.write(join(directory, "scripts/tool.sh"), "#!/bin/bash\nexit 0\n");
+  await Bun.write(join(directory, "tests/test_tool.py"), "import unittest\n");
+  expect(await validateSkill(directory)).toEqual([
+    expect.stringContaining("run scripts/tool.sh through its interpreter"),
   ]);
 });
 
@@ -298,6 +433,191 @@ test("reports each invalid eval field", async () => {
     "sample: eval 1 assertions must be nonempty strings",
     "sample: eval 1 has unknown keys: expectations",
   ]);
+});
+
+test("requires assertions and valid tags without treating two labels as two cases", async () => {
+  const normal = {
+    id: 1,
+    prompt: "Do the task",
+    expected_output: "Output",
+    assertions: ["Output exists"],
+    tags: ["normal"],
+  };
+  const boundary = { ...normal, id: 2, tags: ["boundary"] };
+  const policy = { required: false, reason: "No separate approval boundary." };
+  for (const [evals, message] of [
+    [
+      [{ ...normal, assertions: undefined }, boundary],
+      "assertions must be nonempty strings",
+    ],
+    [
+      [{ ...normal, assertions: [] }, boundary],
+      "assertions must be nonempty strings",
+    ],
+    [[{ ...normal, tags: undefined }, boundary], "tags must be unique values"],
+    [[normal, { ...boundary, tags: ["typo"] }], "tags must be unique values"],
+    [
+      [normal, { ...boundary, tags: ["boundary", "boundary"] }],
+      "tags must be unique values",
+    ],
+    [[{ ...normal, tags: ["normal", "boundary"] }], "needs distinct normal"],
+  ] as const) {
+    const directory = await fixture();
+    await Bun.write(
+      join(directory, "evals/evals.json"),
+      JSON.stringify({ skill_name: "sample", pressure: policy, evals }),
+    );
+    expect(await validateSkill(directory)).toEqual(
+      expect.arrayContaining([expect.stringContaining(message)]),
+    );
+  }
+});
+
+test("requires an explicit reviewed pressure decision and cases when required", async () => {
+  const directory = await fixture();
+  const evals = [
+    {
+      id: 1,
+      prompt: "Normal",
+      expected_output: "Output",
+      assertions: ["Output exists"],
+      tags: ["normal"],
+    },
+    {
+      id: 2,
+      prompt: "Boundary",
+      expected_output: "Boundary",
+      assertions: ["Boundary handled"],
+      tags: ["boundary"],
+    },
+  ];
+  for (const pressure of [
+    undefined,
+    { required: true, reason: "" },
+    { required: "yes", reason: "Approval gate" },
+  ]) {
+    await Bun.write(
+      join(directory, "evals/evals.json"),
+      JSON.stringify({ skill_name: "sample", pressure, evals }),
+    );
+    expect(await validateSkill(directory)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("reviewed for this skill"),
+      ]),
+    );
+  }
+  const pressure = {
+    required: true,
+    reason: "Approval gate must hold under urgency.",
+  };
+  await Bun.write(
+    join(directory, "evals/evals.json"),
+    JSON.stringify({ skill_name: "sample", pressure, evals }),
+  );
+  expect(await validateSkill(directory)).toEqual([
+    "sample: pressure.required needs a pressure-tagged eval",
+  ]);
+  evals[1].tags.push("pressure");
+  await Bun.write(
+    join(directory, "evals/evals.json"),
+    JSON.stringify({ skill_name: "sample", pressure, evals }),
+  );
+  expect(await validateSkill(directory)).toEqual([]);
+});
+
+test("normalizes duplicate trigger queries and flags conflicting labels", async () => {
+  const directory = await fixture();
+  for (const should_trigger of [true, false]) {
+    await writeTriggers(directory, [
+      ...TRIGGERS,
+      { query: "  do  THE task\n", should_trigger },
+    ]);
+    const errors = await validateSkill(directory);
+    expect(errors).toEqual([
+      expect.stringContaining("duplicate trigger query"),
+    ]);
+    expect(errors[0].includes("conflicting should_trigger labels")).toBe(
+      !should_trigger,
+    );
+  }
+});
+
+test("cross-skill positive trigger overlap is advisory", async () => {
+  const root = await tempDir();
+  await writeTriggers(join(root, "skills/a-skill"), TRIGGERS);
+  await writeTriggers(join(root, "skills/b-skill"), [
+    { query: " do THE task ", should_trigger: true },
+  ]);
+  expect(await triggerOverlapWarnings(root, ["a-skill", "b-skill"])).toEqual([
+    expect.stringContaining("review whether collaboration is intended"),
+  ]);
+});
+
+test("only the exact main HAR corpus receives the temporary schema exception", async () => {
+  const source = await Bun.file(
+    join(import.meta.dir, "fixtures/main-har-evals.json"),
+  ).text();
+  expect(legacyHarEvals("analyze-har-workflows", source)).toBe(true);
+  expect(legacyHarEvals("sample", source)).toBe(false);
+  expect(legacyHarEvals("analyze-har-workflows", `${source}\n`)).toBe(false);
+  const directory = join(await tempDir(), "analyze-har-workflows");
+  await Bun.write(
+    join(directory, "SKILL.md"),
+    `---\n${FRONTMATTER.replace("name: sample", "name: analyze-har-workflows")}\n---\n${BODY}`,
+  );
+  await Bun.write(join(directory, "LICENSE"), "MIT\n");
+  await writeTriggers(directory, TRIGGERS);
+  await Bun.write(join(directory, "evals/evals.json"), source);
+  expect(
+    (await validateSkill(directory)).some((error) =>
+      /tags|pressure/.test(error),
+    ),
+  ).toBe(false);
+  expect(await skillWarnings(directory)).toEqual([
+    expect.stringContaining("temporary exact-corpus exception"),
+  ]);
+  await Bun.write(join(directory, "evals/evals.json"), `${source}\n`);
+  expect(await validateSkill(directory)).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("reviewed for this skill"),
+    ]),
+  );
+  expect(await skillWarnings(directory)).toEqual([]);
+  const modern = {
+    skill_name: "analyze-har-workflows",
+    pressure: {
+      required: true,
+      reason: "Replay and privacy boundaries must hold under pressure.",
+    },
+    evals: [
+      {
+        id: 1,
+        prompt: "Analyze a capture",
+        expected_output: "Evidence",
+        tags: ["normal"],
+        assertions: ["Evidence is grounded"],
+      },
+      {
+        id: 2,
+        prompt: "Analyze under pressure",
+        expected_output: "Boundary preserved",
+        tags: ["pressure"],
+        assertions: ["No unsupported replay is claimed"],
+      },
+    ],
+  };
+  const migrated = JSON.stringify(modern);
+  expect(legacyHarEvals("analyze-har-workflows", migrated)).toBe(false);
+  await Bun.write(join(directory, "evals/evals.json"), migrated);
+  expect(await validateSkill(directory)).toEqual([]);
+  expect(await skillWarnings(directory)).toEqual([]);
+  modern.evals[1].assertions = [];
+  await Bun.write(join(directory, "evals/evals.json"), JSON.stringify(modern));
+  expect(await validateSkill(directory)).toEqual(
+    expect.arrayContaining([
+      expect.stringContaining("assertions must be nonempty"),
+    ]),
+  );
 });
 
 test("reports malformed and missing eval files", async () => {
