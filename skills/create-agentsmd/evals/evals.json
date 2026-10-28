@@ -1,5 +1,9 @@
 {
   "skill_name": "create-agentsmd",
+  "pressure": {
+    "required": false,
+    "reason": "Local instruction authoring has no separate destructive or external-mutation approval boundary; normal and monorepo boundary cases cover its scope."
+  },
   "evals": [
     {
       "id": 1,
@@ -10,7 +14,8 @@
         "Every setup, build, lint, test, or type-check command is supported by repository evidence",
         "The document contains repository-specific guidance rather than generic coding advice",
         "The final response distinguishes checks that were actually executed from instructions merely discovered in the repository"
-      ]
+      ],
+      "tags": ["normal"]
     },
     {
       "id": 2,
@@ -21,7 +26,8 @@
         "Generic framework explanations and unenforced stylistic platitudes are removed",
         "Unsupported requirements are removed or explicitly qualified",
         "The resulting document is more concise without losing commands or constraints that change agent behavior"
-      ]
+      ],
+      "tags": ["normal"]
     },
     {
       "id": 3,
@@ -32,7 +38,8 @@
         "Subproject-specific commands or constraints are scoped to the relevant subtree when nested files are warranted",
         "Nested files do not repeat root-level guidance unnecessarily",
         "No provider-specific AGENTS.md extensions are introduced unless repository evidence requires them"
-      ]
+      ],
+      "tags": ["boundary"]
     }
   ]
 }

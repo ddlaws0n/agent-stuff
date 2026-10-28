@@ -2,6 +2,7 @@
 """Fail-closed, read-only GitHub CLI fixture for the skill pilot."""
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -31,20 +32,54 @@ def items():
 
 def main():
     argv = sys.argv[1:]
+    api = argv[:1] == ["api"]
+    graphql = api and "graphql" in argv[1:]
+    input_path = None
+    fields = {}
+    method = None
+    for index, argument in enumerate(argv):
+        if argument == "--input" and index + 1 < len(argv):
+            input_path = argv[index + 1]
+        elif argument.startswith("--input="):
+            input_path = argument.split("=", 1)[1]
+        elif argument in ("-X", "--method") and index + 1 < len(argv):
+            method = argv[index + 1].upper()
+        elif argument.startswith("-X") and len(argument) > 2:
+            method = argument[2:].upper()
+        elif argument.startswith("--method="):
+            method = argument.split("=", 1)[1].upper()
+        parameter = None
+        if argument in ("-f", "-F", "--field", "--raw-field") and index + 1 < len(argv):
+            parameter = argv[index + 1]
+        elif argument.startswith(("--field=", "--raw-field=")):
+            parameter = argument.split("=", 1)[1]
+        elif argument.startswith(("-f", "-F")) and len(argument) > 2:
+            parameter = argument[2:]
+        if parameter is not None:
+            key, _, value = parameter.partition("=")
+            fields[key] = value
     body = {}
-    if argv[:2] == ["api", "graphql"]:
+    known_body = input_path is None
+    if graphql and input_path == "-":
         try:
-            body = json.load(sys.stdin)
+            value = json.load(sys.stdin)
+            if isinstance(value, dict):
+                body = value
+                known_body = True
         except (ValueError, OSError):
             pass
-    query = body.get("query", "")
-    log = Path(os.environ.get("GH_MOCK_LOG", Path(__file__).resolve().parents[1] / "gh-calls.jsonl"))
-    with log.open("a", encoding="utf-8") as out:
-        out.write(json.dumps({"argv": argv, "operation": "mutation" if "mutation" in query.lower() else "read", "query": query[:160], "variables": body.get("variables", {})}) + "\n")
-    if "mutation" in query.lower() or any(x in argv for x in ("edit", "create", "delete", "close", "add-item", "item-edit")):
-        sys.exit("Mock refuses all GitHub writes")
+    query = fields.get("query", body.get("query", ""))
+    if not isinstance(query, str):
+        query = ""
+    mutation = any(x in argv for x in ("edit", "create", "delete", "close", "add-item", "item-edit"))
+    if api:
+        if graphql:
+            mutation = mutation or any(isinstance(value, str) and re.search(r"\bmutation\b", value, re.I)
+                                       for value in (query, body.get("query", "")))
+        else:
+            mutation = mutation or (method or ("POST" if fields else "GET")) not in ("GET", "HEAD")
     data = None
-    if argv[:2] == ["api", "graphql"]:
+    if graphql:
         if "projectsV2(first: 10)" in query:
             data = {"repository": {"projectsV2": {"nodes": [PROJECT]}}}
         elif "projectV2(number:" in query:
@@ -56,8 +91,7 @@ def main():
         elif "items(first: 100" in query:
             data = {"node": {"items": {"pageInfo": {"hasNextPage": False, "endCursor": None}, "nodes": items()}}}
         if data is not None:
-            print(json.dumps({"data": data}))
-            return
+            data = {"data": data}
     elif argv[:2] == ["project", "list"]:
         data = {"projects": [PROJECT]}
     elif argv[:2] == ["project", "view"]:
@@ -65,11 +99,16 @@ def main():
     elif argv[:2] == ["project", "item-list"]:
         data = {"items": [{"id": row["id"], "content": row["content"], "status": next((v for v in row["fieldValues"]["nodes"] if v["field"]["name"] == "Status"), None), "priority": next((v for v in row["fieldValues"]["nodes"] if v["field"]["name"] == "Priority"), None), "size": next((v for v in row["fieldValues"]["nodes"] if v["field"]["name"] == "Size"), None)} for row in items()]}
     elif argv[:2] == ["auth", "status"]:
-        print("Mock GitHub CLI: fixture only; no live access")
-        return
-    if data is None:
+        data = "Mock GitHub CLI: fixture only; no live access"
+    operation = "mutation" if mutation else ("read" if data is not None and known_body and not query.startswith("@") else "unknown")
+    log = Path(os.environ.get("GH_MOCK_LOG", Path(__file__).resolve().parents[1] / "gh-calls.jsonl"))
+    with log.open("a", encoding="utf-8") as out:
+        out.write(json.dumps({"argv": argv, "operation": operation, "query": query[:160], "variables": body.get("variables", {})}) + "\n")
+    if mutation:
+        sys.exit("Mock refuses all GitHub writes")
+    if operation == "unknown":
         sys.exit("Mock refuses unsupported gh command (no live fallback): " + " ".join(argv))
-    print(json.dumps(data))
+    print(data if isinstance(data, str) else json.dumps(data))
 
 
 if __name__ == "__main__":

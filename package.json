@@ -7,7 +7,11 @@
     "prepare": "lefthook install",
     "build": "bun build ./scripts/validate-skills.ts --target bun --outdir dist",
     "typecheck": "tsc --noEmit",
+    "typecheck:python": "bun run ./scripts/typecheck-python.ts",
     "lint": "oxlint --type-aware --deny-warnings",
+    "lint:python": "uvx ruff==0.17.3 check --select E9,F63,F7,F82 skills eval/harness scripts",
+    "lint:shell": "bun run ./scripts/lint-shell.ts",
+    "lint:workflows": "uv run skills/create-github-actions/scripts/validate-workflows.py .github/workflows --require-sha --strict",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "skills:check": "bun run ./scripts/validate-skills.ts",
@@ -17,8 +21,11 @@
     "skills:versions": "bun run ./scripts/check-skill-versions.ts",
     "test": "bun test",
     "test:python": "bun run ./scripts/test-skills.ts",
-    "test:eval": "uv run python -B -m unittest discover -s eval/harness -p 'test_*.py'",
-    "check": "bun run typecheck && bun run lint && bun run format:check && bun run skills:check && bun run skills:lint && bun run skills:spec && bun run test && bun run test:python && bun run test:eval"
+    "test:python:minimum": "bun run ./scripts/test-skills.ts --minimum",
+    "test:installed": "bun run ./scripts/test-installed-skills.ts",
+    "test:tooling:python": "uv run python -B scripts/run-python-tests.py scripts/installed-skills",
+    "test:eval": "uv run python -B scripts/run-python-tests.py eval/harness",
+    "check": "bun run typecheck && bun run typecheck:python && bun run lint && bun run lint:python && bun run lint:shell && bun run lint:workflows && bun run format:check && bun run skills:check && bun run skills:lint && bun run skills:spec && bun run test && bun run test:python && bun run test:tooling:python && bun run test:eval"
   },
   "dependencies": {
     "yaml": "^2.9.1"
