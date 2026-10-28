@@ -23,7 +23,7 @@ Where a repository keeps documentation for people and coding agents, what each d
 - **Moves.** Move or rename a doc only when the user asks, after the user approves the list of moves, and update every inbound link.
 - **Path resolution.** Use the manifest path for a doc type if declared, else the canonical path (§ Doc types).
 - **Verify.** After any change, check the touched docs against § Checks, by hand until the docs-check action exists.
-- **Configuration is not docs.** Markdown that a workflow, script, or tool reads as input (AI review prompts, issue and PR templates, workflow inputs) is configuration wherever it lives. No docs skill edits or moves it; report it instead.
+- **Configuration is not docs.** Markdown whose contents a workflow, script, or tool uses as operational input (AI review prompts, issue and PR templates, workflow inputs) is configuration wherever it lives. No docs skill edits or moves it; report it instead. A doc that a tool only validates, renders, or link-checks is still a doc.
 
 ## Layout
 
