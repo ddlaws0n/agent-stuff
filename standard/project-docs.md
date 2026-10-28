@@ -196,7 +196,7 @@ Sections appear in this order. Include only what the repo needs; each item earns
 1. **Purpose and damaging constraints.** One line of purpose, then the constraints that cause damage if missed (destructive commands, generated files, protected paths).
 2. **Commands.** Exact setup, full-check, and single-test commands, copied from the repo's scripts.
 3. **Task table.** `| Task | Read first |`, one row per common task, targets as Markdown links.
-4. **Folder routing.** One line per nested `AGENTS.md`, such as "Working under `packages/api/`? Read [packages/api/AGENTS.md](packages/api/AGENTS.md) first." Some agents load only the launch directory and its ancestors (§ Agent loading reference), so routing is how they find nested files.
+4. **Folder routing.** One line per nested `AGENTS.md`, such as `Working under packages/api/? Read [packages/api/AGENTS.md](packages/api/AGENTS.md) first.` Some agents load only the launch directory and its ancestors (§ Agent loading reference), so routing is how they find nested files.
 5. **Gotchas.** Repo-specific failure modes, not generic advice.
 
 Rules:
