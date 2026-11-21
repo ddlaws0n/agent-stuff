@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
+import sys
 import tempfile
 import threading
 import unittest
@@ -60,6 +60,7 @@ class FolioTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.server.shutdown()
+        cls.server.server_close()
 
     def setUp(self):
         FakeFolio.calls = []
@@ -67,7 +68,6 @@ class FolioTests(unittest.TestCase):
         self.cache = Path(self._tmp.name)
         self.token_file = self.cache / "save-to-folio" / "token"
         self.env = {
-            **os.environ,
             "FOLIO_API_URL": f"http://127.0.0.1:{self.server.server_port}",
             "XDG_CACHE_HOME": str(self.cache),
             "FOLIO_USERNAME": "me@example.com",
@@ -80,7 +80,7 @@ class FolioTests(unittest.TestCase):
 
     def run_script(self, *args: str) -> tuple[int, list[dict]]:
         proc = subprocess.run(
-            ["python3", str(SCRIPT), *args], env=self.env, capture_output=True, text=True, check=False
+            [sys.executable, str(SCRIPT), *args], env=self.env, capture_output=True, text=True, check=False
         )
         return proc.returncode, [json.loads(line) for line in proc.stdout.splitlines()]
 
@@ -112,7 +112,7 @@ class FolioTests(unittest.TestCase):
     def test_bad_credentials_fail_without_success_report(self):
         self.env["FOLIO_PASSWORD"] = "wrong"
         proc = subprocess.run(
-            ["python3", str(SCRIPT), "save", "https://example.com/a"], env=self.env, capture_output=True, text=True, check=False
+            [sys.executable, str(SCRIPT), "save", "https://example.com/a"], env=self.env, capture_output=True, text=True, check=False
         )
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("rejected", proc.stderr)
