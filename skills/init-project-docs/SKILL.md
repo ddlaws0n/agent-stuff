@@ -18,7 +18,7 @@ compatibility: >-
   Schema 2020-12 validator.
 metadata:
   author: ddlaws0n
-  version: "0.1.1"
+  version: "0.1.2"
 ---
 
 # Initialize project docs

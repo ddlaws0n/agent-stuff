@@ -33,7 +33,7 @@ List every proposed mutation, then stop for approval as `SKILL.md` requires:
 
 - Establish the canonical source before replacing duplicates with links.
 - Move files with `git mv` or another version-control-aware command when possible.
-- Update all affected relative links, anchors, navigation config, and instruction-file path references.
+- Before moving a page, resolve each outgoing relative link from its original parent and keep the target path and fragment. After the move, calculate the path from the new parent to that same target (for example, `os.path.relpath(target, new_parent)`), reattach the fragment, and check it resolves to the original file and heading. Update inbound links, navigation, and instruction-file references.
 - Never renumber an ADR; the ADR and plan lifecycle rules are in `references/standard.md` § Content contracts.
 - Keep commits or change groups small enough to review and revert.
 
