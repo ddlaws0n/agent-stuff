@@ -35,8 +35,8 @@ Add the `[Unreleased]` link definition (see Compare links) once a release tag ex
 ## Evidence commands
 
 - Last release: `git describe --tags --abbrev=0 --match 'v[0-9]*'` (adjust the match to the existing tag prefix, or none). List tags with `git tag --sort=-v:refname`.
-- No tags: use `git log HEAD` (a `<root>..HEAD` range would omit the root commit) and say the range covers all history.
-- Commits: `git log --no-merges --format='%h %s' <base>..HEAD`; add `--merges` or `--first-parent` to see merge-commit pull requests.
+- No tags: use `HEAD` as the range in the filtered log (a `<root>..HEAD` range would omit the root commit) and say the range covers all history.
+- Commits: use the filtered history in SKILL.md. Add `--no-merges`, `--merges`, or `--first-parent` as needed.
 - Pull requests (optional): `gh pr list --state merged --base <branch> --limit 200 --search "merged:>=<tag date>" --json number,title,body,labels,url`. `gh` stops at `--limit`; if you get exactly that many, narrow the date window and repeat. Without `gh` or network access, use commits only and say so.
 - Shallow clone (`git rev-parse --is-shallow-repository` prints `true`): run `git fetch --unshallow --tags` if the user allows, otherwise report that the range may be incomplete.
 - Release or backport branches: use the latest tag reachable from the branch being changelogged, not the highest tag in the repository. Skip cherry-picks whose entry already exists under another version.
