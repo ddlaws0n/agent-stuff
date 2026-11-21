@@ -21,7 +21,7 @@
     "skills:spec": "for skill in skills/*/; do uvx --from skills-ref==0.1.1 agentskills validate \"$skill\" || exit 1; done",
     "skills:scan": "uvx --from cisco-ai-skill-scanner==2.2.0 skill-scanner scan-all skills --fail-on-severity high",
     "skills:versions": "bun run ./scripts/check-skill-versions.ts",
-    "test": "bun test",
+    "test": "bun test --path-ignore-patterns '**/eval/results/**'",
     "test:python": "bun run ./scripts/test-skills.ts",
     "test:python:minimum": "bun run ./scripts/test-skills.ts --minimum",
     "test:installed": "bun run ./scripts/test-installed-skills.ts",
