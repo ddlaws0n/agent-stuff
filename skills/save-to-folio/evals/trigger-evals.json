@@ -1,0 +1,42 @@
+[
+  {
+    "query": "save this article to Folio https://example.com/post",
+    "should_trigger": true
+  },
+  {
+    "query": "can you add these links to my folio reading list",
+    "should_trigger": true
+  },
+  {
+    "query": "send the three long reads you found to Folio and tag them travel",
+    "should_trigger": true
+  },
+  {
+    "query": "push https://example.org/essay into savewithfolio",
+    "should_trigger": true
+  },
+  {
+    "query": "queue these URLs in Folio so I can read them on the plane",
+    "should_trigger": true
+  },
+  { "query": "is my Folio login still working?", "should_trigger": true },
+  {
+    "query": "save to folio: https://example.net/a https://example.net/b",
+    "should_trigger": true
+  },
+  { "query": "put this blog post in my Folio app", "should_trigger": true },
+  { "query": "save this article to Pocket", "should_trigger": false },
+  { "query": "add this link to Instapaper", "should_trigger": false },
+  {
+    "query": "turn these articles into an EPUB for my e-reader",
+    "should_trigger": false
+  },
+  { "query": "bookmark this page in Chrome", "should_trigger": false },
+  { "query": "save this URL to Readwise Reader", "should_trigger": false },
+  {
+    "query": "create a portfolio website for my design work",
+    "should_trigger": false
+  },
+  { "query": "download this article as a PDF", "should_trigger": false },
+  { "query": "store my Folio password in 1Password", "should_trigger": false }
+]
