@@ -13,7 +13,7 @@ compatibility: >-
   The metadata example uses jq.
 metadata:
   author: ddlaws0n
-  version: "0.2.1"
+  version: "0.2.2"
 ---
 
 # 1Password vault and item operations
@@ -44,4 +44,8 @@ If another check would distinguish the causes, use one scoped read such as `op i
 
 ## Output
 
-Report requested metadata, created item location, or the redacted access error and next action. For a request to display a password, direct the user to the item in 1Password or pass it privately to the authorized consumer.
+For a confirmed Login created with a generated password, use the actual item title and vault in this reply:
+
+> Created the {title} Login in the {vault} vault. Open 1Password → {vault} → {title} to view the generated password.
+
+Use the known location directly, without fetching the password for display. For a denied create, report the redacted error and next action. For an uncertain create, report what remains unconfirmed. For lookups, return the requested metadata.
