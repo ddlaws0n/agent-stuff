@@ -13,7 +13,7 @@ compatibility: >-
   and FOLIO_PASSWORD set.
 metadata:
   author: ddlaws0n
-  version: "0.2.2"
+  version: "0.2.3"
 ---
 
 # Save to Folio

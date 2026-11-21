@@ -22,6 +22,7 @@ GOOD = "good-token"
 class FakeFolio(BaseHTTPRequestHandler):
     calls: ClassVar[list[tuple[str, str, dict, str]]] = []
 
+    truncate_once: ClassVar[tuple[str, str] | None] = None
     redirects: ClassVar[dict[str, str]] = {}
     scripted_replies: ClassVar[dict[tuple[str, str], list[tuple[int, dict]]]] = {}
 
@@ -33,6 +34,14 @@ class FakeFolio(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length)) if length else {}
         auth = self.headers.get("Authorization", "")
         FakeFolio.calls.append((self.command, self.path, body, auth))
+        if FakeFolio.truncate_once == (self.command, self.path):
+            FakeFolio.truncate_once = None
+            self.send_response(200)
+            self.send_header("Content-Length", "128")
+            self.end_headers()
+            self.wfile.write(b"private-partial-response")
+            self.close_connection = True
+            return
         if target := FakeFolio.redirects.get(self.path):
             self.send_response(302)
             self.send_header("Location", target)
@@ -76,6 +85,7 @@ class FolioTests(unittest.TestCase):
         cls.server.server_close()
 
     def setUp(self):
+        FakeFolio.truncate_once = None
         FakeFolio.redirects = {}
         FakeFolio.calls = []
         FakeFolio.scripted_replies = {}
@@ -195,6 +205,48 @@ class FolioTests(unittest.TestCase):
         self.assertFalse(out[0]["ok"])
         self.assertIn("no item ID", out[0]["error"])
         self.assertEqual([c[:2] for c in FakeFolio.calls], [("POST", "/sessions"), ("POST", "/items")])
+
+    def test_truncated_create_or_tag_response_continues_batch(self):
+        first, second = "https://example.com/first", "https://example.com/second"
+        for method, path in (("POST", "/items"), ("PATCH", "/items/i1")):
+            with self.subTest(method=method):
+                FakeFolio.calls.clear()
+                FakeFolio.truncate_once = (method, path)
+                proc = subprocess.run(
+                    [sys.executable, str(SCRIPT), "save", first, second, "--tag", "plane"],
+                    env=self.env, capture_output=True, text=True,
+                )
+                self.assertEqual(proc.returncode, 1)
+                self.assertEqual(proc.stderr, "")
+                self.assertNotIn("private-partial-response", proc.stdout)
+                failed, saved = map(json.loads, proc.stdout.splitlines())
+                self.assertEqual(failed["url"], first)
+                self.assertFalse(failed["ok"])
+                self.assertIn("HTTP response", failed["error"])
+                if method == "PATCH":
+                    self.assertTrue(failed["saved"])
+                    self.assertEqual(failed["id"], "i1")
+                else:
+                    self.assertNotIn("saved", failed)
+                self.assertEqual((saved["url"], saved["ok"], saved["tags"]), (second, True, ["plane"]))
+                self.assertEqual([body["item"]["url"] for m, p, body, _ in FakeFolio.calls
+                                  if (m, p) == ("POST", "/items")], [first, second])
+
+    def test_op_password_preserves_whitespace(self):
+        password = "  fixture\tvalue\r\n \t\n"
+        (self.cache / "password").write_bytes(password.encode())
+        op = self.cache / "op"
+        op.write_text(
+            '#!/bin/sh\n[ "$1" = read ] || exit 1\n'
+            'cat "$FIXTURE_PASSWORD"\n[ "$2" = --no-newline ] || echo\n'
+        )
+        op.chmod(0o700)
+        del self.env["FOLIO_PASSWORD"]
+        self.env.update(PATH=f"{self.cache}:/usr/bin:/bin", FIXTURE_PASSWORD=str(self.cache / "password"))
+        FakeFolio.scripted_replies[("POST", "/sessions")] = [(200, {"token": GOOD})]
+        code, _ = self.run_script("check")
+        self.assertEqual(code, 0)
+        self.assertEqual(FakeFolio.calls[0][2]["user"]["password"], password)
 
     def test_dry_run_sends_nothing(self):
         code, out = self.run_script("save", "https://example.com/a", "--dry-run")

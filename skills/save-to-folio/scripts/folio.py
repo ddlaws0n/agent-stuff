@@ -12,6 +12,7 @@ URL failed.
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import subprocess
@@ -73,6 +74,8 @@ def request(method: str, path: str, body: dict | None = None, token: str | None 
         err.close()
         error = AuthError if err.code == 401 else RuntimeError
         raise error(f"{method} {path} -> HTTP {err.code}") from None
+    except http.client.HTTPException:
+        raise RuntimeError(f"{method} {path} -> invalid or incomplete HTTP response") from None
     try:
         payload = json.loads(raw) if raw else {}
     except (ValueError, UnicodeError):
@@ -87,12 +90,12 @@ def op_read(field: str) -> str:
         return os.environ[f"FOLIO_{field.upper()}"]
     ref = f"{OP_ITEM}/{field}"
     try:
-        out = subprocess.run(["op", "read", ref], capture_output=True, text=True, check=True)
+        out = subprocess.run(["op", "read", "--no-newline", ref], capture_output=True, check=True)
     except FileNotFoundError:
         raise RuntimeError("1Password CLI (op) not found; install it or set FOLIO_USERNAME/FOLIO_PASSWORD") from None
     except subprocess.CalledProcessError as err:
         raise RuntimeError(f"op read {ref} failed (exit {err.returncode})") from None
-    return out.stdout.strip()
+    return out.stdout.decode("utf-8")
 
 
 def login() -> str:
