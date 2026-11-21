@@ -17,7 +17,7 @@ description: >-
 license: MIT
 metadata:
   author: ddlaws0n
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Maintain project documentation
@@ -62,7 +62,7 @@ Create and maintain accurate project-owned documentation without expanding scope
 - **Replace an unsafe instruction, don't just remove it.** Name the approved way to do the job, or who to escalate to (standard.md § Trust and safety).
 - **Docs-site navigation breaks silently on moves.** Search for and update nav config such as `mkdocs.yml`, Docusaurus `sidebars.js`, VitePress `config`, `SUMMARY.md`, or `_toc.yml` alongside relative links.
 - **CHANGELOG.md belongs to update-changelog.** Do not create or edit it here, even as a side effect of a docs sync; that skill also detects generated changelogs. Report any changelog content that needs a follow-up.
-- **Check links concretely.** Use relative links for repository-local content. After a move or rename, `git grep -n 'old/path'` and `git grep -n 'old-anchor'` must return nothing outside intended history. Resolve each changed relative link against the file's directory, respect case-sensitive paths, and match anchors to actual heading slugs. Use a repository link checker (for example `lychee` or `markdown-link-check`) when one is configured.
+- **Check links concretely.** Use relative links for repository-local content. After a move or rename, `git grep -n 'old/path'` and `git grep -n 'old-anchor'` must return nothing outside intended history. Resolve every relative link in a moved file from its new parent, including links whose text stayed unchanged. Check path case and heading anchors. Use a repository link checker (for example `lychee` or `markdown-link-check`) when one is configured.
 - **Examples must run.** Use safe placeholders, never secrets, include a verification signal, and state when an example was not run. Use four backticks for an outer Markdown example that contains triple-backtick fences.
 - **Validate before finishing.** Check every changed link and anchor as above; run documented commands and examples where practical; check Markdown formatting and fenced blocks; search for unresolved placeholders and for stale variants of renamed terms, versions, paths, and commands, and for conflicting versions; confirm no secrets, private data, or unsupported values were introduced; review the final diff for unrelated rewrites, generated or vendored edits, and lost or accidentally changed instruction content. After a multi-file change, audit removals (consolidating.md step 5).
 

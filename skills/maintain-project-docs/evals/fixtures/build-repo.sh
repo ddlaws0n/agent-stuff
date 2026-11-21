@@ -30,10 +30,28 @@ write README.md <<'EOF'
 
 Compose stacks for Acme's self-hosted services.
 
+- [Setup](docs/setup.md)
 - [Operations](docs/operations.md)
 - [Emergency deploy](docs/runbooks/emergency-deploy.md)
 - [Windmill plan](services/windmill/PLAN.md)
 - [OIDC migration plan](docs/plans/oidc-migration.md)
+EOF
+write docs/setup.md <<'EOF'
+# Local setup
+
+Read the [media configuration](../services/media/compose.yml) and [ports](reference/media.md#ports) before starting the stack.
+EOF
+write docs/reference/media.md <<'EOF'
+# Media
+
+## Ports
+
+The Compose file defines the published ports.
+EOF
+write mkdocs.yml <<'EOF'
+site_name: Acme services
+nav:
+  - Setup: setup.md
 EOF
 write docs/manifest.json <<'EOF'
 { "version": 1, "paths": { "decisions": "adr" } }

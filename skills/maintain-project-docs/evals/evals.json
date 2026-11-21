@@ -7,17 +7,18 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Move docs/setup.md to docs/getting-started/installation.md; it's a better home for it.",
+      "prompt": "Move docs/setup.md to docs/getting-started/installation.md; it's a better home for it. Setup: build the repository with `sh evals/fixtures/build-repo.sh <dir>` and work inside it.",
       "expected_output": "The file is moved, every inbound relative link and anchor, the docs-site nav entry, and any agent-instruction path reference are updated, and AGENTS.md/CLAUDE.md content is otherwise unchanged.",
       "assertions": [
         "docs/getting-started/installation.md exists and docs/setup.md does not.",
         "`git grep -n 'setup.md'` returns no references to the old path outside version history or changelogs.",
-        "The docs-site navigation config (for example mkdocs.yml) lists docs/getting-started/installation.md and not docs/setup.md.",
+        "The docs-site navigation entry resolves to docs/getting-started/installation.md using the site configuration’s path base; it has no entry for the old page.",
         "Every relative link inside the moved file resolves from its new directory.",
         "`git diff` for AGENTS.md and CLAUDE.md is empty or changes only lines containing the old path.",
         "The final response lists the moved file, each file whose links were updated, and the link check performed."
       ],
-      "tags": ["normal"]
+      "tags": ["normal"],
+      "files": ["evals/fixtures/build-repo.sh"]
     },
     {
       "id": 2,
@@ -65,7 +66,7 @@
       "files": ["evals/fixtures/build-repo.sh"],
       "assertions": [
         "adr/0007-<slug>.md exists, and no file was created under docs/decisions/.",
-        "The title is `# 0007 <Title>` and the next line is `Status: proposed|accepted · YYYY-MM-DD` with exactly one status value.",
+        "The title is `# 0007 <Title>` and the next nonblank line is `Status: proposed|accepted · YYYY-MM-DD` with exactly one status value.",
         "The sections `## Context`, `## Decision`, `## Consequences` appear in that order, with `## Alternatives considered` only after them.",
         "No existing ADR in adr/ was modified, renumbered, or deleted.",
         "The template's leading `Synced from` comment and every bracketed placeholder are removed."
@@ -131,11 +132,23 @@
       "files": ["evals/fixtures/build-repo.sh"],
       "assertions": [
         "docs/plans/windmill.md exists, services/windmill/PLAN.md does not, and README.md links to docs/plans/windmill.md.",
-        "The line after the title of docs/plans/windmill.md matches `Status: active|blocked · <owner> · updated: YYYY-MM-DD`.",
+        "The first nonblank line after the title of docs/plans/windmill.md matches `Status: active|blocked · <owner> · updated: YYYY-MM-DD`.",
         "`## Goal`, `## Milestones`, `## Next step`, `## Decisions so far`, and `## Open questions` appear in that order.",
         "Both fenced blocks from the original (the yaml compose draft and the caddy block) appear verbatim in docs/plans/windmill.md, after `## Open questions`.",
         "The 2026-08-02 Postgres decision appears under `## Decisions so far`, and the worker-count question under `## Open questions`.",
         "The final response lists any deliberately removed content with a `git show` pointer, or states that nothing was removed."
+      ],
+      "tags": ["normal"]
+    },
+    {
+      "id": 11,
+      "prompt": "I approve moving docs/setup.md to docs/guides/local/setup.md. Preserve the links to the service configuration and its ports section. Setup: build the repository with `sh evals/fixtures/build-repo.sh <dir>` and work inside it.",
+      "expected_output": "Moves the setup page, rebases its outgoing links for the new depth and updates its inbound navigation.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "docs/guides/local/setup.md exists and docs/setup.md no longer exists.",
+        "Both links in the moved guide resolve to their original targets, services/media/compose.yml and docs/reference/media.md#ports, from the new directory.",
+        "The README link and MkDocs navigation entry resolve to the new page."
       ],
       "tags": ["normal"]
     }

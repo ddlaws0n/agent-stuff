@@ -106,6 +106,18 @@
         "The final response does not ask which license to use"
       ],
       "tags": ["normal"]
+    },
+    {
+      "id": 8,
+      "prompt": "Where should we put our glossary and incident runbooks? We have neither yet and just want the conventions. Setup: build the repository with `sh evals/fixtures/build-repo.sh new <dir>` and work inside it.",
+      "expected_output": "Answers the location question without scaffolding the repository.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "The response gives docs/glossary.md and docs/runbooks/<slug>.md (or a concrete example of a Markdown file there).",
+        "The response explains when each document becomes useful and that an empty placeholder is unnecessary.",
+        "The repository remains clean and no documentation is scaffolded."
+      ],
+      "tags": ["boundary"]
     }
   ]
 }
