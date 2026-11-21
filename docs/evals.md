@@ -118,3 +118,16 @@ Each condition ran once per revision. These outcomes establish fixture behavior 
 ### Oversized document ownership
 
 Initializer case 10 explicitly requested a size audit of three files. The revised skill and the prior PR head (`3f7781c`) each routed the 511-line README and 511-line setup guide to `maintain-project-docs` and the 300-line AGENTS.md to `create-agentsmd`. Both audits left their fixtures clean (3/3 assertions each). In an earlier pair whose prompt named only the two human docs, both agents omitted AGENTS.md. The new routing rule removes the conflicting handoff instruction; the single explicit pair shows correct routing on both versions. Evidence is in ignored `eval/results/pr8-ownership-20261121/` and `eval/results/pr8-ownership-explicit-20261121/`.
+
+### Human-review follow-up on migration scope and withheld entries
+
+We compared the preceding PR head (`59913b4`) with the revised initializer (`40db2ab`) and changelog skill on the corrected fixture (`c1ce47c`). Each final pair used fresh, pinned `gpt-6-luna` sessions with the same tools and inputs. We read the exact replies and checked the saved files.
+
+- **Plan only.** The revised answer said: “Keep `adr/`: record it as `paths.decisions` in `docs/manifest.json`. Move to canonical `docs/decisions/`: no override is needed.” It asked for approval, identified the ADR cross-link that remains valid, and proposed no formatting work. It mentioned a format discrepancy as out of scope. The baseline omitted what to record if the ADRs stay. Both trees stayed clean.
+- **Wording undecided.** The revised answer closed with: “One entry is withheld. What wording, if any, is approved for the public changelog?” The complete reply disclosed no identifying details or draft wording. The baseline described the approval requirement without asking the question.
+- **Omission already decided.** The revised answer said: “The explicitly embargoed item was excluded.” It asked no question and disclosed no identifying details. Both writable revised fixtures gained #440 under Added and #441 under Fixed, with byte-identical released sections and compare links. The read-only revised fixture remained byte-identical to HEAD; its answer identified the write failure and asked the pending wording question.
+- **Existing controls.** The authorized move preserved both ADR blobs and their links. In the deep guide move, both saved destinations, the heading, and navigation resolved for the revised run. The baseline still missed the Compose target in that pair.
+
+Earlier iterations omitted the manifest alternative or wording question, or repeated identifying information. One run also exposed an eval defect: the supposed pagination fix introduced a new file. The corrected fixture starts with the off-by-one bug and fixes it in the subsequent commit. The final pairs demonstrate the tested outcomes once per revision. The history filter recognizes explicit message markers; unmarked embargoes still depend on other available evidence. Human signoff remains open.
+
+The final replies, transcripts, Git comparisons, and checks are in ignored `eval/results/pr8-wording3-20261121/` (initializer and deep-link control), `eval/results/pr8-wording7-20261121/` (writable changelogs), and `eval/results/pr8-wording7-ro-20261121/` (read-only changelog).
