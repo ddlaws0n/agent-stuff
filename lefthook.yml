@@ -20,7 +20,9 @@ pre-push:
   parallel: true
   jobs:
     - name: check
-      run: bun run check
+      # Fixture Git commands must discover their own repositories.
+      run: |
+        git_vars=$(git rev-parse --local-env-vars) && unset $git_vars && bun run check
     - name: security scan
       glob: "skills/**"
       run: bun run skills:scan
