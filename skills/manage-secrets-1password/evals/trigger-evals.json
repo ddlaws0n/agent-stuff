@@ -20,15 +20,15 @@
     "should_trigger": true
   },
   {
-    "query": "Run the deploy script, it pulls its secrets with op run",
-    "should_trigger": true
+    "query": "Run our deploy script with varlock run; the schema already resolves the token through 1Password.",
+    "should_trigger": false
   },
   {
     "query": "Copy the Grafana token from 1Password into a new n8n credential without showing it",
     "should_trigger": true
   },
   {
-    "query": "Use op inject to render config.tpl into config.yml",
+    "query": "Which vaults can my 1Password service account access?",
     "should_trigger": true
   },
   {
@@ -47,7 +47,10 @@
     "query": "Store this API key in the macOS keychain",
     "should_trigger": false
   },
-  { "query": "Set up Bitwarden CLI for my team", "should_trigger": false },
+  {
+    "query": "Set up Bitwarden CLI for my team",
+    "should_trigger": false
+  },
   {
     "query": "Add a GitHub Actions secret for the deploy token",
     "should_trigger": false
