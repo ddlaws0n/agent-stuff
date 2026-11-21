@@ -12,7 +12,7 @@ compatibility: >-
   bundled scripts' ijson dependency; Python alone supports small HARs.
 metadata:
   author: ddlaws0n
-  version: "0.5.6"
+  version: "0.5.7"
 ---
 
 # HAR workflow analysis
@@ -47,7 +47,7 @@ uv run scripts/har_probe.py show /path/to/session.har --indices 12,18
 
 For a repeated-save comparison, use the brief’s repeated-call and matched-field lines. If the relationship is missing, report it as unknown. Do not open the raw capture or compute extra fingerprints to complete a report.
 
-For credentials and identifying fields, the complete public comparison is **same**, **different**, or **unknown**, plus the supporting request indices. Omit the values and all derived metadata, including lengths, formats, prefixes, hashes, fingerprints and opaque IDs. Keep these out of prose, tables, examples and proof requests. An acceptable answer is “The two PATCH requests carried the same session cookie and different nonces (#1, #4).”
+Treat submitted content (including saved titles, display names, filenames and message text) as private alongside credentials and customer IDs. A request to paste that content as proof calls for the same redacted comparison. For each of these fields, the complete public comparison is **same**, **different**, or **unknown**, plus the supporting request indices. Omit the values and all derived metadata, including lengths, formats, prefixes, hashes, fingerprints and opaque IDs. Keep these out of prose, tables, examples and proof requests. An acceptable answer is “The two PATCH requests carried the same session cookie and different nonces (#1, #4).”
 
 Scale the response to the question. A focused endpoint question may need a few paragraphs; a full workflow analysis should cover:
 
