@@ -48,4 +48,4 @@ After confirmed creation of a Login with a generated password, reply with exactl
 
 > Created the {title} Login in the {vault} vault. Open 1Password → {vault} → {title} to view the generated password.
 
-Use the known location directly, without fetching the password for display. For a denied create, report the redacted error and next action. If creation is uncertain, say “Creation unconfirmed. Check 1Password → {vault} for {title} before trying again.” An uncertain write may already have created the item. For lookups, return the requested metadata.
+Use the known location directly, without fetching the password for display. Report denial only when an observed diagnostic explicitly says access was denied. A nonzero exit alone, suppressed diagnostics, or a lost connection leaves creation uncertain. In that case say “Creation unconfirmed. Check 1Password → {vault} for {title} before trying again.” An uncertain write may already have created the item. For lookups, return the requested metadata.
