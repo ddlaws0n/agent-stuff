@@ -1,11 +1,12 @@
 ---
 name: manage-secrets-1password
 description: >-
-  Finds vaults and item metadata, creates 1Password items, and diagnoses access
-  with the 1Password CLI (op). Use when the user asks to search a vault, create
-  a login, pass an item field to a consumer, or investigate a failed op command
-  or repeated desktop approvals. For ordinary Varlock execution or schema and
-  resolver configuration, use manage-secrets-varlock when available.
+  Operates on existing 1Password vaults with the op CLI. Use when a request
+  needs direct 1Password access to list vaults, find items, read a field
+  privately, create a login, or diagnose CLI authentication and approvals.
+  Do not use for planning how to split vaults, designing access policies, or
+  using the macOS Keychain or other secret stores. Ordinary Varlock runs and
+  schema configuration belong to manage-secrets-varlock when available.
 license: MIT
 compatibility: >-
   Requires 1Password CLI v2 with access to the target account and vault.
