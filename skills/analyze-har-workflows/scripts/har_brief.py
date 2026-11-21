@@ -54,6 +54,7 @@ class Facts:
         self.hosts: Counter[str] = Counter()
         self.cookie_requests = 0
         self.cookie_names: Set[str] = set()
+        self.cookie_headers: Dict[int, str] = {}
         self.set_cookie_names: Set[str] = set()
         self.auth_schemes: Counter[str] = Counter()
         self.csrf: Dict[str, List[int]] = defaultdict(list)
@@ -79,6 +80,9 @@ class Facts:
         pairs = har_probe.header_pairs(req.get("headers"))
         values = dict(pairs)
         custom = [n for n, _ in pairs if n and n not in STANDARD_REQUEST_HEADERS and not n.startswith(("sec-", ":"))]
+        cookie_values = [v for name, v in pairs if name == "cookie"]
+        if len(cookie_values) == 1 and cookie_values[0].strip():
+            self.cookie_headers[idx] = self.graph.fp(cookie_values[0])
         cookies = har_probe.cookie_names(values.get("cookie", ""))
         cookies += [str(c.get("name")) for c in req.get("cookies") or [] if isinstance(c, dict) and c.get("name")]
         if cookies:
@@ -141,7 +145,7 @@ def matching_values(graph: Dict[str, Any], w: Dict[str, Any]) -> List[str]:
             if not ev.get("fp"):
                 continue
             lines.append(
-                f"- Same value <{ev['value']}:{ev['fp']}>: "
+                "- Same value: "
                 f"#{edge['from']} {ev.get('from', 'earlier request')} -> #{edge['to']} {ev['to']}"
             )
     return lines
@@ -183,6 +187,10 @@ def differing_fields(w: Dict[str, Any], facts: Facts) -> List[str]:
         keys = sorted({k for p in prints for k in p})
         differ = [k for k in keys if len({p.get(k) for p in prints}) > 1]
         what = f"compared query/body fields differ in {', '.join(differ[:8])}" if differ else "no differences detected in compared query/body fields"
+        cookie_headers = [facts.cookie_headers.get(i) for i in members]
+        if any(cookie_headers):
+            comparison = "unknown" if None in cookie_headers else "same" if len(set(cookie_headers)) == 1 else "different"
+            what += f"; Cookie header: {comparison}"
         lines.append(f"- #{', #'.join(map(str, members))} {method} {endpoint}: {what}")
     return lines
 
@@ -223,7 +231,7 @@ def render_brief(graph: Dict[str, Any], facts: Facts, top: int, max_chars: int) 
         body += differing_fields(w, facts)
         matches = matching_values(graph, w)
         if matches:
-            body += ["Matching values (per-run placeholders):", *matches[:6]]
+            body += ["Matching values:", *matches[:6]]
             if len(matches) > 6:
                 body.append(f"- {len(matches) - 6} more matches in graph.json")
         body.append("")

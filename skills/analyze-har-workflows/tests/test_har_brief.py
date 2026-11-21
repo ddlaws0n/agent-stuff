@@ -83,6 +83,17 @@ class HarBriefTests(unittest.TestCase):
         self.assertIn("credential on 1 requests", stdout)
         self.assertNotIn("private-", stdout)
 
+    def test_repeated_cookie_comparison_discloses_only_the_relationship(self):
+        def save(index, cookie):
+            return entry(index, "PATCH", "https://example.test/api/save", req_headers=cookie, body={"title": index})
+        first = [("Cookie", "sid=private-a")]
+        for second, relationship in ((first, "same"), ([("Cookie", "sid=private-b")], "different"), ([], "unknown")):
+            with self.subTest(relationship=relationship):
+                report, _ = run_brief([save(0, first), save(1, second)])
+                self.assertIn(f"Cookie header: {relationship}", report)
+                self.assertNotIn("private-", report)
+                self.assertNotIn("Same value <", report)
+
     def test_unrelated_challenge_is_a_capture_signal_without_verdict(self):
         entries = [
             entry(0, "GET", "https://www.google.com/recaptcha/api2/anchor?k=site-key-123", res_mime="text/html"),
