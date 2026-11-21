@@ -25,6 +25,7 @@ Uses the [`skills` CLI](https://github.com/vercel-labs/skills). Some skills need
 | [`maintain-project-docs`](skills/maintain-project-docs/SKILL.md) | Create, update, and consolidate project Markdown documentation against the repository. |
 | [`manage-environments-orbstack`](skills/manage-environments-orbstack/SKILL.md) | Configure, migrate, and troubleshoot OrbStack containers and Linux machines on macOS. |
 | [`manage-github-projects`](skills/manage-github-projects/SKILL.md) | Manage GitHub Projects v2 boards and their issues via `gh` and Python. |
+| [`manage-secrets-1password`](skills/manage-secrets-1password/SKILL.md) | Find vault items, create logins safely, and diagnose 1Password CLI access. |
 | [`manage-secrets-varlock`](skills/manage-secrets-varlock/SKILL.md) | Manage schema-driven environment configuration and secrets with Varlock. |
 | [`review-data-architecture`](skills/review-data-architecture/SKILL.md) | Review data-intensive architecture decisions by guarantees, failure modes, and operational cost. |
 | [`save-to-folio`](skills/save-to-folio/SKILL.md) | Save articles to the Folio read-later app with 1Password-backed login. |
