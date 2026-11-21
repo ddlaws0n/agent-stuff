@@ -38,7 +38,7 @@ Keep one root `CHANGELOG.md` accurate: user-facing entries under `[Unreleased]`,
 
 ## Gotchas
 
-- **Security fixes may be embargoed.** Do not publish exploit details, CVE or advisory identifiers that are not yet public, or private-repo references. Withhold the entry until its wording is approved. Use the disclosure-safe response under Output.
+- **Security fixes may be embargoed.** Do not publish exploit details, CVE or advisory identifiers that are not yet public, or private-repo references. Withhold the entry until its wording is approved. Never identify a withheld commit by hash, even in the private task response. Use the disclosure-safe response under Output.
 - **Never rewrite git history** (amend, rebase, force-push, retagging) to fix changelog prose or tags. Edit the file in a new change.
 - **Preserve existing entries.** Do not reword, reorder, or reformat released sections or unrelated prose; only add entries, move the Unreleased block on a cut, and fix link definitions.
 - **Link definitions need the real remote.** Read `git remote get-url origin`; do not guess the host, owner, or repository. Never invent tags, except the new version's tag on a cut.
@@ -46,10 +46,10 @@ Keep one root `CHANGELOG.md` accurate: user-facing entries under `[Unreleased]`,
 
 ## Output
 
-Report the saved entries with their supporting commits or PRs, ordinary skips and reasons, checks run, and remaining release steps.
+Report the saved entries and their public supporting references, checks run, and remaining manual steps. Explain ordinary skips when relevant.
 
-For withheld work, the closing line below is the entire user-facing description. Keep it out of the entries, ordinary skips, and checks: even saying which kind of advisory exists can disclose embargoed information. Choose the line for the user’s decision:
+**Withheld work:** assemble the reply from the saved public entries, validation results, and one closing line. Before sending, check that every commit reference in the reply supports a **published** entry. Remove any reference to a withheld commit, including abbreviated hashes, its subject, advisory identifiers, technical details, or suggested wording.
 
-- Wording still needed: “One entry is withheld. What wording, if any, is approved for the public changelog?”
+- Public wording undecided: “One entry is withheld. What wording, if any, is approved for the public changelog?”
 - Omission or deferral already requested: “The requested exclusion was honored.”
-- Approved text supplied: use that wording as authorized. No further wording decision is needed.
+- Public wording already approved: use it as authorized.
