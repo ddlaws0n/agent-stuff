@@ -15,6 +15,8 @@ mkdir -p "$dir"
 [ -z "$(ls -A "$dir")" ] || { echo "error: $dir is not empty" >&2; exit 1; }
 cd "$dir"
 
+# A parent git hook may point Git at its own repository, index or object store.
+for git_var in $(command git rev-parse --local-env-vars); do unset "$git_var"; done
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 export GIT_AUTHOR_NAME="Eval Author" GIT_AUTHOR_EMAIL="author@example.com"
 export GIT_COMMITTER_NAME="Eval Author" GIT_COMMITTER_EMAIL="author@example.com"

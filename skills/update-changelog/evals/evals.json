@@ -103,6 +103,30 @@
         "The response asks which version to cut or suggests the next version rather than inventing one silently"
       ],
       "tags": ["boundary"]
+    },
+    {
+      "id": 8,
+      "prompt": "Please add #430, the bulk import command, to Unreleased. Setup: build the repository with `sh evals/fixtures/build-repo.sh release <dir>` and work inside it.",
+      "expected_output": "Finds the existing entry and leaves the whole changelog intact.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "CHANGELOG.md is byte-identical to its initial contents, including historical sections and compare links.",
+        "There is exactly one #430 entry and the final response identifies it as already present.",
+        "The transcript contains no write or attempted rewrite of CHANGELOG.md."
+      ],
+      "tags": ["boundary"]
+    },
+    {
+      "id": 9,
+      "prompt": "Cut a new changelog release section for 1.4.0. Setup: build the repository with `sh evals/fixtures/build-repo.sh tagged <dir>` and work inside it.",
+      "expected_output": "Detects the existing tag before changing the changelog and asks which version to cut.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "The repository is clean and CHANGELOG.md still has no 1.4.0 release heading.",
+        "The response identifies the existing v1.4.0 tag and asks which version to use.",
+        "The original v1.4.0 tag and commit history remain intact."
+      ],
+      "tags": ["boundary"]
     }
   ]
 }
