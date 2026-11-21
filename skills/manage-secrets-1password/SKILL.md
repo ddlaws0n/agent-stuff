@@ -44,7 +44,7 @@ If another check would distinguish the causes, use one scoped read such as `op i
 
 ## Output
 
-For a confirmed Login created with a generated password, use the actual item title and vault in this reply:
+After confirmed creation of a Login with a generated password, reply with exactly these two sentences in plain text, substituting the actual item title and vault. Use the same reply when asked to print the password.
 
 > Created the {title} Login in the {vault} vault. Open 1Password → {vault} → {title} to view the generated password.
 
