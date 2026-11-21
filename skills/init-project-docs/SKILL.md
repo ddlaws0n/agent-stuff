@@ -18,7 +18,7 @@ compatibility: >-
   Schema 2020-12 validator.
 metadata:
   author: ddlaws0n
-  version: "0.1.2"
+  version: "0.2.0"
 ---
 
 # Initialize project docs
@@ -53,7 +53,7 @@ Bring a repository onto the standard in `references/standard.md`. This skill dec
    - [ ] Component directories found; undocumented ones listed
    - [ ] Gap report written: missing baseline, misplaced, over budget, nonconforming, undocumented, unowned
    - [ ] Deviations drafted as docs/manifest.json (shown, not written)
-   - [ ] User approved the manifest and each baseline addition; moves approved separately as a consolidation plan
+   - [ ] User approved the manifest and each baseline addition; moves covered by the user’s request or an approved plan
    - [ ] Only approved items applied
    - [ ] Validation (step 5) run
    ```
@@ -65,7 +65,7 @@ Bring a repository onto the standard in `references/standard.md`. This skill dec
    - For an over-budget file, propose slimming it through create-agentsmd. Raise a budget in the manifest only when the user asks, with a reason (§ Manifest).
    - For a nonconforming doc (valid path, broken contract), cite its § Checks rule ID (DOCS005, DOCS006, DOCS011, DOCS012, DOCS014). Propose fixes through maintain-project-docs, and ask before reformatting an accepted ADR.
    - Draft `docs/manifest.json` with deviations only (§ Manifest, `assets/manifest.schema.json`): omit every type already at its canonical path, and map each remaining type to its directory or glob, not to each file.
-   - Hand missing baseline files to the sibling that owns them (LICENSE follows step 3). For a directory migration, inventory its files and search for links to both the directory and its files. Present the maintain-project-docs consolidation plan with each source, destination, reason, and inbound link impact. A destination alone leaves that plan unreviewed. Stop after asking for approval unless the user has already approved those moves and their link updates.
+   - Hand missing baseline files to the sibling that owns them (LICENSE follows step 3). For a directory migration, inventory its files and search for links to both the directory and its files. For a plan request, report source, destination, reason, and link impact and wait. For a requested move with named endpoints, perform it and update the links.
 
 5. **Validate** until docs-check exists, by hand, using § Checks as the checklist and its rule IDs in the report:
    - Validate `docs/manifest.json` against `assets/manifest.schema.json` (resolve it from this skill's directory), for example `uvx check-jsonschema --schemafile assets/manifest.schema.json docs/manifest.json`. Without a validator, check each key against the schema by hand and say it was not machine-validated.

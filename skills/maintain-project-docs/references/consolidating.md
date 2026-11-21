@@ -18,7 +18,7 @@ For each in-scope file, identify audience, owner, authoritative topics, inbound 
 
 ## 3. Plan before editing
 
-List every proposed mutation, then stop for approval as `SKILL.md` requires:
+For changes awaiting approval, show the proposed mutations and link impact:
 
 <!-- prettier-ignore -->
 | Action | Source | Destination/canonical source | Reason | Link/instruction impact |
@@ -33,7 +33,7 @@ List every proposed mutation, then stop for approval as `SKILL.md` requires:
 
 - Establish the canonical source before replacing duplicates with links.
 - Move files with `git mv` or another version-control-aware command when possible.
-- Before moving a page, resolve each outgoing relative link from its original parent and keep the target path and fragment. After the move, calculate the path from the new parent to that same target (for example, `os.path.relpath(target, new_parent)`), reattach the fragment, and check it resolves to the original file and heading. Update inbound links, navigation, and instruction-file references.
+- Before moving a page, resolve each outgoing relative link from its original parent and keep the target path and fragment. Calculate the new link with a path tool (such as `os.path.relpath(target, new_parent)`) and preserve its fragment. Re-read the saved link and compare the files with `test "$new_parent/$saved_path" -ef "$original_target"`; check the fragment against the heading separately. Update inbound links, navigation, and instruction-file references.
 - Never renumber an ADR; the ADR and plan lifecycle rules are in `references/standard.md` § Content contracts.
 - Keep commits or change groups small enough to review and revert.
 

@@ -16,7 +16,7 @@ description: >-
 license: MIT
 metadata:
   author: ddlaws0n
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Create or improve AGENTS.md

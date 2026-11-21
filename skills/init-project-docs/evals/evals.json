@@ -81,7 +81,7 @@
     },
     {
       "id": 6,
-      "prompt": "Migrate adr/ to docs/decisions/ so this repo matches the standard. Setup: build the repository with `sh evals/fixtures/build-repo.sh migrate <dir>` and work inside it. Install all four skills (init-project-docs, create-agentsmd, maintain-project-docs, update-changelog) first: they ship as a set and init-project-docs hands off to the others.",
+      "prompt": "Plan the migration from adr/ to docs/decisions/. Show me the link impact and wait for my approval before making changes. Setup: build the repository with `sh evals/fixtures/build-repo.sh migrate <dir>` and work inside it. Install all four skills (init-project-docs, create-agentsmd, maintain-project-docs, update-changelog) first: they ship as a set and init-project-docs hands off to the others.",
       "expected_output": "Treats the move as an approval-gated migration: presents a consolidation plan table through maintain-project-docs with one row per move and its link impact (the README links, the AGENTS.md routing row, and the cross-link between the two ADRs), asks for approval, and moves nothing yet.",
       "files": ["evals/fixtures/build-repo.sh"],
       "assertions": [
@@ -121,8 +121,8 @@
     },
     {
       "id": 9,
-      "prompt": "I approved moving adr/0001-use-postgres.md and adr/0002-adopt-bun.md to docs/decisions/ with their current filenames. Update README and AGENTS.md links as part of the move. Please carry out this approved migration. Setup: build the repository with `sh evals/fixtures/build-repo.sh migrate <dir>` and work inside it.",
-      "expected_output": "Applies the explicitly approved list and repairs links while preserving the accepted ADRs.",
+      "prompt": "Move adr/ to docs/decisions/ and update the links. Setup: build the repository with `sh evals/fixtures/build-repo.sh migrate <dir>` and work inside it.",
+      "expected_output": "Executes the explicitly requested directory move and repairs links while preserving the accepted ADRs.",
       "files": ["evals/fixtures/build-repo.sh"],
       "assertions": [
         "Both decisions exist under docs/decisions/, retain their original filenames and contents, and no ADR remains under adr/.",

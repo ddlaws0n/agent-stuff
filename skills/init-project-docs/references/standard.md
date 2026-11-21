@@ -22,7 +22,7 @@ Where a repository keeps documentation for people and coding agents, what each d
 - **Baseline.** Every repo has `README.md` and `AGENTS.md`, a `CLAUDE.md` bridge where § Agent loading reference says one is needed, and `LICENSE` if public. Create every other doc type the first time it has real content; never create empty stubs.
 - **Ownership.** Each doc type has one owner skill (§ Doc types). A skill edits only the types it owns and hands the rest off by name.
 - **User-owned choices.** The license and the security contact: ask, never pick.
-- **Moves.** Move or rename a doc only when the user asks, after the user approves the list of moves, and update every inbound link.
+- **Moves.** A request to move a named file or directory to a named destination authorizes that move and its link updates. For plan-only requests or proposed moves outside the request, present the list and wait for approval.
 - **Path resolution.** Use the manifest path for a doc type if declared, else the canonical path (§ Doc types).
 - **Verify.** After any change, check the touched docs against § Checks, by hand until the docs-check action exists.
 - **Configuration is not docs.** Markdown whose contents a workflow, script, or tool uses as operational input (AI review prompts, issue and PR templates, workflow inputs) is configuration wherever it lives. No docs skill edits or moves it; report it instead. A doc that a tool only validates, renders, or link-checks is still a doc.

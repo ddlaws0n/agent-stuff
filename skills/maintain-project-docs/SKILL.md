@@ -5,8 +5,8 @@ description: >-
   documentation such as README, CONTRIBUTING, SECURITY, ADRs, plans, glossary,
   runbooks, architecture maps, guides, research notes, post-mortems and audit
   records, and package READMEs, verifying commands
-  and links against the repository and gating moves or deletions behind an
-  approved plan. Use when the user asks to write, refresh, or fix stale commands
+  and links against the repository and honoring the requested scope for moves
+  and deletions. Use when the user asks to write, refresh, or fix stale commands
   or broken links in project docs, record a decision as an ADR, start or finish
   a multi-session plan, add a glossary, runbook, or architecture map, sync docs
   after a migration, or deduplicate, move, or remove documentation files.
@@ -17,7 +17,7 @@ description: >-
 license: MIT
 metadata:
   author: ddlaws0n
-  version: "0.2.2"
+  version: "0.3.0"
 ---
 
 # Maintain project documentation
@@ -32,14 +32,7 @@ Create and maintain accurate project-owned documentation without expanding scope
    - Deduplication, reorganization, moves, broad rewrites, or deletion: `references/consolidating.md`.
 2. Bound scope to tracked, project-owned files (see Gotchas).
 3. Verify every command, version, path, and behavior you write against manifests, code, tests, CI, configuration, release metadata, or an authoritative external source when current library behavior matters. Reuse repository terminology. Never invent commands, file contracts, or versions; mark unverified external or future-facing claims. Moving text does not verify it: when you move, split, or label text canonical, re-check every port, address, binding, exposure, and access rule in it against the file that defines it.
-4. Gate destructive work. Separate safe targeted edits from approval-gated actions, and list every proposed create, rewrite, move, and delete with its link impact. Get explicit user approval before:
-   - deleting documentation
-   - moving or renaming files
-   - broad rewrites across many files
-   - repurposing an operational instruction file
-
-   If approval is not available, stop after the plan or apply only independently safe, explicitly requested edits. Targeted edits the user explicitly requested need no extra gate.
-
+4. For a plan request, list proposed changes and their link impact, then wait. Carry out an explicitly requested move, rename, deletion, or rewrite within its stated scope. Seek approval for additional destructive changes.
 5. Apply the change, keeping edits within the requested scope.
 6. Validate using the checklist in Gotchas, then report using Output.
 
