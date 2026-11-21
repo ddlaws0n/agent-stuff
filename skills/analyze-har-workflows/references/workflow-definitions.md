@@ -25,6 +25,19 @@ Use `definition`, `runtime`, `inference`, or `documentation` as the claim's basi
 
 ## Reconcile all available jobs across captures
 
+Start with a single private inventory of the job lists. Walk the job arrays in one inspector invocation across all captures, writing JSON to a private file. Project just the caller, root, job, parent-job and repeat fields from that file locally. Compare opaque identities within that invocation. For structural recipe IDs, versions, counts and enabled node types, select those exact scalar pointers together with `--values`; leave customer and credential values hidden. Summarize the grouped rows once. If a field is absent, leave the corresponding relationship unknown instead of expanding unrelated payloads or repeating the same inspection.
+
+For example, if the job lists are response entry 2 under `/jobs` in both files:
+
+```bash
+uv run scripts/har_inspect.py first.har second.har \
+  --select '0:2:/jobs' --select '1:2:/jobs' --walk \
+  --max-items 300 --max-chars 40000 > "$ANALYSIS_DIR/jobs.json"
+jq -r '.truncated, (.observations[] | select(.pointer | test("/(id|calling_job_id|root_job_id|calling_recipe_id|root_recipe_id)$")) | [.source,.pointer,.value_id] | @tsv)' "$ANALYSIS_DIR/jobs.json"
+```
+
+Read each job's own ID and its caller and root IDs from their **separate fields**. Match the two root fields across sources to count shared runs. Only a caller-job ID equal to a particular job's **own** ID supports a direct invocation by that job. If you have only a shared root, report that and stop. Read structural recipe IDs with selected `--values` pointers so the caller list is useful to the reader.
+
 - Separate page length, filtered-scope counts, and recipe-wide totals; record filters, pagination, and whether more pages are absent. A single detailed job is not the complete caller inventory.
 - Compare each visible job's direct caller, root recipe, calling/root job IDs, and repeat/master linkage across files. Group callers and match shared runs using one inspection command so opaque IDs remain comparable. Root ancestry proves an upstream relationship, not necessarily a direct call; clone/parent lineage is a separate relationship.
 - Compare repeated entity identifiers without assuming identical complete requests. A repeated account can represent a legitimate later transition; missing old/new IDs leave duplication unknown.
@@ -44,6 +57,6 @@ Before finalizing:
 1. Check every material relationship and count against the complete **available** inventory, including cross-file matches. Preserve gaps instead of filling them with plausible names, order, or call edges.
 2. Check each proposed edit pointer resolves to the expected node type and operation. Use `--expect` for types, flags, and exact API values; an `else` node is not its child HTTP action. Validate references to retained aliases/UUIDs and keep connection config separate from action inputs.
 3. Reconcile the summary, architecture, detailed breakdown, and change map against the same facts. Correct contradictions, then rerun affected checks. Record what was actually verified and what was sampled, blocked by redaction, inferred, or not run.
-4. If an independent review is requested, provide the original captures and bounded inspection tools. Verify its findings before changing the report; record dispositions and coverage limits. Do not turn a review of one artifact into a claim of controlled skill-evaluation improvement.
+4. If an independent review is requested, share sanitized evidence and pointers; keep original captures private unless their owner explicitly authorizes a transfer. Verify its findings before changing the report; record dispositions and coverage limits. Do not turn a review of one artifact into a claim of controlled skill-evaluation improvement.
 
 For long reports, explain shared architecture, findings, and validation advice once. Put exhaustive node identities and endpoint/trace tables in appendices. Scale the detail to the request. Propose sandbox fixtures for unresolved behavior; do not replay live mutations or claim a fresh save/invocation contract when the capture only contains reads.

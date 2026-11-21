@@ -367,6 +367,9 @@ def post_data_info(post_data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+GRAPHQL_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,127}")
+
+
 def graphql_info(url: str, post_text: str) -> Dict[str, Any]:
     info: Dict[str, Any] = {"is_graphql": bool(re.search(r"(?i)graphql", url or ""))}
     parsed = parse_json_maybe(post_text or "")
@@ -379,13 +382,14 @@ def graphql_info(url: str, post_text: str) -> Dict[str, Any]:
         if isinstance(parsed.get("variables"), dict):
             variables_keys = sorted(parsed["variables"].keys())[:100]
         if isinstance(query, str):
-            m = re.search(r"\b(mutation|query)\s+([A-Za-z0-9_]+)?", query)
+            m = re.search(r"\b(mutation|query)\b(?:\s+([^\s({@]+))?", query)
             if m:
-                query_head = " ".join(x for x in m.groups() if x)
+                kind, name = m.groups()
+                query_head = f"{kind} {name}" if name and GRAPHQL_NAME.fullmatch(name) else kind
             if re.search(r"\bmutation\b", query):
                 info["is_mutation"] = True
-    if operation_name:
-        info["operationName"] = str(operation_name)
+    if isinstance(operation_name, str) and GRAPHQL_NAME.fullmatch(operation_name):
+        info["operationName"] = operation_name
         info["is_graphql"] = True
     if query_head:
         info["query_head"] = query_head

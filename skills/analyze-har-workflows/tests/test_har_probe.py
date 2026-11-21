@@ -15,6 +15,20 @@ import har_probe  # noqa: E402
 
 
 class HarProbeTests(unittest.TestCase):
+    def test_graphql_operation_metadata_only_contains_bounded_identifiers(self):
+        private = "synthetic-private-marker"
+        for name in ({"token": private}, [private], private, "9Invalid", "ü", "N" * 129, 42, None, "_Save2"):
+            with self.subTest(name=name):
+                body = {"operationName": name, "query": "mutation " + "N" * 129 + " { save }"}
+                entry = {"request": {"url": "https://example.test/graphql", "method": "POST",
+                                     "postData": {"mimeType": "application/json", "text": json.dumps(body)}}}
+                compact = har_probe.compact_entry(entry, 0)
+                self.assertEqual(compact["graphql"].get("operationName"), "_Save2" if name == "_Save2" else None)
+                self.assertEqual(compact["graphql"]["query_head"], "mutation")
+                for output in (json.dumps(compact), har_probe.show_entry(entry, 0, 5000)):
+                    self.assertNotIn(private, output)
+                    self.assertNotIn("N" * 129, output)
+
     def test_sensitive_fields_are_not_emitted(self):
         entry = {
             "request": {

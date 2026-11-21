@@ -1,19 +1,18 @@
 ---
 name: analyze-har-workflows
 description: >-
-  Analyzes HAR captures to reconstruct website actions, captured workflow
-  definitions, configuration, and job evidence, and assess automation. Use when
-  the user provides HAR files or DevTools network exports to investigate API
-  calls, forms, uploads, settings, or workflow structure. Extracts bounded,
-  privacy-conscious evidence before reasoning.
-  Do not use for live browser automation or scraping without a capture.
+  Reconstructs recorded browser actions, workflow definitions and job history
+  from bounded local evidence. Use when the request supplies or identifies a
+  HAR or DevTools network export for inspection. Skip capture/export tutorials,
+  packet captures, server debugging, live browser tasks, and workflow design
+  without an existing HTTP capture.
 license: MIT
 compatibility: >-
   Requires Python 3.10+. uv is recommended for streaming large HARs via the
   bundled scripts' ijson dependency; Python alone supports small HARs.
 metadata:
   author: ddlaws0n
-  version: "0.5.4"
+  version: "0.5.5"
 ---
 
 # HAR workflow analysis
@@ -22,11 +21,10 @@ Explain the captured action or workflow structure and assess the requested autom
 
 ## Workflow
 
-1. Keep the raw HAR out of model context, including small or synthetic captures. Use the bundled scripts for shapes, opaque equality IDs, and bounded selections. Never print a whole capture or body to check a parse.
-2. Establish the action and expected result from the prompt. Ask only when missing context prevents identifying the relevant traffic.
-3. For traffic triage, use the brief below, then follow promising requests and relationships with `show`. Rankings, workflow groups, roles, and link kinds are navigation hints. For stored definitions, configuration, or execution history, read `references/workflow-definitions.md` and inspect the relevant bodies; GET responses may contain the primary evidence without a captured mutation.
-4. Develop an evidence-backed explanation. Distinguish observations, inferences, and unknowns; cite request indices for material claims. A matching value supports a possible relationship, but its shape does not establish its purpose or lifetime. Missing links or challenge signals do not establish replayability.
-5. Before synthesizing multiple captures, compare their available job/dependency evidence, not just one example per file. Validate material claims and proposed edit locations against exact source paths; resolve contradictory evidence or label it unknown. Answer when the evidence supports a useful explanation, or identify the specific gap preventing one. Expand only the evidence needed to resolve uncertainty; `references/deep-dive.md` describes additional inspection tools.
+1. Work from local capture files only. Keep raw HARs, bodies and private inspection output out of model context, including synthetic examples. Use the bundled scripts and select the smallest evidence that answers the question.
+2. For a browser action, run the brief and inspect the relevant request indices. Report observed requests, response shapes and the saved result. When two saves use different nonces, write “a different nonce appeared in each save; lifetime unknown.” Reserve “single-use”, “expires”, and “requires refresh” for direct evidence of rejection or an explicit protocol rule.
+3. For stored definitions or jobs, go straight to the response inspector and `references/workflow-definitions.md`. Inspect a compact batch of structural fields across all visible rows before drawing relationships. Report direct callers from caller fields, shared roots as shared roots, and definition ancestry separately. Omit an execution edge unless the capture identifies both endpoints of that edge.
+4. Identify configured actions separately from executed actions. Give the job's executed version only from its version field or a matched snapshot. Describe a configured return as “if execution reaches this step”. When evidence ends, state the specific unknown and finish. Never replay a request, contact the application, or probe a proposed prerequisite.
 
 ## Scripts
 
@@ -47,14 +45,14 @@ uv run scripts/har_probe.py show /path/to/session.har --indices 12,18
 
 ## Output
 
-Before returning the report, replace captured names, titles, filenames, customer identifiers, and credential values with role labels or placeholders, including in examples. Report equality as “same” or “different” with request indices or per-command opaque IDs. Keep literal values, lengths, prefixes, and stable hashes of private fields out of reports, even if the user requests proof. For per-use tokens, state separately what changed in the capture and whether expiry was observed. Two different issued values leave acceptance of the older value unknown. Report the source of a token only if the selected field and its relationship are visible.
+For credentials and identifying fields, the complete public comparison is **same**, **different**, or **unknown**, plus the supporting request indices. Omit the values and all derived metadata, including lengths, formats, prefixes, hashes, fingerprints and opaque IDs. Keep these out of prose, tables, examples and proof requests. An acceptable answer is “The two PATCH requests carried the same session cookie and different nonces (#1, #4).”
 
 Scale the response to the question. A focused endpoint question may need a few paragraphs; a full workflow analysis should cover:
 
 - The action and its relevant request sequence, identified by method, normalized endpoint, and request index.
 - Request/response shapes and prerequisites: observed auth, dynamic values, their sources where visible, and verification of the result.
 - An automation recommendation with supporting evidence, confidence, and material unknowns. When classifying, use `direct-http`, `http-with-token-refresh`, `browser-assisted`, `manual-only/blocked`, or `insufficient-evidence`; the criteria are in `references/automation-signals.md`.
-- A concise implementation sketch when useful, using placeholders, plus any validation needed before relying on it.
+- If asked for a sketch, describe the observed sequence with placeholders. State what additional recorded evidence would resolve an unknown.
 
 For a full technical report, present shared architecture and material findings once; keep exhaustive node identifiers, endpoint inventories, and evidence locations in appendices. Keep a private structured evidence inventory for complex synthesis so claims and edit targets can be rechecked. A requested independent review supplements these checks; no particular model, CLI, or delegation scheme is required.
 

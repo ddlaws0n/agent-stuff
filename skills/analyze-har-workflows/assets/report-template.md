@@ -46,12 +46,7 @@ Response shape:
 
 ## Dynamic values
 
-<!-- prettier-ignore -->
-| Value | Where used | Source request/index | How to refresh |
-|-|-|-:|-|
-| CSRF token | header/body |  | GET page or bootstrap API |
-| Resource ID | URL/body |  | Current page/API response |
-| Upload URL | upload request |  | Init/presign endpoint |
+Name the field and cite where it appeared or changed. Give its lifetime only if the capture directly establishes it.
 
 ## Captured definitions and runtime coverage
 
@@ -61,28 +56,9 @@ Response shape:
 - **Job coverage:** [Visible page, scope/total counts, version matching, executed branches and unverified results]
 - **Edit targets:** [Exact pointer, node type/operation, reference dependencies and checks]
 
-## Automation recommendation
+## Feasibility and unknowns
 
-[Explain the simplest reliable automation path. Prefer direct HTTP only when token refresh and replayability are clear. Recommend Playwright/browser automation where the reverse-engineering cost or challenge risk is high.]
-
-## Minimal implementation sketch
-
-```python
-# Pseudocode only. Do not include real secrets.
-import httpx
-
-with httpx.Client(follow_redirects=True) as client:
-    # 1. Authenticate or attach authorized session cookies.
-    # 2. Fetch bootstrap/form page if needed.
-    # 3. Submit primary action request.
-    # 4. Verify result.
-    pass
-```
-
-## Unknowns and validation plan
-
-1. [Specific missing evidence and what would resolve it.]
-2. [Proposed future validation, with authorization required for mutations. Do not execute captured mutations as an analysis check.]
+[Give the requested assessment using only observed prerequisites and results. Identify the missing capture evidence for each unresolved question.]
 
 ## Evidence appendix
 
