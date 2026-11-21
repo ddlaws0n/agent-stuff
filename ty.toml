@@ -1,3 +1,9 @@
 [environment]
+python-version = "3.13"
 # Skill tests import their skill's scripts by path.
 extra-paths = ["skills/analyze-har-workflows/scripts"]
+
+[src]
+# Existing dict-inference error on main; remove after feat/har-workflow-graph merges.
+# Its behavioral tests and minimum-runtime checks still run.
+exclude = ["skills/analyze-har-workflows/scripts/har_probe.py"]

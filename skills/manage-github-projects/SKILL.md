@@ -20,7 +20,7 @@ compatibility: >-
   uv is optional.
 metadata:
   author: ddlaws0n
-  version: "0.1.2"
+  version: "0.2.0"
 ---
 
 # Manage GitHub Projects

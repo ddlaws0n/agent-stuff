@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -17,6 +18,30 @@ SPEC.loader.exec_module(MODULE)
 
 
 class AuditTailwindTests(unittest.TestCase):
+    def test_json_cli_contract_and_findings_shape(self):
+        temp, root = self.make_project()
+        self.addCleanup(temp.cleanup)
+        (root / "app.css").write_text('@tailwind utilities;')
+        result = subprocess.run([sys.executable, "-B", str(MODULE_PATH), str(root), "--format", "json"],
+                                check=True, capture_output=True, text=True, timeout=15)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["root"], str(root.resolve()))
+        self.assertEqual(report["summary"]["total"], len(report["findings"]))
+        self.assertTrue(report["findings"])
+        self.assertTrue({"severity", "code", "path", "line", "message", "suggestion"} <= report["findings"][0].keys())
+
+    def test_missing_input_and_invalid_output_format_fail_without_json(self):
+        temp, root = self.make_project()
+        self.addCleanup(temp.cleanup)
+        for arguments, status in [([str(root / "missing"), "--format", "json"], 1),
+                                  ([str(root), "--format", "invalid"], 2)]:
+            with self.subTest(arguments=arguments):
+                result = subprocess.run([sys.executable, "-B", str(MODULE_PATH), *arguments],
+                                        capture_output=True, text=True, timeout=15)
+                self.assertEqual(result.returncode, status)
+                self.assertEqual(result.stdout, "")
+                self.assertTrue(result.stderr.strip())
+
     def make_project(self) -> tuple[tempfile.TemporaryDirectory, Path]:
         temp = tempfile.TemporaryDirectory()
         root = Path(temp.name)

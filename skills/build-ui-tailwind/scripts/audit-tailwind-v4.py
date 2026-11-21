@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = []
+# ///
 """Audit a project for Tailwind CSS v4.3 readiness issues.
 
 This script is intentionally dependency-free so agents can run it in most

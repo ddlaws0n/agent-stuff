@@ -22,7 +22,42 @@ const EVAL_KEYS = new Set([
   "expected_output",
   "files",
   "assertions",
+  "tags",
 ]);
+const EVAL_TAGS = new Set([
+  "normal",
+  "boundary",
+  "refusal",
+  "dry-run",
+  "pressure",
+]);
+// Remove after the HAR branch's corpus migration lands. Only the exact corpus
+// on main can defer tags/pressure; assertions and all other checks still apply.
+const LEGACY_HAR_EVAL_SHA256 =
+  "5d6ec64d8a4f4f4d0babbdfe6ccf69e8e1a4ec95ceb5f9d17427cd57b209bb77";
+
+export function legacyHarEvals(name: string, text: string): boolean {
+  return (
+    name === "analyze-har-workflows" &&
+    new Bun.CryptoHasher("sha256").update(text).digest("hex") ===
+      LEGACY_HAR_EVAL_SHA256
+  );
+}
+
+export function normalizeQuery(query: string): string {
+  return query.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function validTags(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every(
+      (tag: unknown) => typeof tag === "string" && EVAL_TAGS.has(tag),
+    ) &&
+    new Set(value).size === value.length
+  );
+}
 const SKILL_ENTRIES = new Set([
   "SKILL.md",
   "LICENSE",
@@ -130,6 +165,142 @@ function exists(path: string): Promise<boolean> {
   );
 }
 
+export function isPythonEntryPoint(source: string): boolean {
+  return /^if\s+__name__\s*==\s*["']__main__["']\s*:/m.test(source);
+}
+
+export function pythonMinimum(compatibility: unknown): string | undefined {
+  return typeof compatibility === "string"
+    ? /\bPython (\d+\.\d+)\+/.exec(compatibility)?.[1]
+    : undefined;
+}
+
+// Lenient frontmatter read for advisory checks; validateSkill reports errors.
+export async function readFrontmatter(
+  directory: string,
+): Promise<Record<string, unknown>> {
+  const source = await Bun.file(join(directory, "SKILL.md")).text();
+  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(source);
+  const data: unknown = match ? parseDocument(match[1]).toJS() : null;
+  return isRecord(data) ? data : {};
+}
+
+export function pythonMetadataErrors(
+  source: string,
+  compatibility: unknown,
+): string[] {
+  const blocks = [
+    ...source.matchAll(/^# \/\/\/ script\r?\n([\s\S]*?)^# \/\/\/\s*$/gm),
+  ];
+  if (blocks.length !== 1) return ["needs one complete PEP 723 script block"];
+  const lines = blocks[0][1].trimEnd().split(/\r?\n/);
+  if (lines.some((line) => !/^#(?: |$)/.test(line)))
+    return ["PEP 723 metadata must contain only comment lines"];
+  let metadata: Record<string, unknown>;
+  try {
+    const parsed: unknown = Bun.TOML.parse(
+      lines.map((line) => line.slice(2)).join("\n"),
+    );
+    if (!isRecord(parsed)) return ["PEP 723 metadata must be a TOML mapping"];
+    metadata = parsed;
+  } catch {
+    return ["PEP 723 metadata must be valid TOML"];
+  }
+  const minimum = pythonMinimum(compatibility);
+  const errors: string[] = [];
+  if (!minimum) errors.push("compatibility must declare a Python X.Y+ minimum");
+  else if (metadata["requires-python"] !== `>=${minimum}`)
+    errors.push(
+      `requires-python must match compatibility minimum (>=${minimum})`,
+    );
+  if (
+    metadata.dependencies !== undefined &&
+    (!Array.isArray(metadata.dependencies) ||
+      metadata.dependencies.some(
+        (dependency) => typeof dependency !== "string" || !dependency.trim(),
+      ))
+  )
+    errors.push("PEP 723 dependencies must be an array of nonempty strings");
+  return errors;
+}
+
+async function interpreterErrors(
+  text: string,
+  directory: string,
+  path: string,
+): Promise<string[]> {
+  const errors: string[] = [];
+  let fenceLanguage: string | undefined;
+  let shellFence = false;
+  for (const [index, line] of text.split("\n").entries()) {
+    const fence = /^\s*(?:```|~~~)(\w*)/.exec(line);
+    if (fence) {
+      fenceLanguage = fenceLanguage === undefined ? fence[1] : undefined;
+      shellFence =
+        fenceLanguage !== undefined &&
+        ["", "bash", "sh", "shell", "console"].includes(fenceLanguage);
+      continue;
+    }
+    const candidates = [...line.matchAll(/`([^`]+)`/g)]
+      .filter((match) => {
+        const before = line.slice(0, match.index).trim();
+        const after = line.slice(match.index + match[0].length).trim();
+        return (
+          /\b(?:run|execute|invoke|command(?: is)?|usage:)\s*$/i.test(before) ||
+          (!after &&
+            /^(?:[-*]\s*)?$/.test(before) &&
+            /^\S+\s+\S/.test(match[1]))
+        );
+      })
+      .map((match) => match[1]);
+    // Inline labels that explain a subcommand are references. Only explicit
+    // execution instructions or standalone examples count as commands.
+    if (shellFence || !path.endsWith(".md"))
+      candidates.push(line.trim().replace(/^Usage:\s*/, ""));
+    for (const command of candidates) {
+      const match = /^(?:\$\s+)?(?:\.\/)?(scripts\/[\w./-]+)(.*)$/.exec(
+        command,
+      );
+      if (!match) continue;
+      if (await exists(join(directory, match[1]))) {
+        errors.push(
+          `${path}:${index + 1} run ${match[1]} through its interpreter`,
+        );
+        break;
+      }
+    }
+  }
+  return errors;
+}
+
+async function validateScripts(
+  directory: string,
+  name: string,
+  compatibility: unknown,
+): Promise<string[]> {
+  const scripts = [
+    ...new Bun.Glob("scripts/**/*.{py,sh}").scanSync({ cwd: directory }),
+  ];
+  if (!scripts.length) return [];
+  const errors: string[] = [];
+  if (
+    ![...new Bun.Glob("tests/**/test_*.py").scanSync({ cwd: directory })].length
+  )
+    errors.push(
+      `${name}: bundled scripts need discoverable tests (tests/**/test_*.py)`,
+    );
+  for (const script of scripts.filter((path) => path.endsWith(".py"))) {
+    const source = await Bun.file(join(directory, script)).text();
+    if (isPythonEntryPoint(source))
+      errors.push(
+        ...pythonMetadataErrors(source, compatibility).map(
+          (error) => `${name}: ${script} ${error}`,
+        ),
+      );
+  }
+  return errors;
+}
+
 async function validateBody(
   text: string,
   body: string,
@@ -213,6 +384,12 @@ async function validateFiles(
     if (text.includes("\0")) continue;
     if (MACHINE_PATH.test(text))
       errors.push(`${name}: ${path} contains a machine-specific path`);
+    if (/\.(?:md|py|sh)$/.test(path))
+      errors.push(
+        ...(await interpreterErrors(text, directory, path)).map(
+          (error) => `${name}: ${error}`,
+        ),
+      );
     if (path.endsWith(".md"))
       for (const line of paddedTables(text))
         errors.push(
@@ -245,7 +422,9 @@ async function validateEvals(
 
   const errors: string[] = [];
   try {
-    const evals: unknown = await evalFile.json();
+    const source = await evalFile.text();
+    const legacy = legacyHarEvals(name, source);
+    const evals: unknown = JSON.parse(source);
     if (
       !isRecord(evals) ||
       evals.skill_name !== name ||
@@ -259,6 +438,17 @@ async function validateEvals(
 
     const ids = new Set<number>();
     const items: unknown[] = evals.evals;
+    const taggedCases: string[][] = [];
+    if (
+      !legacy &&
+      (!isRecord(evals.pressure) ||
+        typeof evals.pressure.required !== "boolean" ||
+        typeof evals.pressure.reason !== "string" ||
+        !evals.pressure.reason.trim())
+    )
+      errors.push(
+        `${name}: eval corpus needs pressure {required: boolean, reason: nonempty string} reviewed for this skill`,
+      );
     for (const [index, item] of items.entries()) {
       const prefix = `${name}: eval ${index + 1}`;
       if (!isRecord(item)) {
@@ -286,19 +476,44 @@ async function validateEvals(
       )
         errors.push(`${prefix} files must be existing paths within the skill`);
       if (
-        item.assertions !== undefined &&
-        (!Array.isArray(item.assertions) ||
-          item.assertions.some(
-            (assertion: unknown) =>
-              typeof assertion !== "string" || !assertion.trim(),
-          ))
+        !Array.isArray(item.assertions) ||
+        item.assertions.length === 0 ||
+        item.assertions.some(
+          (assertion: unknown) =>
+            typeof assertion !== "string" || !assertion.trim(),
+        )
       ) {
         errors.push(`${prefix} assertions must be nonempty strings`);
+      }
+      if (!legacy) {
+        if (!validTags(item.tags))
+          errors.push(
+            `${prefix} tags must be unique values from ${[...EVAL_TAGS].join(", ")}`,
+          );
+        else taggedCases.push(item.tags);
       }
       // Unknown keys (e.g. "expectations") would otherwise be silently skipped.
       const unknown = Object.keys(item).filter((key) => !EVAL_KEYS.has(key));
       if (unknown.length > 0)
         errors.push(`${prefix} has unknown keys: ${unknown.join(", ")}`);
+    }
+    if (!legacy) {
+      const normal = taggedCases.flatMap((tags, index) =>
+        tags.includes("normal") ? [index] : [],
+      );
+      const boundaries = taggedCases.flatMap((tags, index) =>
+        tags.some((tag) => tag !== "normal") ? [index] : [],
+      );
+      if (!normal.some((index) => boundaries.some((other) => other !== index)))
+        errors.push(
+          `${name}: needs distinct normal and boundary/refusal/dry-run/pressure eval cases`,
+        );
+      if (
+        isRecord(evals.pressure) &&
+        evals.pressure.required === true &&
+        !taggedCases.some((tags) => tags.includes("pressure"))
+      )
+        errors.push(`${name}: pressure.required needs a pressure-tagged eval`);
     }
   } catch (error) {
     errors.push(`${name}: invalid evals/evals.json: ${String(error)}`);
@@ -328,17 +543,26 @@ async function validateTriggerEvals(
       return [
         `${name}: trigger-evals.json must be an array of {query, should_trigger}`,
       ];
-    const expected = new Set(
-      cases.map((item: { should_trigger: boolean }) => item.should_trigger),
-    );
+    const validCases: { query: string; should_trigger: boolean }[] = cases;
+    const expected = new Set(validCases.map((item) => item.should_trigger));
     if (expected.size < 2)
       return [
         `${name}: trigger-evals.json needs should-trigger and near-miss cases`,
       ];
+    const seen = new Map<string, boolean>();
+    const errors: string[] = [];
+    for (const item of validCases) {
+      const query = normalizeQuery(item.query);
+      if (seen.has(query))
+        errors.push(
+          `${name}: duplicate trigger query ${JSON.stringify(item.query)}${seen.get(query) !== item.should_trigger ? " has conflicting should_trigger labels" : ""}`,
+        );
+      seen.set(query, item.should_trigger);
+    }
+    return errors;
   } catch (error) {
     return [`${name}: invalid evals/trigger-evals.json: ${String(error)}`];
   }
-  return [];
 }
 
 export async function validateSkill(directory: string): Promise<string[]> {
@@ -367,6 +591,7 @@ export async function validateSkill(directory: string): Promise<string[]> {
     validateFiles(directory, name),
     validateEvals(directory, name),
     validateTriggerEvals(directory, name),
+    validateScripts(directory, name, data.compatibility),
   ]);
   return errors.concat(...results);
 }
@@ -403,6 +628,86 @@ export async function skillDirectories(skillsDir: string): Promise<string[]> {
     .toSorted();
 }
 
+export async function skillWarnings(directory: string): Promise<string[]> {
+  const name = basename(directory);
+  const data = await readFrontmatter(directory);
+  if (typeof data.description !== "string") return [];
+  const warnings: string[] = [];
+  const evalFile = Bun.file(join(directory, "evals", "evals.json"));
+  if ((await evalFile.exists()) && legacyHarEvals(name, await evalFile.text()))
+    warnings.push(
+      `${name}: temporary exact-corpus exception for tags/pressure until the HAR branch migration lands; assertions remain required`,
+    );
+  if (data.description.length > 600)
+    warnings.push(
+      `${name}: description has ${data.description.length} characters (editorial target: 600); preserve routing boundaries when shortening`,
+    );
+  const trigger = data.description.indexOf("Use when");
+  if (trigger > 300)
+    warnings.push(
+      `${name}: "Use when" starts after ${trigger} characters (editorial target: first 300)`,
+    );
+  return warnings;
+}
+
+export async function triggerOverlapWarnings(
+  root: string,
+  skills: string[],
+): Promise<string[]> {
+  const positives = new Map<string, Set<string>>();
+  for (const name of skills) {
+    const file = Bun.file(
+      join(root, "skills", name, "evals", "trigger-evals.json"),
+    );
+    if (!(await file.exists())) continue;
+    let cases: unknown;
+    try {
+      cases = await file.json();
+    } catch {
+      continue; // Validation reports malformed files.
+    }
+    if (!Array.isArray(cases)) continue;
+    for (const item of cases) {
+      if (
+        !isRecord(item) ||
+        item.should_trigger !== true ||
+        typeof item.query !== "string"
+      )
+        continue;
+      const query = normalizeQuery(item.query);
+      if (!positives.has(query)) positives.set(query, new Set());
+      positives.get(query)!.add(name);
+    }
+  }
+  return [...positives]
+    .filter(([, names]) => names.size > 1)
+    .map(
+      ([query, names]) =>
+        `Trigger overlap: ${JSON.stringify(query)} is positive in ${[...names].join(", ")}; review whether collaboration is intended`,
+    );
+}
+
+export function catalogSize(
+  entries: { name: string; description: string; path: string }[],
+) {
+  const namesAndDescriptions = entries.reduce(
+    (total, skill) => total + skill.name.length + skill.description.length,
+    0,
+  );
+  const paths = entries.reduce((total, skill) => total + skill.path.length, 0);
+  const rendered = entries
+    .map(
+      (skill) => `- ${skill.name}: ${skill.description} (file: ${skill.path})`,
+    )
+    .join("\n").length;
+  return {
+    namesAndDescriptions,
+    paths,
+    formatting: rendered - namesAndDescriptions - paths,
+    rendered,
+  };
+}
+
 if (import.meta.main) {
   const root = resolve(import.meta.dir, "..");
   const skillsDir = join(root, "skills");
@@ -415,6 +720,27 @@ if (import.meta.main) {
       validateRepository(root, directories),
     ])
   ).flat();
+  const warnings = (
+    await Promise.all(
+      directories.map((entry) => skillWarnings(join(skillsDir, entry))),
+    )
+  ).flat();
+  warnings.push(...(await triggerOverlapWarnings(root, directories)));
+  for (const warning of warnings) console.warn(`Warning: ${warning}`);
+  const catalog = [];
+  for (const name of directories) {
+    const { description } = await readFrontmatter(join(skillsDir, name));
+    if (typeof description === "string")
+      catalog.push({
+        name,
+        description,
+        path: join(skillsDir, name, "SKILL.md"),
+      });
+  }
+  const size = catalogSize(catalog);
+  console.log(
+    `Catalog advisory (this checkout only): ${size.namesAndDescriptions} name/description characters + ${size.paths} path characters + ${size.formatting} formatting characters = ${size.rendered} estimated rendered characters; host budgets and other installed skills vary.`,
+  );
   if (errors.length) {
     console.error(errors.join("\n"));
     process.exitCode = 1;

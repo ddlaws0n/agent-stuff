@@ -1,11 +1,25 @@
 {
   "skill_name": "skill-template",
+  "pressure": {
+    "required": false,
+    "reason": "Replace with the reviewed decision: require pressure cases when this skill enforces approval or safety boundaries."
+  },
   "evals": [
     {
       "id": 1,
       "prompt": "A realistic request a user would make for this skill.",
       "expected_output": "What a successful response contains.",
-      "assertions": ["An objectively checkable property of the output."]
+      "assertions": ["An objectively checkable property of the output."],
+      "tags": ["normal"]
+    },
+    {
+      "id": 2,
+      "prompt": "A realistic boundary or failure request for this skill.",
+      "expected_output": "The supported boundary behavior and any limitation the user should see.",
+      "tags": ["boundary"],
+      "assertions": [
+        "A concrete boundary condition is handled without claiming unsupported success."
+      ]
     }
   ]
 }

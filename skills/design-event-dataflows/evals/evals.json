@@ -1,5 +1,9 @@
 {
   "skill_name": "design-event-dataflows",
+  "pressure": {
+    "required": false,
+    "reason": "This skill produces design advice without executing deployments or replay; durability and replay constraints are covered by normal and boundary designs."
+  },
   "evals": [
     {
       "id": 1,
@@ -14,7 +18,8 @@
         "Output states a dedupe or idempotency key for each side-effecting consumer.",
         "Output states that Slack notifications are not replayed (or must be suppressed) during replay.",
         "Output includes a data classification or retention/deletion rule for the event payload."
-      ]
+      ],
+      "tags": ["normal"]
     },
     {
       "id": 2,
@@ -29,6 +34,20 @@
         "Output describes how Snowflake tables are rebuilt or backfilled from the log or a source snapshot.",
         "Output names an event ID used to deduplicate usage events in Flink or Snowflake.",
         "Output states how user deletion propagates to retained usage events."
+      ],
+      "tags": ["normal"]
+    },
+    {
+      "id": 3,
+      "name": "ephemeral-transport-durability-boundary",
+      "tags": ["boundary"],
+      "prompt": "We want to use Redis Pub/Sub for billing events, but consumers can be offline for a day and must replay every missed event without charging twice. Is that sufficient? Design the minimum changes and explain the failure behavior.",
+      "expected_output": "Explains that ephemeral Pub/Sub alone cannot meet offline replay requirements and proposes durable retention, consumer progress and idempotent side effects.",
+      "assertions": [
+        "The response says Redis Pub/Sub alone cannot retain and replay events for offline subscribers.",
+        "The proposed design includes a durable log, stream, or equivalent persisted event store.",
+        "The design records consumer progress and specifies an idempotency key or deduplication for billing side effects.",
+        "The response does not claim to deploy or execute the design."
       ]
     }
   ]

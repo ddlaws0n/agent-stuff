@@ -8,12 +8,14 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from case_contracts import CASE_GRADERS
+
 REPO = Path(__file__).resolve().parents[2]
 RESULTS_BASE = REPO / "eval/results"
 WORKSPACES_BASE = Path(tempfile.gettempdir())
 DEFAULT_MODEL = "openrouter/z-ai/glm-5.3-flash"
 MODELS = (DEFAULT_MODEL, "openrouter/openai/gpt-6-luna")
-CASES = [("create-agentsmd", 1), ("create-github-actions", 1), ("manage-github-projects", 1)]
+CASES = list(CASE_GRADERS)
 
 
 def run_name(value):
@@ -58,8 +60,15 @@ def main(argv=None):
         case = next(x for x in json.loads((REPO / f"skills/{skill}/evals/evals.json").read_text())["evals"] if x["id"] == case_id)
         if not case.get("assertions"):
             raise SystemExit(f"Pilot case {skill}/{case_id} needs explicit assertions before execution")
+        if (skill, case_id) not in CASE_GRADERS:
+            raise SystemExit(f"Unsupported eval case {skill}/{case_id}; add a reviewed fixture and grader first")
+        tags = case.get("tags")
+        if not isinstance(tags, list) or not tags or any(not isinstance(tag, str) for tag in tags):
+            raise SystemExit(f"Pilot case {skill}/{case_id} needs explicit tags before execution")
+        if CASE_GRADERS[(skill, case_id)] == "board-pressure" and "pressure" not in tags:
+            raise SystemExit(f"Pressure case {skill}/{case_id} needs the pressure tag")
         for cell in ("with_skill", "without_skill"):
-            key = f"{skill}-{cell}"
+            key = f"{skill}-eval-{case_id}-{cell}"
             root = results / skill / f"eval-{case_id}" / cell
             workspace = workspaces / skill / f"eval-{case_id}" / cell
             workspace.mkdir(parents=True)
@@ -77,9 +86,9 @@ def main(argv=None):
                 dest.parent.mkdir(parents=True)
                 shutil.copytree(REPO / "skills" / skill, dest)
             task = f"{case['prompt']}\n\nUse only this disposable fixture workspace. Do not access the network or a real GitHub account. Do not edit .agents/ or .pi/ configuration. For the project-board case, use the local mock gh only. Report what you changed or observed and which checks you actually ran."
-            metadata = {"eval_id": case_id, "eval_name": case.get("name", skill), "prompt": task, "expected_output": case["expected_output"], "assertions": case.get("assertions", [])}
+            metadata = {"eval_id": case_id, "eval_name": case.get("name", skill), "prompt": task, "expected_output": case["expected_output"], "assertions": case["assertions"], "tags": tags}
             put(root, "eval_metadata.json", json.dumps(metadata, indent=2) + "\n")
-            cells.append({"key": key, "skill": skill, "condition": cell, "cwd": str(workspace), "root": str(root), "task": task, "model": model})
+            cells.append({"key": key, "skill": skill, "evalId": case_id, "tags": tags, "condition": cell, "cwd": str(workspace), "root": str(root), "task": task, "model": model})
     manifest = {"run_name": options.run_name, "model": model, "cells": cells}
     put(results, "manifest.json", json.dumps(manifest, indent=2) + "\n")
     print(f"Prepared {len(cells)} independent cells under {results} with {model}")

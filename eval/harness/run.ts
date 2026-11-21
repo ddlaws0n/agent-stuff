@@ -11,6 +11,8 @@ type Cell = {
   root: string;
   task: string;
   model: string;
+  evalId: number;
+  tags: string[];
 };
 type Message = {
   role: string;
@@ -60,6 +62,8 @@ export function inspectEvent(
 }
 
 export function buildDockerArgs(cell: Cell) {
+  if (!cell.tags.length)
+    throw new Error("Eval tags are required before execution");
   const skillPath = join("/workspace", ".agents/skills", cell.skill);
   const args = [
     "--mode",
@@ -152,6 +156,16 @@ export async function runCell(cell: Cell, key: string, dockerBin = "docker") {
     if (event.type === "turn_start") turnCount++;
     if (event.type === "agent_settled") state.settled = true;
   };
+  const writeError = (error: string) =>
+    writeFile(
+      join(cell.root, "status.json"),
+      JSON.stringify({
+        state: "evaluation_error",
+        evalId: cell.evalId,
+        tags: cell.tags,
+        error,
+      }) + "\n",
+    );
   try {
     const decoder = new TextDecoder();
     for await (const chunk of child.stdout) {
@@ -168,12 +182,18 @@ export async function runCell(cell: Cell, key: string, dockerBin = "docker") {
   } catch (error) {
     child.kill();
     await child.exited;
+    await writeError(
+      "Runner rejected transcript or resolved model; inspect redacted transcript",
+    );
     throw error;
   } finally {
     await transcript.end();
   }
   const exitCode = await child.exited;
   if (exitCode !== 0 || !state.settled || state.last?.stopReason !== "stop") {
+    await writeError(
+      "Child did not complete successfully; inspect redacted transcript",
+    );
     throw new Error(
       `${key}: Pi did not finish successfully (exit ${exitCode}); inspect the redacted transcript`,
     );
@@ -208,6 +228,8 @@ export async function runCell(cell: Cell, key: string, dockerBin = "docker") {
     steps: [{ model: cell.model }],
     toolCount,
     turnCount,
+    evalId: cell.evalId,
+    tags: cell.tags,
   };
   await writeFile(
     join(cell.root, "status.json"),
@@ -238,23 +260,23 @@ async function main() {
   const { runName, model } = parseArgs(process.argv.slice(2));
   if (!process.env.OPENROUTER_API_KEY)
     throw new Error("OPENROUTER_API_KEY is required");
-  const prepared = Bun.spawnSync(
-    [
-      "python3",
-      "-B",
-      join(harness, "prepare.py"),
-      "--run-name",
-      runName,
-      "--model",
-      model,
-    ],
-    {
-      cwd: repo,
-      stdout: "inherit",
-      stderr: "inherit",
-    },
-  );
-  if (prepared.exitCode !== 0) throw new Error("Preparation failed");
+  const python = (script: string, ...args: string[]) =>
+    Bun.spawnSync(
+      [
+        "uv",
+        "run",
+        "--no-project",
+        "python",
+        "-B",
+        join(harness, script),
+        "--run-name",
+        runName,
+        ...args,
+      ],
+      { cwd: repo, stdout: "inherit", stderr: "inherit" },
+    ).exitCode;
+  if (python("prepare.py", "--model", model) !== 0)
+    throw new Error("Preparation failed");
   const manifest: { cells: Cell[] } = JSON.parse(
     await readFile(
       join(repo, "eval/results", runName, "manifest.json"),
@@ -262,15 +284,7 @@ async function main() {
     ),
   );
   for (const cell of manifest.cells) await runCell(cell, cell.key);
-  const graded = Bun.spawnSync(
-    ["python3", "-B", join(harness, "grade.py"), "--run-name", runName],
-    {
-      cwd: repo,
-      stdout: "inherit",
-      stderr: "inherit",
-    },
-  );
-  if (graded.exitCode !== 0) throw new Error("Grading failed");
+  if (python("grade.py") !== 0) throw new Error("Grading failed");
 }
 
 if (import.meta.main) {

@@ -45,6 +45,8 @@ test("only the disposable fixture enters each Pi container", () => {
     root: "/private/eval/results/case",
     task: "Inspect the fixture",
     model: "openrouter/z-ai/glm-5.3-flash:high",
+    evalId: 1,
+    tags: ["normal"],
   };
   const args = buildDockerArgs(cell).join(" ");
   expect(args).toContain("type=bind,src=/tmp/disposable/case,dst=/workspace");
@@ -55,6 +57,9 @@ test("only the disposable fixture enters each Pi container", () => {
   expect(args).not.toContain(cell.root);
   expect(args).not.toContain("/repo/skills");
   expect(args).not.toContain("op://");
+  expect(() => buildDockerArgs({ ...cell, tags: [] })).toThrow(
+    "tags are required",
+  );
   expect(
     buildDockerArgs({ ...cell, condition: "without_skill" }).join(" "),
   ).not.toContain("--skill");
@@ -124,6 +129,8 @@ test("collects and redacts Pi JSON output without invoking a real model", async 
         root,
         task: "Inspect fixture",
         model: "openrouter/z-ai/glm-5.3-flash:high",
+        evalId: 1,
+        tags: ["normal"],
       },
       "case-with_skill",
       join(bin, "docker"),
@@ -141,6 +148,9 @@ test("collects and redacts Pi JSON output without invoking a real model", async 
       JSON.parse(await readFile(join(root, "timing.json"), "utf8"))
         .total_tokens,
     ).toBe(5);
+    expect(
+      JSON.parse(await readFile(join(root, "status.json"), "utf8")),
+    ).toMatchObject({ evalId: 1, tags: ["normal"] });
   } finally {
     if (originalKey === undefined) delete process.env.OPENROUTER_API_KEY;
     else process.env.OPENROUTER_API_KEY = originalKey;
@@ -179,13 +189,17 @@ test("terminates a child when resolved-model validation fails", async () => {
           root,
           task: "fixture",
           model: "openrouter/z-ai/glm-5.3-flash:high",
+          evalId: 1,
+          tags: ["normal"],
         },
         "mismatch",
         bin,
       ),
     ).rejects.toThrow("Resolved model differs");
     expect(Date.now() - started).toBeLessThan(2000);
-    expect(await Bun.file(join(root, "status.json")).exists()).toBe(false);
+    expect(
+      JSON.parse(await readFile(join(root, "status.json"), "utf8")),
+    ).toMatchObject({ state: "evaluation_error", evalId: 1, tags: ["normal"] });
   } finally {
     await rm(base, { recursive: true, force: true });
   }

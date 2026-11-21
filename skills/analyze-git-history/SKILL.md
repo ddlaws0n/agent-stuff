@@ -13,7 +13,7 @@ compatibility: >-
   no network access.
 metadata:
   author: ddlaws0n
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Analyze Git History
@@ -25,7 +25,7 @@ Stay read-only. Do not check out, reset, fetch, unshallow, or otherwise change t
 ## Workflow
 
 1. **Scope.** Choose the narrowest meaningful path: the user's subsystem, `src/`, `app/`, or `packages/<service>/`. Scan the repo root only for small repos or when the user asks for a repo-wide view; lockfiles, generated code, and changelogs dominate root-level counts.
-2. **Scan.** Run `scripts/git-risk-scan.sh` (see [Scripts](#scripts)) with that scope. Widen `--since` for slow-moving repos. Read its Warnings first: a shallow clone or an empty scope changes what you can claim.
+2. **Scan.** Run `bash scripts/git-risk-scan.sh` (see [Scripts](#scripts)) with that scope. Widen `--since` for slow-moving repos. Read its Warnings first: a shallow clone or an empty scope changes what you can claim.
 3. **Cross-check.** Rank files that appear in both churn and bug-fix lists highest. Compare all-time and recent owners to spot departed experts. Sample `git log --format=%s -n 50` to judge commit-message quality before trusting keyword counts, and check for split identities and bots (see [Gotchas](#gotchas)).
 4. **Drill down.** For the top three to five files, run `git log --follow --stat --since="1 year ago" -- <file>` and `git log --follow -p --since="3 months ago" -- <file>`, then read the current source. Use the diffs to name repeated failure modes before judging the implementation.
 5. **Report.** Write the risk map in the [Output](#output) shape and label each claim with a confidence level.
