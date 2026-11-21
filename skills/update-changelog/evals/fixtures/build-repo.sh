@@ -104,6 +104,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci && npm test
 EOF
+  if [ "$case_name" = embargoed ]; then
+    write src/paging.js <<'EOF'
+export const page = (items, n, size) => items.slice((n - 1) * size + 1, n * size);
+EOF
+  fi
   changelog "$1" "$2" | write CHANGELOG.md
   commit "chore: initial import"
   git tag "v$1"
