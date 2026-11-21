@@ -17,6 +17,23 @@ class WorkflowEvidenceTests(unittest.TestCase):
         self.assertEqual(result.returncode, code, result.stdout + result.stderr)
         return json.loads(result.stdout)
 
+    def test_job_projection_separates_caller_root_and_job_identity(self):
+        names = ["related-assignment.synthetic.har", "related-messaging.synthetic.har"]
+        out = self.inspect(names, "--jobs", "--values", "--select", "0:2:", "--select", "1:2:")
+        self.assertFalse(out["truncated"])
+        a, b = ([row for row in out["observations"] if row["source"] == source] for source in (0, 1))
+        self.assertEqual((a[0]["visible_rows"], a[0]["job_scope_count"], a[0]["job_count"]), (3, 7, 43))
+        self.assertEqual({row["calling_recipe_id"] for row in b[1:]}, {601, 602})
+        self.assertEqual({row["root_recipe_id"] for row in b[1:]}, {501, 503, 601})
+        self.assertEqual({row["root_job_id"] for row in a[1:]} & {row["root_job_id"] for row in b[1:]},
+                         {a[1]["root_job_id"], a[3]["root_job_id"]})
+        self.assertNotEqual(a[1]["id"], a[1]["root_job_id"])
+        self.assertNotIn("shared-run", json.dumps(out))
+        self.assertNotIn("private-account", json.dumps(out))
+        masked = self.inspect(names[:1], "--jobs", "--select", "0:2:", "--max-items", "2")
+        self.assertTrue(masked["truncated"])
+        self.assertIsInstance(masked["observations"][1]["calling_recipe_id"], str)
+
     def test_job_inventory_proves_two_shared_runs_without_disclosing_entities(self):
         out = self.inspect(["related-assignment.synthetic.har", "related-messaging.synthetic.har"],
                            "--select", "0:2:/jobs", "--select", "1:2:/jobs", "--walk", "--max-items", "200", "--max-chars", "30000")

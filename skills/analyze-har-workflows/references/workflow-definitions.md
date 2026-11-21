@@ -25,18 +25,13 @@ Use `definition`, `runtime`, `inference`, or `documentation` as the claim's basi
 
 ## Reconcile all available jobs across captures
 
-Start with a single private inventory of the job lists. Walk the job arrays in one inspector invocation across all captures, writing JSON to a private file. Project just the caller, root, job, parent-job and repeat fields from that file locally. Compare opaque identities within that invocation. For structural recipe IDs, versions, counts and enabled node types, select those exact scalar pointers together with `--values`; leave customer and credential values hidden. Summarize the grouped rows once. If a field is absent, leave the corresponding relationship unknown instead of expanding unrelated payloads or repeating the same inspection.
-
-For example, if the job lists are response entry 2 under `/jobs` in both files:
+For a response object containing a `jobs` array, start with the job projection. If both pages are response entry 2 at the JSON root, run:
 
 ```bash
-uv run scripts/har_inspect.py first.har second.har \
-  --select '0:2:/jobs' --select '1:2:/jobs' --walk \
-  --max-items 300 --max-chars 40000 > "$ANALYSIS_DIR/jobs.json"
-jq -r '.truncated, (.observations[] | select(.pointer | test("/(id|calling_job_id|root_job_id|calling_recipe_id|root_recipe_id)$")) | [.source,.pointer,.value_id] | @tsv)' "$ANALYSIS_DIR/jobs.json"
+uv run scripts/har_inspect.py first.har second.har --jobs --values --select '0:2:' --select '1:2:'
 ```
 
-Read each job's own ID and its caller and root IDs from their **separate fields**. Match the two root fields across sources to count shared runs. Only a caller-job ID equal to a particular job's **own** ID supports a direct invocation by that job. If you have only a shared root, report that and stop. Read structural recipe IDs with selected `--values` pointers so the caller list is useful to the reader.
+The page row gives visible, scoped and total counts. Each job row keeps the job's own ID, caller-job and root-job IDs in separate columns, using private equality labels. Only integer caller/root **recipe** IDs are disclosed by `--values` in job rows. List all distinct callers from the caller column before discussing shared roots. Match root-job labels across captures; a shared root alone cannot identify an immediate caller. For other shapes use a bounded `--walk` and project equivalent fields locally. Check the truncation flag. Report gaps without reconstructing missing links. Inspect connection bindings and enabled actions separately.
 
 - Separate page length, filtered-scope counts, and recipe-wide totals; record filters, pagination, and whether more pages are absent. A single detailed job is not the complete caller inventory.
 - Compare each visible job's direct caller, root recipe, calling/root job IDs, and repeat/master linkage across files. Group callers and match shared runs using one inspection command so opaque IDs remain comparable. Root ancestry proves an upstream relationship, not necessarily a direct call; clone/parent lineage is a separate relationship.

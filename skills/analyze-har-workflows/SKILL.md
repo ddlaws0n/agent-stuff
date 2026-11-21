@@ -12,7 +12,7 @@ compatibility: >-
   bundled scripts' ijson dependency; Python alone supports small HARs.
 metadata:
   author: ddlaws0n
-  version: "0.5.7"
+  version: "0.5.8"
 ---
 
 # HAR workflow analysis
@@ -23,7 +23,7 @@ Explain the captured action or workflow structure and assess the requested autom
 
 1. Work from local capture files only. Keep raw HARs, bodies and private inspection output out of model context, including synthetic examples. Use the bundled scripts and select the smallest evidence that answers the question.
 2. For a browser action, run the brief and inspect the relevant request indices. Report observed requests, response shapes and the saved result. When two saves use different nonces, write “a different nonce appeared in each save; lifetime unknown.” Reserve “single-use”, “expires”, and “requires refresh” for direct evidence of rejection or an explicit protocol rule.
-3. For stored definitions or jobs, go straight to the response inspector and `references/workflow-definitions.md`. Inspect a compact batch of structural fields across all visible rows before drawing relationships. Report direct callers from caller fields, shared roots as shared roots, and definition ancestry separately. Omit an execution edge unless the capture identifies both endpoints of that edge.
+3. For stored definitions or jobs, go straight to the response inspector and `references/workflow-definitions.md`. For captured job pages, use the inspector’s `--jobs` projection across the files in one command. Read its caller, root and count columns before drawing relationships. Report direct callers from caller fields, shared roots as shared roots, and definition ancestry separately. Omit an execution edge unless the capture identifies both endpoints of that edge.
 4. Identify configured actions separately from executed actions. Give the job's executed version only from its version field or a matched snapshot. Describe a configured return as “if execution reaches this step”. When evidence ends, state the specific unknown and finish. Never replay a request, contact the application, or probe a proposed prerequisite.
 
 ## Scripts

@@ -129,6 +129,25 @@ def describe(value: Any, hidden: bool, identities: Dict[str, str], reveal: bool)
     return result
 
 
+def job_rows(page: Any, pointer: str, hidden: bool, identities: Dict[str, str], reveal: bool) -> Iterator[Tuple[str, Dict[str, Any]]]:
+    """Project captured job-list fields; never infer an edge or copy a job payload."""
+    if hidden or sensitive_record(page) or not isinstance(page, dict) or not isinstance(page.get("jobs"), list):
+        raise ValueError("--jobs requires a public object with a jobs array")
+    counts = {k: page[k] for k in ("job_scope_count", "job_count") if type(page.get(k)) is int}
+    yield pointer, {"visible_rows": len(page["jobs"]), **counts}
+    for index, row in enumerate(page["jobs"]):
+        fields: Dict[str, Any] = {}
+        if isinstance(row, dict) and not sensitive_record(row):
+            for key in ("id", "calling_job_id", "root_job_id", "master_job_id", "calling_recipe_id", "root_recipe_id"):
+                value = row.get(key)
+                if type(value) in (str, int) and value != "":
+                    if reveal and key.endswith("recipe_id") and type(value) is int:
+                        fields[key] = value
+                    else:
+                        fields[key] = describe(value, False, identities, False)["value_id"]
+        yield f"{pointer}/jobs/{index}", fields
+
+
 def inspect(args: argparse.Namespace) -> Tuple[Dict[str, Any], bool]:
     selected = args.select or []
     expected = [(selector(location), json.loads(literal)) for location, literal in (args.expect or [])]
@@ -177,13 +196,17 @@ def inspect(args: argparse.Namespace) -> Tuple[Dict[str, Any], bool]:
     for source, index, pointer in selected:
         decoded_at = encodings.setdefault((source, index), {})
         value, hidden = resolve(bodies[source, index], pointer, args.max_json_chars, decoded_at)
-        rows = leaves(value, pointer, hidden, args.max_json_chars, decoded_at) if args.walk else iter([(pointer, value, hidden)])
-        for location, child, private in rows:
+        if args.jobs:
+            observations = job_rows(value, pointer, hidden, identities, args.values)
+        else:
+            rows = leaves(value, pointer, hidden, args.max_json_chars, decoded_at) if args.walk else iter([(pointer, value, hidden)])
+            observations = ((location, describe(child, private, identities, args.values)) for location, child, private in rows)
+        for location, details in observations:
             if len(result["observations"]) >= args.max_items:
                 result["truncated"] = True
                 break
             result["observations"].append({"source": source, "entry": index, "pointer": har_probe.redact_scalar(location),
-                                           **describe(child, private, identities, args.values)})
+                                           **details})
     passed = True
     for (source, index, pointer), wanted in expected:
         decoded_at = encodings.setdefault((source, index), {})
@@ -211,7 +234,9 @@ def main() -> int:
     parser.add_argument("--select", type=selector, action="append", help="SOURCE:ENTRY:/pointer; repeat to compare locations")
     parser.add_argument("--expect", nargs=2, action="append", metavar=("SELECTOR", "JSON"), help="check an exact JSON value without printing the captured value; repeatable")
     parser.add_argument("--body", choices=("request", "response"), default="response")
-    parser.add_argument("--walk", action="store_true", help="inventory selected subtrees as bounded leaf paths and private value IDs")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--jobs", action="store_true", help="project selected job-list objects into counts, caller/root recipe IDs and opaque job IDs; --values reveals only integer recipe IDs in rows")
+    mode.add_argument("--walk", action="store_true", help="inventory selected subtrees as bounded leaf paths and private value IDs")
     parser.add_argument("--values", action="store_true", help="reveal only explicitly selected scalar values with best-effort redaction")
     parser.add_argument("--max-items", type=positive, default=100)
     parser.add_argument("--max-chars", type=positive, default=6000)
