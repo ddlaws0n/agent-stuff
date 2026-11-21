@@ -118,6 +118,18 @@
         "The repository remains clean and no documentation is scaffolded."
       ],
       "tags": ["boundary"]
+    },
+    {
+      "id": 9,
+      "prompt": "I approved moving adr/0001-use-postgres.md and adr/0002-adopt-bun.md to docs/decisions/ with their current filenames. Update README and AGENTS.md links as part of the move. Please carry out this approved migration. Setup: build the repository with `sh evals/fixtures/build-repo.sh migrate <dir>` and work inside it.",
+      "expected_output": "Applies the explicitly approved list and repairs links while preserving the accepted ADRs.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "Both decisions exist under docs/decisions/, retain their original filenames and contents, and no ADR remains under adr/.",
+        "README.md and AGENTS.md point to docs/decisions/ and the cross-link inside the second ADR resolves.",
+        "No docs/manifest.json is created and the agent leaves the migration uncommitted."
+      ],
+      "tags": ["normal"]
     }
   ]
 }
