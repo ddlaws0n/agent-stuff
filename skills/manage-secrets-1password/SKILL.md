@@ -47,13 +47,6 @@ varlock run -- sh -c 'cmd-one && cmd-two && cmd-three'
 op run --env-file=.env.op -- sh -c 'cmd-one && cmd-two && cmd-three'
 ```
 
-```bash
-# Plain shell: one read, many uses, nothing echoed
-TOKEN=$(op read "op://Vault/Item/credential") || exit 1
-curl -sf -H @- https://api.example.com/a <<<"Authorization: Bearer $TOKEN" >a.json
-curl -sf -H @- https://api.example.com/b <<<"Authorization: Bearer $TOKEN" >b.json
-```
-
 - Write intermediate results to files inside the batch and read them in later, prompt-free tool calls (`jq` on the saved JSON), instead of re-querying.
 - Look items up once: `op item list --vault V --format json` and filter with `jq`, rather than one `op item get` per candidate.
 - Keep secret-free calls out of the batch only when they come first and decide what the batch does. Otherwise include them: an extra command costs nothing, an extra prompt costs the user.
