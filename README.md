@@ -27,6 +27,7 @@ Uses the [`skills` CLI](https://github.com/vercel-labs/skills). Some skills need
 | [`manage-github-projects`](skills/manage-github-projects/SKILL.md) | Manage GitHub Projects v2 boards and their issues via `gh` and Python. |
 | [`manage-secrets-varlock`](skills/manage-secrets-varlock/SKILL.md) | Manage schema-driven environment configuration and secrets with Varlock. |
 | [`review-data-architecture`](skills/review-data-architecture/SKILL.md) | Review data-intensive architecture decisions by guarantees, failure modes, and operational cost. |
+| [`save-to-folio`](skills/save-to-folio/SKILL.md) | Save articles to the Folio read-later app with 1Password-backed login. |
 | [`triage-distributed-failures`](skills/triage-distributed-failures/SKILL.md) | Triage production anomalies in distributed systems with evidence timelines and approval-gated repair. |
 
 ## Develop
