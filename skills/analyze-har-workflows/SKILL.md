@@ -13,7 +13,7 @@ compatibility: >-
   bundled scripts' ijson dependency; Python alone supports small HARs.
 metadata:
   author: ddlaws0n
-  version: "0.5.3"
+  version: "0.5.4"
 ---
 
 # HAR workflow analysis
@@ -47,7 +47,7 @@ uv run scripts/har_probe.py show /path/to/session.har --indices 12,18
 
 ## Output
 
-Before returning the report, replace captured names, titles, filenames, customer identifiers, and credential values with role labels or placeholders, including in examples. Demonstrate identity and change with request indices and local equality IDs. Report the source of a token only if the selected field and its relationship are visible.
+Before returning the report, replace captured names, titles, filenames, customer identifiers, and credential values with role labels or placeholders, including in examples. Report equality as “same” or “different” with request indices or per-command opaque IDs. Keep literal values, lengths, prefixes, and stable hashes of private fields out of reports, even if the user requests proof. For per-use tokens, state separately what changed in the capture and whether expiry was observed. Two different issued values leave acceptance of the older value unknown. Report the source of a token only if the selected field and its relationship are visible.
 
 Scale the response to the question. A focused endpoint question may need a few paragraphs; a full workflow analysis should cover:
 
