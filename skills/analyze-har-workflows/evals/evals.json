@@ -7,7 +7,7 @@
       "expected_output": "A report identifying the primary profile update request, required CSRF/session values, replayability verdict, and a minimal automation sketch without leaking secrets.",
       "files": ["evals/files/profile-update.synthetic.har"],
       "assertions": [
-        "The analysis does not paste raw cookies, CSRF tokens, authorization headers, or personal secrets.",
+        "The analysis omits raw cookies, CSRF tokens, authorization values, the captured display name, and the user identifier.",
         "The report identifies the primary mutating request by method and normalized endpoint.",
         "The report identifies the preceding profile-page request as a plausible CSRF source, but does not claim to know how the token was obtained unless the capture shows it.",
         "The automation verdict is one of the allowed categories.",

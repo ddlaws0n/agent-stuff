@@ -13,7 +13,7 @@ compatibility: >-
   bundled scripts' ijson dependency; Python alone supports small HARs.
 metadata:
   author: ddlaws0n
-  version: "0.5.2"
+  version: "0.5.3"
 ---
 
 # HAR workflow analysis
@@ -22,10 +22,11 @@ Explain the captured action or workflow structure and assess the requested autom
 
 ## Workflow
 
-1. Establish the action and expected result from the prompt. Ask only when missing context prevents identifying the relevant traffic.
-2. For traffic triage, use the brief below, then follow promising requests and relationships with `show`. Rankings, workflow groups, roles, and link kinds are navigation hints. For stored definitions, configuration, or execution history, read `references/workflow-definitions.md` and inspect the relevant bodies; GET responses may contain the primary evidence without a captured mutation.
-3. Develop an evidence-backed explanation. Distinguish observations, inferences, and unknowns; cite request indices for material claims. A matching value supports a possible relationship, but its shape does not establish its purpose or lifetime. Missing links or challenge signals do not establish replayability.
-4. Before synthesizing multiple captures, compare their available job/dependency evidence, not just one example per file. Validate material claims and proposed edit locations against exact source paths; resolve contradictory evidence or label it unknown. Answer when the evidence supports a useful explanation, or identify the specific gap preventing one. Expand only the evidence needed to resolve uncertainty; `references/deep-dive.md` describes additional inspection tools.
+1. Keep the raw HAR out of model context, including small or synthetic captures. Use the bundled scripts for shapes, opaque equality IDs, and bounded selections. Never print a whole capture or body to check a parse.
+2. Establish the action and expected result from the prompt. Ask only when missing context prevents identifying the relevant traffic.
+3. For traffic triage, use the brief below, then follow promising requests and relationships with `show`. Rankings, workflow groups, roles, and link kinds are navigation hints. For stored definitions, configuration, or execution history, read `references/workflow-definitions.md` and inspect the relevant bodies; GET responses may contain the primary evidence without a captured mutation.
+4. Develop an evidence-backed explanation. Distinguish observations, inferences, and unknowns; cite request indices for material claims. A matching value supports a possible relationship, but its shape does not establish its purpose or lifetime. Missing links or challenge signals do not establish replayability.
+5. Before synthesizing multiple captures, compare their available job/dependency evidence, not just one example per file. Validate material claims and proposed edit locations against exact source paths; resolve contradictory evidence or label it unknown. Answer when the evidence supports a useful explanation, or identify the specific gap preventing one. Expand only the evidence needed to resolve uncertainty; `references/deep-dive.md` describes additional inspection tools.
 
 ## Scripts
 
@@ -45,6 +46,8 @@ uv run scripts/har_probe.py show /path/to/session.har --indices 12,18
 `uv run` installs `ijson` for streaming. Without `uv`, use `python3` for HARs under 100 MiB. Read compact outputs and bounded selections; avoid loading the whole HAR or bulk output files into context. Scripts filter and sample evidence, so inspect coverage and truncation before drawing conclusions from an absence.
 
 ## Output
+
+Before returning the report, replace captured names, titles, filenames, customer identifiers, and credential values with role labels or placeholders, including in examples. Demonstrate identity and change with request indices and local equality IDs. Report the source of a token only if the selected field and its relationship are visible.
 
 Scale the response to the question. A focused endpoint question may need a few paragraphs; a full workflow analysis should cover:
 
