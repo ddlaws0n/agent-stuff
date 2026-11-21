@@ -133,7 +133,7 @@
     },
     {
       "id": 10,
-      "prompt": "Audit our over-budget docs. We use the on-demand budget for the README and setup guide. Identify which installed skill should handle each file and give its line count. Leave the files unchanged. Setup: build the repository with `sh evals/fixtures/build-repo.sh oversized <dir>` and work inside it.",
+      "prompt": "Audit README.md, docs/guides/setup.md, and AGENTS.md for size. We use the on-demand budget for the README and setup guide. Identify which installed skill should handle each file and give its line count. Leave the files unchanged. Setup: build the repository with `sh evals/fixtures/build-repo.sh oversized <dir>` and work inside it.",
       "expected_output": "Reports each file with its measured size and owning skill.",
       "files": ["evals/fixtures/build-repo.sh"],
       "assertions": [
