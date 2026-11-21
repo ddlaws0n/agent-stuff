@@ -16,18 +16,14 @@ compatibility: >-
   Linux.
 metadata:
   author: ddlaws0n
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # 1Password CLI for agents
 
-Every approval prompt interrupts the user. Treat each one as a cost and spend it deliberately.
-
 ## Why agents trigger so many prompts
 
 With desktop-app integration, op ties an authorization to the terminal session: on macOS and Linux the session ID comes from the current TTY plus its start time, and it extends to sub-shells. Agent shell tools usually start a new process with **no TTY** for every command (`tty` prints `not a tty`), so no authorization carries over, and every command that reaches 1Password can ask for approval again. That includes anything that resolves secrets indirectly: `varlock run`, `op run`, a package script wrapping either, or an `exec(op read ...)` resolver.
-
-Ten separate tool calls that each touch op can mean ten prompts. One tool call that does all ten things usually means one.
 
 ## Workflow
 
@@ -43,19 +39,11 @@ Ten separate tool calls that each touch op can mean ten prompts. One tool call t
 
 ## Batching patterns
 
-Resolve the secret once, then run every command that needs it in the same process:
+Wrap all dependent commands once so they share the resolved environment. Use the wrapper configured by the project:
 
 ```bash
-# Wrapper that resolves secrets (Varlock, op run) around the whole batch, not each command
-varlock run -- sh -c '
-  n8n-cli workflow get abc123 --json > /tmp/wf.json
-  n8n-cli tag list --json > /tmp/tags.json
-  n8n-cli workflow tags abc123 --set id1,id2
-'
-```
-
-```bash
-# op run: map references once, run many commands
+varlock run -- sh -c 'cmd-one && cmd-two && cmd-three'
+# Or, for a project using op references in an env file:
 op run --env-file=.env.op -- sh -c 'cmd-one && cmd-two && cmd-three'
 ```
 
