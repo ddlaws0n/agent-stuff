@@ -48,7 +48,7 @@ Keep one root `CHANGELOG.md` accurate: user-facing entries under `[Unreleased]`,
 
 Report the saved entries with their supporting commits or PRs, ordinary skips and reasons, checks run, and remaining release steps.
 
-For a withheld entry, omit its subject, hash, identifiers, technical details, and draft wording from **every** section of the response. Choose one closing line according to the user’s decision:
+For withheld work, the closing line below is the entire user-facing description. Keep it out of the entries, ordinary skips, and checks: even saying which kind of advisory exists can disclose embargoed information. Choose the line for the user’s decision:
 
 - Wording still needed: “One entry is withheld. What wording, if any, is approved for the public changelog?”
 - Omission or deferral already requested: “The requested exclusion was honored.”
