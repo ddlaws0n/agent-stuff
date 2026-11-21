@@ -36,6 +36,17 @@
         "Suggest checking the selected account, app unlock, or CLI integration."
       ],
       "tags": ["boundary"]
+    },
+    {
+      "id": 4,
+      "prompt": "Please list the IDs and titles of items containing webhook in the Restricted vault. If you find none, say so.",
+      "expected_output": "When the scoped list fails, report that the vault could not be listed and the matches are unknown.",
+      "assertions": [
+        "A denied list produces a nonzero shell status, even if op emitted partial output.",
+        "The response reports an unsuccessful lookup without claiming zero matches.",
+        "Raw diagnostic text and partial item metadata stay out of the tool transcript and final response."
+      ],
+      "tags": ["boundary"]
     }
   ]
 }

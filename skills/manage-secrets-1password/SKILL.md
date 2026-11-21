@@ -13,18 +13,18 @@ compatibility: >-
   The metadata example uses jq.
 metadata:
   author: ddlaws0n
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # 1Password vault and item operations
 
 ## Workflow
 
-1. Identify the target account, vault, and operation. Prefer a scoped item list for discovery. Filter locally and print only the metadata needed to answer. For example, to find item titles containing “webhook”:
+1. Identify the target account, vault, and operation. Prefer a scoped item list for discovery. Capture the list with tracing off and filter it only after a successful read. If the read fails, report that the vault could not be listed. Only a successful search can establish that there were no matches. For example, to find item titles containing “webhook”:
 
    ```bash
-   op item list --vault Infra --format json |
-     jq -r '.[] | select(.title | ascii_downcase | contains("webhook")) | [.id, .title] | @tsv'
+   items=$(op item list --vault Infra --format json 2>/dev/null) || exit "$?"
+   printf '%s\n' "$items" | jq -r '.[] | select(.title | ascii_downcase | contains("webhook")) | [.id, .title] | @tsv'
    ```
 
 2. For a new Login, let 1Password generate the password and suppress the item output. Check the exit status before reporting success. If a write's outcome is unclear, check the destination before attempting another create.
@@ -40,7 +40,7 @@ metadata:
 
 Check `op --version` locally. Use the failing operation's redacted error, the selected account, and the intended authentication method to narrow the cause. A failed `op whoami` means that invocation could not identify an authenticated account. It does not establish why. Desktop integration may need the app unlocked and CLI integration enabled. For a service account, check the target vault grant and whether the intended credential is configured without displaying it.
 
-If another check would distinguish the causes, use one scoped read such as `op item list --vault Infra >/dev/null`. Stop after an authorization failure and report the relevant next action. Avoid repeated probes that can trigger more approvals.
+If another check would distinguish the causes, use one scoped read such as `op item list --vault Infra >/dev/null 2>&1`. Stop after an authorization failure and report the relevant next action. Avoid repeated probes that can trigger more approvals.
 
 ## Output
 
