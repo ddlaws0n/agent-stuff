@@ -13,7 +13,7 @@ compatibility: >-
   and FOLIO_PASSWORD set.
 metadata:
   author: ddlaws0n
-  version: "0.2.1"
+  version: "0.2.2"
 ---
 
 # Save to Folio
@@ -45,11 +45,12 @@ Authentication, in order:
 
 1. Reuse the bearer token cached in `$XDG_CACHE_HOME/save-to-folio/token` (falls back to `.cache` in the home directory; file mode 0600).
 2. On a missing token or an HTTP 401, log in once with `POST /v4/sessions`, cache the new token, and retry.
-3. Credentials come from `FOLIO_USERNAME` / `FOLIO_PASSWORD` if set, otherwise `op read "$FOLIO_OP_ITEM/username"` and `/password`. `FOLIO_OP_ITEM` defaults to `op://Private/Folio`.
+3. Credentials come from `FOLIO_USERNAME` / `FOLIO_PASSWORD` if set, otherwise `op read "$FOLIO_OP_ITEM/username"` and `/password`.
 
 ## Gotchas
 
-- `op read` can show a 1Password approval prompt on the user's machine. If it fails, report the field reference and exit status. The Folio item stores the password for the Folio service. Direct the user to inspect that item privately in 1Password.
+- `op read` can show a 1Password approval prompt on the user's machine. If it fails, report the field reference and exit status.
+- For a request to see the Folio service password, give one private inspection direction, then stop. If the user supplies `FOLIO_OP_ITEM`, name that vault and item. Otherwise say: “In 1Password, open the item configured by `FOLIO_OP_ITEM`. If you haven’t set it, the built-in default is `op://Private/Folio`. View its password field privately.” Never assume the actual vault or title. Skip secret reads, shell commands, and login troubleshooting.
 - Never print, log, or echo the token or the password. Do not `cat` the token file.
 - Folio fetches each URL on its own servers, so paywalled or login-only pages may save as a stub. Say so when a title comes back empty or generic.
 - Saving is a live write to the user's account. Use `--dry-run` to test or demonstrate the script.
