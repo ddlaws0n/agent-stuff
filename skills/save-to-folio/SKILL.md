@@ -13,7 +13,7 @@ compatibility: >-
   and FOLIO_PASSWORD set.
 metadata:
   author: ddlaws0n
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # Save to Folio
@@ -28,7 +28,7 @@ Folio has no public API. The bundled script calls the same private v4 endpoints 
    uv run scripts/folio.py save https://example.com/a https://example.com/b --tag plane
    ```
 3. Read the JSON lines. Each URL reports `ok`, plus `id` and `title` on success or `error` on failure. Exit code 1 means at least one URL failed.
-4. Report using the Output section. Do not retry a failed URL more than once.
+4. Report known saves with failed tags separately (`saved: true`). Count those items as saved and name the tagging failure. Do not resubmit an unconfirmed or partially completed save.
 
 ## Scripts
 
@@ -49,7 +49,7 @@ Authentication, in order:
 
 ## Gotchas
 
-- `op read` can show a 1Password approval prompt on the user's machine. If it fails, report the `op` error. Never ask the user to paste their password into chat.
+- `op read` can show a 1Password approval prompt on the user's machine. If it fails, report the field reference and exit status. Never ask the user to paste their password into chat.
 - Never print, log, or echo the token or the password. Do not `cat` the token file.
 - Folio fetches each URL on its own servers, so paywalled or login-only pages may save as a stub. Say so when a title comes back empty or generic.
 - Saving is a live write to the user's account. Use `--dry-run` to test or demonstrate the script.

@@ -16,6 +16,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -29,7 +30,7 @@ TOKEN_FILE = (
 )
 
 
-class AuthError(Exception):
+class AuthError(RuntimeError):
     pass
 
 
@@ -43,11 +44,16 @@ def request(method: str, path: str, body: dict | None = None, token: str | None 
         with urllib.request.urlopen(req, timeout=30) as resp:
             raw = resp.read()
     except urllib.error.HTTPError as err:
-        if err.code == 401:
-            raise AuthError(path) from err
-        detail = err.read().decode(errors="replace")[:300]
-        raise RuntimeError(f"{method} {path} -> HTTP {err.code}: {detail}") from err
-    return json.loads(raw) if raw else {}
+        err.close()
+        error = AuthError if err.code == 401 else RuntimeError
+        raise error(f"{method} {path} -> HTTP {err.code}") from None
+    try:
+        payload = json.loads(raw) if raw else {}
+    except (ValueError, UnicodeError):
+        raise RuntimeError(f"{method} {path} returned invalid JSON") from None
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"{method} {path} returned an unexpected response")
+    return payload
 
 
 def op_read(field: str) -> str:
@@ -57,9 +63,9 @@ def op_read(field: str) -> str:
     try:
         out = subprocess.run(["op", "read", ref], capture_output=True, text=True, check=True)
     except FileNotFoundError:
-        sys.exit("error: 1Password CLI (op) not found; install it or set FOLIO_USERNAME/FOLIO_PASSWORD")
+        raise RuntimeError("1Password CLI (op) not found; install it or set FOLIO_USERNAME/FOLIO_PASSWORD") from None
     except subprocess.CalledProcessError as err:
-        sys.exit(f"error: op read {ref} failed: {err.stderr.strip()}")
+        raise RuntimeError(f"op read {ref} failed (exit {err.returncode})") from None
     return out.stdout.strip()
 
 
@@ -68,41 +74,52 @@ def login() -> str:
     try:
         resp = request("POST", "/sessions", {"user": creds})
     except AuthError:
-        sys.exit("error: Folio rejected the 1Password credentials (401)")
+        raise RuntimeError("Folio rejected the login credentials (HTTP 401)") from None
     token = resp.get("token")
-    if not token:
-        sys.exit("error: login response had no token")
+    if not isinstance(token, str) or not token:
+        raise RuntimeError("login response had no token")
     TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
-    TOKEN_FILE.touch(mode=0o600)
-    TOKEN_FILE.write_text(token)
+    with tempfile.NamedTemporaryFile(mode="w", dir=TOKEN_FILE.parent, delete=False) as tmp:
+        try:
+            tmp.write(token)
+            tmp.close()
+            os.replace(tmp.name, TOKEN_FILE)
+        finally:
+            Path(tmp.name).unlink(missing_ok=True)
     return token
 
 
 def cached_token() -> str | None:
     try:
-        return TOKEN_FILE.read_text().strip() or None
+        with TOKEN_FILE.open() as stream:
+            os.fchmod(stream.fileno(), 0o600)
+            return stream.read().strip() or None
     except FileNotFoundError:
         return None
 
 
-def with_auth(fn):
-    """Call fn(token) with the cached token, logging in again once on 401."""
-    token = cached_token() or login()
-    try:
-        return fn(token)
-    except AuthError:
-        return fn(login())
+def authenticated(method: str, path: str, body: dict | None = None) -> dict:
+    token = cached_token()
+    if token:
+        try:
+            return request(method, path, body, token)
+        except AuthError:
+            pass
+    return request(method, path, body, login())
 
 
 def save(url: str, tags: list[str]) -> dict:
-    def go(token: str) -> dict:
-        item = request("POST", "/items", {"item": {"url": url}}, token).get("item") or {}
-        if tags and item.get("id"):
-            request("PATCH", f"/items/{item['id']}", {"item": {"tags_list": tags}}, token)
-        return item
-
-    item = with_auth(go)
-    return {"url": url, "ok": True, "id": item.get("id"), "title": item.get("title"), "tags": tags}
+    item = authenticated("POST", "/items", {"item": {"url": url}}).get("item")
+    if not isinstance(item, dict) or not item.get("id"):
+        raise RuntimeError("unconfirmed save: Folio returned no item ID")
+    result = {"url": url, "ok": True, "id": item["id"], "title": item.get("title"), "tags": []}
+    if tags:
+        try:
+            authenticated("PATCH", f"/items/{item['id']}", {"item": {"tags_list": tags}})
+        except (RuntimeError, OSError) as err:
+            return {**result, "ok": False, "saved": True, "error": f"tagging failed: {err}"}
+        result["tags"] = tags
+    return result
 
 
 def main() -> int:
@@ -121,7 +138,7 @@ def main() -> int:
         print(json.dumps({"ok": True, "logged_out": True}))
         return 0
     if args.cmd == "check":
-        user = with_auth(lambda t: request("GET", "/users/current", token=t))
+        user = authenticated("GET", "/users/current")
         print(json.dumps({"ok": True, "email": (user.get("user") or user).get("email")}))
         return 0
 
@@ -135,12 +152,17 @@ def main() -> int:
             print(json.dumps({"url": url, "ok": True, "dry_run": True, "request": f"POST {API}/items", "tags": args.tag}))
             continue
         try:
-            print(json.dumps(save(url, args.tag)), flush=True)
-        except (RuntimeError, AuthError, urllib.error.URLError, TimeoutError) as err:
+            result = save(url, args.tag)
+            print(json.dumps(result), flush=True)
+            failed += int(not result["ok"])
+        except (RuntimeError, OSError) as err:
             print(json.dumps({"url": url, "ok": False, "error": str(err)}), flush=True)
             failed += 1
     return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except (RuntimeError, OSError) as err:
+        sys.exit(str(err))

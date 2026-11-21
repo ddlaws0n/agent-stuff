@@ -19,6 +19,8 @@ GOOD = "good-token"
 class FakeFolio(BaseHTTPRequestHandler):
     calls: ClassVar[list[tuple[str, str, dict, str]]] = []
 
+    scripted_replies: ClassVar[dict[tuple[str, str], list[tuple[int, dict]]]] = {}
+
     def log_message(self, format, *args):  # noqa: A002 - matches base signature
         pass
 
@@ -27,6 +29,8 @@ class FakeFolio(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length)) if length else {}
         auth = self.headers.get("Authorization", "")
         FakeFolio.calls.append((self.command, self.path, body, auth))
+        if responses := FakeFolio.scripted_replies.get((self.command, self.path)):
+            return self.reply(*responses.pop(0))
         if self.path == "/sessions":
             ok = body.get("user") == {"email": "me@example.com", "password": "pw"}
             return self.reply(200 if ok else 401, {"token": GOOD} if ok else {})
@@ -64,6 +68,7 @@ class FolioTests(unittest.TestCase):
 
     def setUp(self):
         FakeFolio.calls = []
+        FakeFolio.scripted_replies = {}
         self._tmp = tempfile.TemporaryDirectory()
         self.cache = Path(self._tmp.name)
         self.token_file = self.cache / "save-to-folio" / "token"
@@ -96,9 +101,11 @@ class FolioTests(unittest.TestCase):
     def test_reuses_cached_token_without_logging_in(self):
         self.token_file.parent.mkdir(parents=True)
         self.token_file.write_text(GOOD)
+        self.token_file.chmod(0o644)
         code, _ = self.run_script("save", "https://example.com/a")
         self.assertEqual(code, 0)
         self.assertEqual([c[:2] for c in FakeFolio.calls], [("POST", "/items")])
+        self.assertEqual(self.token_file.stat().st_mode & 0o777, 0o600)
 
     def test_expired_token_relogs_in_once(self):
         self.token_file.parent.mkdir(parents=True)
@@ -115,9 +122,35 @@ class FolioTests(unittest.TestCase):
             [sys.executable, str(SCRIPT), "save", "https://example.com/a"], env=self.env, capture_output=True, text=True, check=False
         )
         self.assertNotEqual(proc.returncode, 0)
-        self.assertIn("rejected", proc.stderr)
+        self.assertIn("rejected", json.loads(proc.stdout)["error"])
         self.assertNotIn('"ok": true', proc.stdout)
         self.assertFalse(self.token_file.exists())
+
+    def test_tag_retry_does_not_repeat_create(self):
+        FakeFolio.scripted_replies[("PATCH", "/items/i1")] = [(401, {})]
+        code, out = self.run_script("save", "https://example.com/a", "--tag", "plane")
+        self.assertEqual(code, 0)
+        self.assertTrue(out[0]["ok"])
+        self.assertEqual([c[:2] for c in FakeFolio.calls], [
+            ("POST", "/sessions"), ("POST", "/items"), ("PATCH", "/items/i1"),
+            ("POST", "/sessions"), ("PATCH", "/items/i1"),
+        ])
+
+    def test_tag_failure_reports_saved_item_without_response_body(self):
+        FakeFolio.scripted_replies[("PATCH", "/items/i1")] = [(422, {"error": "sensitive"})]
+        code, out = self.run_script("save", "https://example.com/a", "--tag", "plane")
+        self.assertEqual(code, 1)
+        self.assertEqual(out[0], {"url": "https://example.com/a", "id": "i1", "title": "Hello",
+                                  "ok": False, "saved": True, "tags": [],
+                                  "error": "tagging failed: PATCH /items/i1 -> HTTP 422"})
+
+    def test_missing_id_fails_without_tagging_or_retry(self):
+        FakeFolio.scripted_replies[("POST", "/items")] = [(201, {"item": {"title": "Hello"}})]
+        code, out = self.run_script("save", "https://example.com/a", "--tag", "plane")
+        self.assertEqual(code, 1)
+        self.assertFalse(out[0]["ok"])
+        self.assertIn("no item ID", out[0]["error"])
+        self.assertEqual([c[:2] for c in FakeFolio.calls], [("POST", "/sessions"), ("POST", "/items")])
 
     def test_dry_run_sends_nothing(self):
         code, out = self.run_script("save", "https://example.com/a", "--dry-run")
