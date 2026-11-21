@@ -90,7 +90,8 @@
         "The response contains a table with an action, source, destination, reason, and link-impact column and a row for each ADR (or for the directory) with a destination under `docs/decisions/`",
         "The link impact names README.md, the AGENTS.md routing row for `adr/`, and the `0001-use-postgres.md` link inside `adr/0002-adopt-bun.md`",
         "The response asks for approval before moving anything",
-        "The response says no manifest entry is needed for decision records once they sit at `docs/decisions/`, or that one would only be needed if they stay in `adr/`"
+        "The response says that retaining adr/ means recording paths.decisions as adr in docs/manifest.json, while moving to canonical docs/decisions/ needs no decisions override.",
+        "The plan proposes only the requested moves and affected links; it offers no ADR reformatting, content rewrite, or separate approval for either."
       ],
       "tags": ["boundary"]
     },

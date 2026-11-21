@@ -13,7 +13,7 @@ compatibility: >-
   Requires git. Pull request evidence needs the gh CLI or equivalent.
 metadata:
   author: ddlaws0n
-  version: "0.1.2"
+  version: "0.1.3"
 ---
 
 # Update changelog
@@ -38,7 +38,7 @@ Keep one root `CHANGELOG.md` accurate: user-facing entries under `[Unreleased]`,
 
 ## Gotchas
 
-- **Security fixes may be embargoed.** Do not publish exploit details, CVE or advisory identifiers that are not yet public, or private-repo references. Flag any security-related change to the user and add a `Security` entry only after they approve its wording.
+- **Security fixes may be embargoed.** Do not publish exploit details, CVE or advisory identifiers that are not yet public, or private-repo references. Keep undisclosed details out of the response too. If an entry is withheld and its disposition is open, ask “What wording, if any, is approved for the public changelog?” Leave it unwritten until answered. Follow an explicit decision to omit, defer, or use approved wording without reopening it.
 - **Never rewrite git history** (amend, rebase, force-push, retagging) to fix changelog prose or tags. Edit the file in a new change.
 - **Preserve existing entries.** Do not reword, reorder, or reformat released sections or unrelated prose; only add entries, move the Unreleased block on a cut, and fix link definitions.
 - **Link definitions need the real remote.** Read `git remote get-url origin`; do not guess the host, owner, or repository. Never invent tags, except the new version's tag on a cut.
