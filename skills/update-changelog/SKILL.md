@@ -38,7 +38,7 @@ Keep one root `CHANGELOG.md` accurate: user-facing entries under `[Unreleased]`,
 
 ## Gotchas
 
-- **Security fixes may be embargoed.** Do not publish exploit details, CVE or advisory identifiers that are not yet public, or private-repo references. Keep undisclosed details out of the response too. If an entry is withheld and its disposition is open, ask “What wording, if any, is approved for the public changelog?” Leave it unwritten until answered. Follow an explicit decision to omit, defer, or use approved wording without reopening it.
+- **Security fixes may be embargoed.** Do not publish exploit details, CVE or advisory identifiers that are not yet public, or private-repo references. Withhold the entry until its wording is approved. Use the disclosure-safe response under Output.
 - **Never rewrite git history** (amend, rebase, force-push, retagging) to fix changelog prose or tags. Edit the file in a new change.
 - **Preserve existing entries.** Do not reword, reorder, or reformat released sections or unrelated prose; only add entries, move the Unreleased block on a cut, and fix link definitions.
 - **Link definitions need the real remote.** Read `git remote get-url origin`; do not guess the host, owner, or repository. Never invent tags, except the new version's tag on a cut.
@@ -46,4 +46,10 @@ Keep one root `CHANGELOG.md` accurate: user-facing entries under `[Unreleased]`,
 
 ## Output
 
-Files changed; entries added, each with its supporting commit or PR; changes skipped and why; items flagged for the user (security wording, ambiguous changes, missing tags); validation performed; and remaining manual steps such as tagging, version bumps, or pushing.
+Report the saved entries with their supporting commits or PRs, ordinary skips and reasons, checks run, and remaining release steps.
+
+For a withheld entry, omit its subject, hash, identifiers, technical details, and draft wording from **every** section of the response. Choose one closing line according to the user’s decision:
+
+- Wording still needed: “One entry is withheld. What wording, if any, is approved for the public changelog?”
+- Omission or deferral already requested: “The requested exclusion was honored.”
+- Approved text supplied: use that wording as authorized. No further wording decision is needed.
