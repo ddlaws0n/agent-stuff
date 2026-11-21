@@ -20,6 +20,7 @@ import tempfile
 import urllib.error
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlsplit
 
 API = os.environ.get("FOLIO_API_URL", "https://api.savewithfolio.com/v4")
 OP_ITEM = os.environ.get("FOLIO_OP_ITEM", "op://Private/Folio")
@@ -34,6 +35,31 @@ class AuthError(RuntimeError):
     pass
 
 
+def origin(url: str) -> tuple[str, str, int]:
+    parts = urlsplit(url)
+    if parts.scheme not in ("http", "https") or not parts.hostname or parts.username is not None:
+        raise ValueError("invalid HTTP origin")
+    port = parts.port
+    if port is None:
+        port = 443 if parts.scheme == "https" else 80
+    return parts.scheme, parts.hostname, port
+
+
+class SameOriginRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        try:
+            allowed = origin(req.full_url) == origin(newurl)
+        except ValueError:
+            allowed = False
+        if not allowed:
+            # The caller closes the response and reports only the original request status.
+            raise urllib.error.HTTPError(req.full_url, code, "redirect outside API origin", headers, fp)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+OPENER = urllib.request.build_opener(SameOriginRedirects())
+
+
 def request(method: str, path: str, body: dict | None = None, token: str | None = None) -> dict:
     headers = {"Content-Type": "application/json", "User-Agent": "save-to-folio"}
     if token:
@@ -41,7 +67,7 @@ def request(method: str, path: str, body: dict | None = None, token: str | None 
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(f"{API}{path}", data=data, method=method, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with OPENER.open(req, timeout=30) as resp:
             raw = resp.read()
     except urllib.error.HTTPError as err:
         err.close()

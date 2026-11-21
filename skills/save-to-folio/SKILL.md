@@ -13,7 +13,7 @@ compatibility: >-
   and FOLIO_PASSWORD set.
 metadata:
   author: ddlaws0n
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Save to Folio
@@ -49,7 +49,7 @@ Authentication, in order:
 
 ## Gotchas
 
-- `op read` can show a 1Password approval prompt on the user's machine. If it fails, report the field reference and exit status. Never ask the user to paste their password into chat.
+- `op read` can show a 1Password approval prompt on the user's machine. If it fails, report the field reference and exit status. The Folio item stores the password for the Folio service. Direct the user to inspect that item privately in 1Password.
 - Never print, log, or echo the token or the password. Do not `cat` the token file.
 - Folio fetches each URL on its own servers, so paywalled or login-only pages may save as a stub. Say so when a title comes back empty or generic.
 - Saving is a live write to the user's account. Use `--dry-run` to test or demonstrate the script.

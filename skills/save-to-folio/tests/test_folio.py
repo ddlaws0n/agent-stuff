@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import runpy
 import subprocess
 import sys
 import tempfile
 import threading
 import unittest
+import urllib.error
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import ClassVar
@@ -19,6 +22,7 @@ GOOD = "good-token"
 class FakeFolio(BaseHTTPRequestHandler):
     calls: ClassVar[list[tuple[str, str, dict, str]]] = []
 
+    redirects: ClassVar[dict[str, str]] = {}
     scripted_replies: ClassVar[dict[tuple[str, str], list[tuple[int, dict]]]] = {}
 
     def log_message(self, format, *args):  # noqa: A002 - matches base signature
@@ -29,6 +33,11 @@ class FakeFolio(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length)) if length else {}
         auth = self.headers.get("Authorization", "")
         FakeFolio.calls.append((self.command, self.path, body, auth))
+        if target := FakeFolio.redirects.get(self.path):
+            self.send_response(302)
+            self.send_header("Location", target)
+            self.end_headers()
+            return
         if responses := FakeFolio.scripted_replies.get((self.command, self.path)):
             return self.reply(*responses.pop(0))
         if self.path == "/sessions":
@@ -67,6 +76,7 @@ class FolioTests(unittest.TestCase):
         cls.server.server_close()
 
     def setUp(self):
+        FakeFolio.redirects = {}
         FakeFolio.calls = []
         FakeFolio.scripted_replies = {}
         self._tmp = tempfile.TemporaryDirectory()
@@ -88,6 +98,40 @@ class FolioTests(unittest.TestCase):
             [sys.executable, str(SCRIPT), *args], env=self.env, capture_output=True, text=True, check=False
         )
         return proc.returncode, [json.loads(line) for line in proc.stdout.splitlines()]
+
+    def test_redirect_origin_compares_scheme_host_and_effective_port(self):
+        handler = runpy.run_path(str(SCRIPT))["SameOriginRedirects"]()
+        req = urllib.request.Request("https://api.example.test/resource")
+        for target in ("http://api.example.test:443", "https://api.example.test:8443",
+                       "https://other.example.test", "https://name@api.example.test"):
+            with self.subTest(target=target), self.assertRaises(urllib.error.HTTPError):
+                handler.redirect_request(req, None, 302, "", {}, target)
+        target = "https://API.EXAMPLE.TEST:443/new-path"
+        redirected = handler.redirect_request(req, None, 302, "", {}, target)
+        self.assertEqual(redirected.full_url, target)
+
+    def test_cross_origin_redirect_stops_at_original_endpoint(self):
+        # Both loopback hostnames reach this recorder, but identify different origins.
+        target = f"http://localhost:{self.server.server_port}/redirect-target"
+        for path in ("/sessions", "/items", "/items/i1", "/users/current"):
+            with self.subTest(path=path):
+                self.token_file.unlink(missing_ok=True)
+                FakeFolio.calls.clear()
+                FakeFolio.redirects = {path: target}
+                args = ("check",) if path == "/users/current" else ("save", "https://example.com", "--tag", "test")
+                code, _ = self.run_script(*args)
+                self.assertEqual(code, 1)
+                paths = [call[1] for call in FakeFolio.calls]
+                self.assertIn(path, paths)
+                self.assertNotIn("/redirect-target", paths)
+
+    def test_relative_same_origin_redirect_preserves_authenticated_get(self):
+        FakeFolio.redirects = {"/users/current": "/account"}
+        FakeFolio.scripted_replies[("GET", "/account")] = [(200, {"user": {"email": "me@example.com"}})]
+        code, out = self.run_script("check")
+        self.assertEqual(code, 0)
+        self.assertEqual(out[0]["email"], "me@example.com")
+        self.assertEqual(FakeFolio.calls[-1], ("GET", "/account", {}, f"Bearer {GOOD}"))
 
     def test_logs_in_caches_token_and_saves_with_tags(self):
         code, out = self.run_script("save", "https://example.com/a", "--tag", "plane")
