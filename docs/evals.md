@@ -76,3 +76,24 @@ Scope: the five skills in the repository on that date, and a three-skill pilot (
 - The grader uses text patterns and command-presence checks: formatting can cause false negatives, and command mentions do not prove success or verify SHA pinning. Review transcripts before making quality or safety claims.
 
 Evidence stays in ignored `eval/results/review-20261003/`.
+
+## Project docs standard evaluation — 21 November 2026
+
+PR #8 began at `7360327`. The first 32 pairs exercised its four original corpora. After workflow and fixture revisions, the final comparison covers 37 pairs (74 fresh Codex CLI sessions). Each pair used OpenAI `gpt-6-luna` at low reasoning effort with identical fixture inputs. The only repository tool ran commands in disposable, network-disabled Docker containers. Revised skills used their pre-PR snapshot at `f5d7b19` as baseline; new skills used an absent target skill. The initializer's sibling skills were available on both sides. This direct-provider cohort is separate from the Pi pilots above.
+
+<!-- prettier-ignore -->
+|Skill|Cases|Assertions passed, skill / baseline|Median seconds, skill / baseline|Median input + output tokens, skill / baseline|
+|-|-|-|-|-|
+|create-agentsmd|8|31/32 · 27/32|34 · 32|145k · 139k|
+|init-project-docs|9|35/45 · 24/45|57 · 43|226k · 209k|
+|maintain-project-docs|11|44/50 · 37/50|36 · 35|225k · 148k|
+|update-changelog|9|37/42 · 28/42|49 · 54|182k · 144k|
+
+Counts combine file, Git, schema, and link checks with agent review of semantic assertions and transcripts. Token counts include cached input. Each final cell ran once. The initial availability-based runs and later runs with the target instructions supplied directly use different loading methods; comparisons above are within pairs.
+
+- **Migration approval.** In initializer case 6 the agent moved both ADRs and changed inbound links before presenting the required plan. The explicitly approved case 9 succeeded. Both maintenance case 4 runs honored the user's instruction to wait before changing files.
+- **Moved links.** The updated maintenance skill preserved both outgoing links in the one-level move. In the deeper move (case 11), the reference-page anchor resolved but the Compose link was one directory short. The final response incorrectly reported that both resolved.
+- **Changelog integrity.** An initial repeat request truncated two historical sections. After revision, the duplicate-entry check preserved the file checksum, and both release-collision cases left the worktree clean. In final case 5 the agent reported adding two ordinary entries while the persisted changelog remained unchanged; the embargoed detail stayed out.
+- **Selection.** In a separate description-only Codex routing probe, 70/88 queries matched the expected selection. All 18 misses were false negatives; five selected correctly when the misses were repeated. Native automatic activation and human usefulness, correctness, and safety review remain open.
+
+Human review should start with initializer cases 6 and 9, maintenance cases 1 and 11, and changelog cases 2 and 5. The ignored `eval/results/pr8-final-20261121/benchmark.json` records case grades, timing, and usage. The sibling run directories `pr8-20261121`, `pr8-retest-20261121`, `pr8-changelog-20261121`, `pr8-final-20261121`, and `pr8-moves-20261121` retain fixtures, outputs, transcripts, and grading.
