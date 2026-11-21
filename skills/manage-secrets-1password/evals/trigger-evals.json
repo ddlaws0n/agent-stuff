@@ -1,0 +1,66 @@
+[
+  {
+    "query": "I just got seven 1Password prompts in a row, can you stop doing that?",
+    "should_trigger": true
+  },
+  {
+    "query": "Read op://Dev/ADMIN-n8n/credential and use it to call the n8n API",
+    "should_trigger": true
+  },
+  {
+    "query": "op read is failing with an authorization error, why?",
+    "should_trigger": true
+  },
+  {
+    "query": "Create a 1Password item with a generated password for the webhook basic auth",
+    "should_trigger": true
+  },
+  {
+    "query": "Find which 1Password items in the Homelab vault mention ntfy",
+    "should_trigger": true
+  },
+  {
+    "query": "Run our deploy script with varlock run; the schema already resolves the token through 1Password.",
+    "should_trigger": false
+  },
+  {
+    "query": "Copy the Grafana token from 1Password into a new n8n credential without showing it",
+    "should_trigger": true
+  },
+  {
+    "query": "Which vaults can my 1Password service account access?",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a .env.schema that loads DATABASE_URL from 1Password with Varlock",
+    "should_trigger": false
+  },
+  {
+    "query": "How should I split my 1Password vaults between prod and dev?",
+    "should_trigger": false
+  },
+  {
+    "query": "Rotate the Stripe API key in the Stripe dashboard",
+    "should_trigger": false
+  },
+  {
+    "query": "Store this API key in the macOS keychain",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up Bitwarden CLI for my team",
+    "should_trigger": false
+  },
+  {
+    "query": "Add a GitHub Actions secret for the deploy token",
+    "should_trigger": false
+  },
+  {
+    "query": "My SSH login to the server keeps asking me to re-authenticate with Tailscale",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain how environment variables work in Docker Compose",
+    "should_trigger": false
+  }
+]
