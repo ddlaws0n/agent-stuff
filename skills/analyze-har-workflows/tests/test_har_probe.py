@@ -75,13 +75,12 @@ class HarProbeTests(unittest.TestCase):
             assert match is not None, (index, field)
             return match.group(1)
 
-        self.assertEqual(identifier(0, "nonce"), identifier(1, "nonce"))
-        self.assertEqual(identifier(3, "nonce"), identifier(4, "nonce"))
-        self.assertNotEqual(identifier(0, "nonce"), identifier(3, "nonce"))
+        for index in (0, 1, 3, 4):
+            self.assertIn("nonce=<private>", blocks[index])
         self.assertEqual(identifier(0, "resourceId"), identifier(3, "resourceId"))
-        self.assertEqual(identifier(1, "title"), identifier(2, "title"))
-        self.assertEqual(identifier(4, "title"), identifier(5, "title"))
-        self.assertNotEqual(identifier(1, "title"), identifier(4, "title"))
+        for index in (1, 2, 4, 5):
+            self.assertIn("title=<private>", blocks[index])
+            self.assertNotRegex(blocks[index], r"title=<[^>]*:v[0-9]+")
         self.assertEqual(identifier(1, "version"), identifier(2, "version"))
         self.assertNotEqual(identifier(1, "version"), identifier(4, "version"))
         for secret in ("547892", "932871", "3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d", "Private first title", "Private second title", "synthetic-session-secret-4242"):

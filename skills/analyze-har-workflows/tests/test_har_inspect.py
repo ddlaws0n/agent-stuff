@@ -84,6 +84,24 @@ class HarInspectTests(unittest.TestCase):
         for private in ("short-pass", "short-token", "another-short-secret", "short-pin", "short-credentials", "547892", "person@example.test", "user:pass", "token=secret"):
             self.assertNotIn(private, json.dumps(out))
 
+    def test_expectations_preserve_nested_scalar_types(self):
+        path = self.capture("nested-flags.har", {"cfg": {"rows": [{"skip": True}], "count": 1}})
+        self.run_probe([path], "--expect", "0:0:/cfg", '{"count":1,"rows":[{"skip":true}]}')
+        for wanted in ('{"rows":[{"skip":1}],"count":1}', '{"rows":[{"skip":true}],"count":1.0}'):
+            out = self.run_probe([path], "--expect", "0:0:/cfg", wanted, code=1)
+            self.assertFalse(out["checks"][0]["matches"])
+
+    def test_selected_title_has_no_value_id_or_value(self):
+        path = self.capture("title.har", {"title": "Private title"})
+        row = self.run_probe([path], "--select", "0:0:/title", "--values")["observations"][0]
+        self.assertEqual(row, {"source": 0, "entry": 0, "pointer": "/title", "redacted": True})
+
+    def test_array_of_titles_stays_private_when_selected_or_walked(self):
+        path = self.capture("title-array.har", {"title": ["Private title"]})
+        for args in (("--select", "0:0:/title/0", "--values"), ("--select", "0:0:/title", "--walk")):
+            rows = self.run_probe([path], *args)["observations"]
+            self.assertEqual(rows, [{"source": 0, "entry": 0, "pointer": "/title/0", "redacted": True}])
+
     def test_expectations_validate_patch_node_types_and_skip_flags(self):
         path = self.capture("nodes.har", {"block": [{"keyword": "else"}, {"keyword": "action", "skip": True}]})
         passed = self.run_probe([path], "--expect", "0:0:/block/1/keyword", '"action"', "--expect", "0:0:/block/1/skip", "true")

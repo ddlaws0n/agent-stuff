@@ -19,9 +19,8 @@ Links requests by:
 - redirects and Referer relationships
 - timestamp proximity for requests with no stronger link
 
-Writes graph.json and workflow.md. Values are never emitted: evidence uses value
-kinds, key locations, and per-run salted fingerprints so edges stay comparable
-inside one output without exposing the captured value.
+Writes graph.json and workflow.md with matched locations. Salted value
+fingerprints are used internally and omitted from both artifacts.
 """
 
 from __future__ import annotations
@@ -116,7 +115,7 @@ def value_kind(value: str, key: str) -> Optional[str]:
 def walk_json(obj: Any, path: str = "$") -> Iterator[Tuple[str, str, Any]]:
     """Yield (location, last key, scalar) for JSON leaves."""
     if isinstance(obj, dict):
-        items = [(f"{path}.{k}", str(k), v) for k, v in list(obj.items())[:500]]
+        items = [(f"{path}.{har_probe.field_label(k)}", str(k), v) for k, v in list(obj.items())[:500]]
     elif isinstance(obj, list):
         # Lookup lists (e.g. every town in a province) often hold the chosen key deep inside.
         items = [(f"{path}[]", "", v) for v in obj[:2000]]
@@ -140,20 +139,20 @@ def url_values(url: str, prefix: str) -> Iterator[Tuple[str, str, str]]:
             yield f"{prefix}.path[{i}]", previous, value
     for k, v in parse_qsl(parsed.query, keep_blank_values=False):
         if not CACHE_BUSTER_RE.match(k):
-            yield f"{prefix}.query:{k}", k, v
+            yield f"{prefix}.query:{har_probe.field_label(k)}", k, v
 
 
 def body_values(text: str, mime: str, params: Any, prefix: str) -> Iterator[Tuple[str, str, str]]:
     if isinstance(params, list) and params:
         for p in params[:500]:
             if isinstance(p, dict) and p.get("name") and p.get("value") is not None and not p.get("fileName"):
-                yield f"{prefix}.form:{p['name']}", str(p["name"]), str(p["value"])
+                yield f"{prefix}.form:{har_probe.field_label(str(p['name']))}", str(p["name"]), str(p["value"])
         return
     if not text:
         return
     if "x-www-form-urlencoded" in mime:
         for k, v in parse_qsl(text, keep_blank_values=False):
-            yield f"{prefix}.form:{k}", k, v
+            yield f"{prefix}.form:{har_probe.field_label(k)}", k, v
         return
     parsed = har_probe.parse_json_maybe(text)
     if parsed is not None:
@@ -164,7 +163,7 @@ def body_values(text: str, mime: str, params: Any, prefix: str) -> Iterator[Tupl
     if "multipart/form-data" in mime:
         for name, file, value in har_probe.multipart_fields(text, mime):
             if not file:
-                yield f"{prefix}.form:{name}", name, value
+                yield f"{prefix}.form:{har_probe.field_label(name)}", name, value
 
 
 
@@ -175,11 +174,11 @@ def html_values(text: str) -> Iterator[Tuple[str, str, str]]:
             name = attrs.get("name") or attrs.get("id") or attrs.get("property") or ""
             value = attrs.get("value") if label == "input" else attrs.get("content")
             if name and value:
-                yield f"response.html:{label}[{name}]", name, value
+                yield f"response.html:{label}[{har_probe.field_label(name)}]", name, value
     unescaped = text.replace('\\"', '"')
     for key, value in INLINE_PAIR_RE.findall(unescaped)[:2000]:
         if ID_KEY_RE.search(key) or TOKEN_KEY_RE.search(key):
-            yield f"response.html:script[{key}]", key, value
+            yield f"response.html:script[{har_probe.field_label(key)}]", key, value
     for m in list(UUID_RE.finditer(text))[:200]:
         yield "response.html:uuid", "", m.group(0)
 
@@ -349,10 +348,10 @@ class Graph:
                 producer = self.latest_before(self.producers.get(f, []), t, idx)
                 if producer:
                     _, src, src_loc, src_key, _ = producer
-                    add(src, idx, self.edge_kind(src, kind, src_key, loc, key), {"value": kind, "fp": f, "from": src_loc, "to": loc})
+                    add(src, idx, self.edge_kind(src, kind, src_key, loc, key), {"value": kind, "from": src_loc, "to": loc})
                 elif f in last_user and kind != "short" and not loc.startswith("request.header:"):
                     # Constant client headers are session-wide, not shared resources.
-                    add(last_user[f], idx, "shared-id", {"value": kind, "fp": f, "to": loc})
+                    add(last_user[f], idx, "shared-id", {"value": kind, "to": loc})
                 last_user[f] = idx
             # Signed or handed-out URLs requested later.
             for target in dict.fromkeys((m["url"], m["url"].split("?", 1)[0])):
@@ -360,7 +359,7 @@ class Graph:
                 producer = self.latest_before(self.producers.get(f, []), t, idx)
                 if producer:
                     location = "request.url" if target == m["url"] else "request.url (without query)"
-                    add(producer[1], idx, "signed-url", {"value": "url", "fp": f, "from": producer[2], "to": location})
+                    add(producer[1], idx, "signed-url", {"value": "url", "from": producer[2], "to": location})
                     break
             ref = self.referers.get(idx)
             referer = self.latest_before(self.url_index.get(ref, []), t, idx) if ref else None
@@ -481,7 +480,7 @@ class Graph:
             "coverage": self.coverage,
             "notes": [
                 "Workflow groups, primary indices, roles and edge kinds are heuristic suggestions.",
-                "Equal fingerprints identify matching values within this run; equality does not prove dependency or token lifetime.",
+                "Matched locations carry equal sampled values; equality does not prove dependency or token lifetime.",
                 "Matching samples fields and arrays, filters generic/high-fanout values, and may miss unsupported body formats.",
                 "Missing timestamps use request order as a fallback; relative times involving them are unreliable.",
             ],

@@ -70,6 +70,10 @@ def sensitive_record(value: Any) -> bool:
     )
 
 
+def display_pointer(pointer: str) -> str:
+    return "/".join(part if part.isdigit() else har_probe.field_label(part) for part in pointer.split("/"))
+
+
 def resolve(value: Any, pointer: str, max_chars: int, decoded_at: Dict[str, int] | None = None) -> Tuple[Any, bool]:
     hidden = False
     current = ""
@@ -86,6 +90,7 @@ def resolve(value: Any, pointer: str, max_chars: int, decoded_at: Dict[str, int]
             value = value[part]
         else:
             raise ValueError("pointer traverses a scalar")
+        hidden |= har_probe.private_content_key(part) and not isinstance(value, dict)
         current += "/" + encoded
     value = decode(value, max_chars, decoded_at, pointer)
     return value, hidden or sensitive_record(value)
@@ -97,7 +102,7 @@ def leaves(value: Any, pointer: str, hidden: bool, max_chars: int, decoded_at: D
     if isinstance(value, dict) and value:
         for key, child in value.items():
             escaped = key.replace("~", "~0").replace("/", "~1")
-            private = hidden or sensitive_key(key)
+            private = hidden or sensitive_key(key) or (har_probe.private_content_key(key) and not isinstance(child, dict))
             yield from leaves(child, pointer + "/" + escaped, private, max_chars, decoded_at)
     elif isinstance(value, list) and value:
         for index, child in enumerate(value):
@@ -107,14 +112,14 @@ def leaves(value: Any, pointer: str, hidden: bool, max_chars: int, decoded_at: D
 
 
 def describe(value: Any, hidden: bool, identities: Dict[str, str], reveal: bool) -> Dict[str, Any]:
-    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    if hidden:
+        return {"redacted": True}
+    encoded = har_probe.canonical_json(value)
     digest = hashlib.sha256(encoded.encode()).hexdigest()
     kind = "object" if isinstance(value, dict) else "array" if isinstance(value, list) else har_probe.value_shape(value)
     result: Dict[str, Any] = {"kind": kind, "value_id": identities.setdefault(digest, f"v{len(identities) + 1}")}
-    if hidden:
-        return {**result, "redacted": True}
     if isinstance(value, dict):
-        result.update(length=len(value), keys=[har_probe.redact_scalar(k) for k in list(value)[:30]])
+        result.update(length=len(value), keys=[har_probe.field_label(k) for k in list(value)[:30]])
         result["keys_omitted"] = max(0, len(value) - 30)
     elif isinstance(value, list):
         result["length"] = len(value)
@@ -200,21 +205,21 @@ def inspect(args: argparse.Namespace) -> Tuple[Dict[str, Any], bool]:
             observations = job_rows(value, pointer, hidden, identities, args.values)
         else:
             rows = leaves(value, pointer, hidden, args.max_json_chars, decoded_at) if args.walk else iter([(pointer, value, hidden)])
-            observations = ((location, describe(child, private, identities, args.values)) for location, child, private in rows)
+            observations = ((location, describe(child, private or har_probe.private_content_key(location.rsplit("/", 1)[-1]), identities, args.values)) for location, child, private in rows)
         for location, details in observations:
             if len(result["observations"]) >= args.max_items:
                 result["truncated"] = True
                 break
-            result["observations"].append({"source": source, "entry": index, "pointer": har_probe.redact_scalar(location),
+            result["observations"].append({"source": source, "entry": index, "pointer": display_pointer(location),
                                            **details})
     passed = True
     for (source, index, pointer), wanted in expected:
         decoded_at = encodings.setdefault((source, index), {})
         value, _ = resolve(bodies[source, index], pointer, args.max_json_chars, decoded_at)
-        matches = type(value) is type(wanted) and value == wanted
+        matches = har_probe.canonical_json(value) == har_probe.canonical_json(wanted)
         passed &= matches
-        result["checks"].append({"source": source, "entry": index, "pointer": har_probe.redact_scalar(pointer), "matches": matches})
-    result["decoded_json"] = [{"source": source, "entry": index, "pointer": har_probe.redact_scalar(pointer), "layers": layers}
+        result["checks"].append({"source": source, "entry": index, "pointer": display_pointer(pointer), "matches": matches})
+    result["decoded_json"] = [{"source": source, "entry": index, "pointer": display_pointer(pointer), "layers": layers}
                               for (source, index), paths in encodings.items() for pointer, layers in paths.items()]
     # Remove whole rows rather than emitting invalid, character-truncated JSON.
     while len(json.dumps(result, ensure_ascii=False)) > args.max_chars:

@@ -19,12 +19,13 @@ by kind (date, uuid, word, ...), headers and cookies by name.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import parse_qs, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import har_graph  # noqa: E402
@@ -96,10 +97,10 @@ class Facts:
 
         post = har_probe.as_dict(req.get("postData"))
         fields = har_probe.body_shapes(post)
-        query = dict(parse_qsl(urlparse(url).query, keep_blank_values=True))
+        query = parse_qs(urlparse(url).query, keep_blank_values=True)
         for name in list(values) + list(fields) + list(query):
-            if CSRF_RE.search(name) and len(self.csrf[name]) < 5:
-                self.csrf[name].append(idx)
+            if CSRF_RE.search(name) and len(self.csrf[har_probe.field_label(name)]) < 5:
+                self.csrf[har_probe.field_label(name)].append(idx)
         for name in set(cookies) | set(values) | set_cookies:
             if BOT_MANAGEMENT_RE.match(name) and len(self.bot_signals[name]) < 5:
                 self.bot_signals[name].append(idx)
@@ -126,9 +127,24 @@ class Facts:
         parsed = har_probe.parse_json_maybe(text[: self.graph.args.max_scan_chars])
         if parsed is not None:
             self.res_fields[idx] = har_probe.json_shapes(parsed, limit=30)
-        prints = {f"?{k}": self.graph.fp(v) for k, v in query.items()}
-        prints.update({loc.split(":", 1)[1].removeprefix("$."): self.graph.fp(v) for loc, _, v in har_graph.body_values(
-            str(post.get("text") or ""), str(post.get("mimeType") or ""), post.get("params"), "request")})
+        prints = {f"?{k}": self.graph.fp(har_probe.canonical_json(v)) for k, v in query.items()}
+        body_text = str(post.get("text") or "")
+        mime = str(post.get("mimeType") or "")
+        if "json" in mime or body_text.lstrip().startswith(("{", "[")):
+            try:
+                body = json.loads(body_text)
+            except ValueError:
+                pass
+            else:
+                # Compare entire field values, including nested arrays, empty containers and null.
+                for key, value in (body.items() if isinstance(body, dict) else [("$", body)]):
+                    prints["body:" + key] = self.graph.fp(har_probe.canonical_json(value))
+        else:
+            form: Dict[str, List[str]] = defaultdict(list)
+            for _, key, value in har_graph.body_values(body_text, mime, post.get("params"), "request"):
+                form[key].append(value)
+            for key, values_list in form.items():
+                prints["body:" + key] = self.graph.fp(har_probe.canonical_json(values_list))
         self.req_prints[idx] = prints
 
 
@@ -142,7 +158,7 @@ def matching_values(graph: Dict[str, Any], w: Dict[str, Any]) -> List[str]:
     lines = []
     for edge in workflow_edges(graph, w):
         for ev in edge["evidence"]:
-            if not ev.get("fp"):
+            if "value" not in ev:
                 continue
             lines.append(
                 "- Same value: "
@@ -186,7 +202,10 @@ def differing_fields(w: Dict[str, Any], facts: Facts) -> List[str]:
         prints = [facts.req_prints.get(i, {}) for i in members]
         keys = sorted({k for p in prints for k in p})
         differ = [k for k in keys if len({p.get(k) for p in prints}) > 1]
-        what = f"compared query/body fields differ in {', '.join(differ[:8])}" if differ else "no differences detected in compared query/body fields"
+        labels = [har_probe.field_label(k.removeprefix("body:")) for k in differ[:8]]
+        what = "no comparable query/body fields" if not keys else "no differences detected in compared query/body fields"
+        if labels:
+            what = f"compared query/body fields differ in {', '.join(labels)}"
         cookie_headers = [facts.cookie_headers.get(i) for i in members]
         if any(cookie_headers):
             comparison = "unknown" if None in cookie_headers else "same" if len(set(cookie_headers)) == 1 else "different"

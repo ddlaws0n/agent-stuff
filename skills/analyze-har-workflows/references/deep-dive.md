@@ -36,7 +36,7 @@ jq '.entries[] | select(.index == 18)' "$ANALYSIS_DIR/selected.json"
 
 `show` exposes compact shapes; `extract` preserves more nested JSON structure. Both redact values, and both have output limits. Avoid treating a sampled shape as a complete request specification.
 
-`show --value-ids` gives equal sampled query/body values the same opaque ID, such as `title=<text:v3>`. Compare across the selected requests and responses to check reuse, changes, and verification reads without writing a custom comparison script. IDs distinguish JSON types, are local to one command, and are separate from graph fingerprints. Arrays/fields are sampled; matching placeholders do not establish whole-body equality. Header values and file contents are not included.
+`show --value-ids` gives equal sampled query/body values the same opaque ID, such as `version=<integer:v3>`. Compare across the selected requests and responses to check reuse, changes, and verification reads without writing a custom comparison script. IDs distinguish JSON types, are local to one command, and remain private. Arrays/fields are sampled; matching placeholders do not establish whole-body equality. Header values and file contents are not included.
 
 ## Inspect exact body locations
 
@@ -62,6 +62,6 @@ Outside job projections, `--values` reveals only explicitly selected scalar valu
 jq '.edges[] | select(.to == 18)' "$ANALYSIS_DIR/graph.json"
 ```
 
-Edges include field locations and per-run matching-value fingerprints. A response field matching a later request field is stronger evidence than timing proximity, but equality alone does not establish causality. Edge kinds such as `created-id`, `token`, or `signed-url` are guesses from names and formats. Fingerprints are comparable within one run only.
+Edges include matching field locations. A response field matching a later request field is stronger evidence than timing proximity, but equality alone does not establish causality. Edge kinds such as `created-id`, `token`, or `signed-url` are guesses from names and formats.
 
 `graph.json` also contains coverage counts and limitations. Matching filters generic and high-fanout values, samples fields/arrays, caps response scans, and supports only certain body formats. A missing edge cannot prove independence. Relative timing is unreliable for entries without timestamps.

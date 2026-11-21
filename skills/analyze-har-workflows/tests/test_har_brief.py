@@ -133,6 +133,21 @@ class HarBriefTests(unittest.TestCase):
         self.assertIn("1/2 requests selected", stdout)
         self.assertIn("Response scans skipped: 1; cut at scan limit: 1", stdout)
 
+    def test_comparison_preserves_scalar_types_and_missing_fields(self):
+        first = {"skip": False, "amount": 0.5, "optional": None, "typed": True}
+        second = {"skip": True, "amount": 1.5, "typed": 1}
+        report, _ = run_brief([entry(i, "PATCH", "https://example.test/api/save", body=b)
+                               for i, b in enumerate((first, second))])
+        self.assertIn("fields differ in amount, optional, skip, typed", report)
+
+    def test_comparison_preserves_array_order_and_length(self):
+        first = {"items": ["before", "same"], "length": ["same"], "obj": {"b": 2, "a": 1}}
+        second = {"items": ["after", "same"], "length": ["same", "same"], "obj": {"a": 1, "b": 2}}
+        report, _ = run_brief([entry(i, "PATCH", "https://example.test/api/save", body=b)
+                               for i, b in enumerate((first, second))])
+        self.assertIn("fields differ in items, length", report)
+        self.assertNotIn("items, length, obj", report)
+
     def test_brief_respects_length_cap(self):
         entries = [entry(i, "POST", f"https://app.example.com/api/thing{i}/save", body={"n": i}) for i in range(40)]
         stdout, _ = run_brief(entries, "--max-chars", "800")

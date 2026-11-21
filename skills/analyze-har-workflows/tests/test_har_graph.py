@@ -47,6 +47,16 @@ def edge_set(graph):
 
 
 class HarGraphTests(unittest.TestCase):
+    def test_matched_locations_hide_identifying_keys_and_fingerprints(self):
+        key = "customer@example.test"
+        entries = [entry(0, "GET", "https://example.test/api/list", res_body={"contacts": {key: CREATED_ID}}),
+                   entry(1, "PATCH", "https://example.test/api/save", body={"selection": CREATED_ID})]
+        _, graph, markdown = run_graph(entries)
+        self.assertTrue(any(edge["from"] == 0 and edge["to"] == 1 and
+                            "contacts." in str(edge["evidence"]) for edge in graph["edges"]))
+        self.assertNotIn(key, json.dumps(graph) + markdown)
+        self.assertNotIn('"fp":', json.dumps(graph))
+
     def test_links_created_ids_tokens_and_referer(self):
         page = "https://app.example.com/records/new"
         entries = [

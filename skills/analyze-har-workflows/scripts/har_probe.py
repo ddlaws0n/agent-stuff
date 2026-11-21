@@ -72,6 +72,15 @@ def eprint(*args: Any) -> None:
     print(*args, file=sys.stderr)
 
 
+def canonical_json(value: Any) -> str:
+    """Keep scalar types and array positions while ignoring object member order."""
+    return json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+
+
+def private_content_key(key: str) -> bool:
+    return key.lower().replace("_", "").replace("-", "") in {"title", "filename", "displayname", "messagetext"}
+
+
 def redact_scalar(value: Any) -> Any:
     if value is None or isinstance(value, (bool, int, float)):
         return value
@@ -84,6 +93,13 @@ def redact_scalar(value: Any) -> Any:
     text = re.sub(r"(?i)\b(Bearer|Token)\s+[A-Za-z0-9._~+/=-]{12,}", r"\1 <token:redacted>", text)
     text = re.sub(r"\b[A-Za-z0-9._~+/=-]{40,}\b", "<redacted>", text)
     return text
+
+
+def field_label(key: str) -> str:
+    """Mask recognizable data used as a field name before displaying locations."""
+    if UUID_RE.search(key) or key.isdigit() or any(c.isspace() for c in key):
+        return "<private-field>"
+    return str(redact_scalar(key))
 
 
 def is_epoch(text: str) -> bool:
@@ -139,7 +155,7 @@ def value_shape(value: Any) -> str:
 def redact_mapping(obj: Any) -> Any:
     """Keep body structure for analysis, but never emit captured leaf values."""
     if isinstance(obj, dict):
-        return {str(redact_scalar(k)): redact_mapping(v) for k, v in obj.items()}
+        return {field_label(k): redact_mapping(v) for k, v in obj.items()}
     if isinstance(obj, list):
         items = [redact_mapping(v) for v in obj[:200]]
         if len(obj) > 200:
@@ -157,7 +173,7 @@ def json_shapes(obj: Any, prefix: str = "", out: Optional[Dict[str, str]] = None
         for k, v in list(obj.items())[:200]:
             if len(out) >= limit:
                 break
-            json_shapes(v, f"{prefix}.{redact_scalar(k)}" if prefix else str(redact_scalar(k)), out, limit, shape)
+            json_shapes(v, f"{prefix}.{field_label(k)}" if prefix else field_label(k), out, limit, shape)
     elif isinstance(obj, list):
         if not obj:
             out.setdefault(prefix + "[]", "empty-list")
@@ -193,21 +209,25 @@ def body_shapes(post: Dict[str, Any], limit: int = 60, shape: Callable[[Any], st
         return {str(redact_scalar(p["name"])): "file" if p.get("fileName") else shape(p.get("value"))
                 for p in params[:limit] if isinstance(p, dict) and p.get("name")}
     if "x-www-form-urlencoded" in mime:
-        return {str(redact_scalar(k)): shape(v) for k, v in parse_qsl(text, keep_blank_values=True)[:limit]}
+        return {field_label(k): shape(v) for k, v in parse_qsl(text, keep_blank_values=True)[:limit]}
     parsed = parse_json_maybe(text)
     if parsed is not None:
         return json_shapes(parsed, limit=limit, shape=shape)
     if "multipart/form-data" in mime:
-        return {str(redact_scalar(k)): "file" if file else "part" for k, file, _ in islice(multipart_fields(text, mime), limit)}
+        return {field_label(k): "file" if file else "part" for k, file, _ in islice(multipart_fields(text, mime), limit)}
     return {}
 
 
 def query_shapes(url: str, shape: Callable[[Any], str] = value_shape) -> Dict[str, str]:
-    return {str(redact_scalar(k)): shape(v) for k, v in parse_qsl(urlparse(url).query, keep_blank_values=True)[:50]}
+    return {field_label(k): shape(v) for k, v in parse_qsl(urlparse(url).query, keep_blank_values=True)[:50]}
 
 
 def format_shapes(shapes: Dict[str, str], limit: int = 25) -> str:
-    items = [f"{k}=<{v}>" for k, v in list(shapes.items())[:limit]]
+    items = []
+    for key, kind in list(shapes.items())[:limit]:
+        if SENSITIVE_KEY_RE.search(key) or any(private_content_key(part) for part in key.replace("[]", "").split(".")):
+            kind = "private"
+        items.append(f"{key}=<{kind}>")
     if len(shapes) > limit:
         items.append(f"(+{len(shapes) - limit} more)")
     return " ".join(items)
@@ -310,7 +330,7 @@ def normalize_url(url: str, graphql_operation: Optional[str] = None) -> Dict[str
     parsed = urlparse(url or "")
     if parsed.scheme and parsed.scheme not in {"http", "https", "ws", "wss"}:
         return {"scheme": parsed.scheme, "host": "", "path": "{redacted}", "normalized": f"{parsed.scheme}:{{redacted}}", "query_keys": []}
-    query_keys = sorted({str(redact_scalar(k)) for k, _ in parse_qsl(parsed.query, keep_blank_values=True)})[:50]
+    query_keys = sorted({field_label(k) for k, _ in parse_qsl(parsed.query, keep_blank_values=True)})[:50]
     host = parsed.hostname or ""
     if parsed.port:
         host += f":{parsed.port}"
@@ -348,11 +368,11 @@ def post_data_info(post_data: Dict[str, Any]) -> Dict[str, Any]:
             if p.get("fileName"):
                 files.append("<file>")
     elif "application/x-www-form-urlencoded" in mime:
-        keys = [str(redact_scalar(k)) for k, _ in parse_qsl(text, keep_blank_values=True)][:200]
+        keys = [field_label(k) for k, _ in parse_qsl(text, keep_blank_values=True)][:200]
     else:
         parsed = parse_json_maybe(text)
         if isinstance(parsed, dict):
-            keys = sorted(str(redact_scalar(k)) for k in parsed.keys())[:200]
+            keys = sorted(field_label(k) for k in parsed.keys())[:200]
         elif text and "multipart/form-data" in mime:
             for name, file, _ in islice(multipart_fields(text, mime), 200):
                 keys.append(str(redact_scalar(name)))
@@ -380,7 +400,7 @@ def graphql_info(url: str, post_text: str) -> Dict[str, Any]:
         operation_name = parsed.get("operationName")
         query = parsed.get("query")
         if isinstance(parsed.get("variables"), dict):
-            variables_keys = sorted(parsed["variables"].keys())[:100]
+            variables_keys = sorted(field_label(key) for key in parsed["variables"])[:100]
         if isinstance(query, str):
             m = re.search(r"\b(mutation|query)\b(?:\s+([^\s({@]+))?", query)
             if m:
@@ -796,7 +816,7 @@ def cmd_show(args: argparse.Namespace) -> int:
         return f"{kind}:v{identifier}"
 
     if args.value_ids:
-        print("Value IDs compare sampled query/body fields within this command only; they are separate from graph fingerprints.")
+        print("Value IDs compare sampled query/body fields within this command only; keep these labels private.")
     max_idx = max(indices)
     for idx, entry in enumerate(iter_har_entries(Path(args.har))):
         if idx in indices:
