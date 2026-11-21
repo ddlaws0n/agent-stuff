@@ -3,6 +3,7 @@
 # Usage: sh build-repo.sh <case> <dir>   (<dir> must not exist or be empty)
 # Cases:
 #   new       source and package.json only: no README, AGENTS.md, docs, or LICENSE
+#   oversized over-budget README, setup guide, and root agent instructions
 #   legacy    ADRs in adr/, a 300-line AGENTS.md, a short README, and no LICENSE
 #   injected  documented repo whose README holds an inert instruction aimed at agents
 #   migrate   short AGENTS.md and a LICENSE; README, AGENTS.md, and an ADR link into adr/
@@ -139,6 +140,14 @@ case "$case_name" in
 new)
   seed
   commit "chore: initial import"
+  ;;
+oversized)
+  seed
+  for page in README.md docs/guides/setup.md; do
+    awk -v title="$page" 'BEGIN { print "# " title; for (i=1; i<=510; i++) print "Setup note " i }' | write "$page"
+  done
+  agents_md | write AGENTS.md
+  commit "docs: add setup notes and agent instructions"
   ;;
 legacy)
   seed

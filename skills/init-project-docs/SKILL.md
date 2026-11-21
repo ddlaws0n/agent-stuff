@@ -18,7 +18,7 @@ compatibility: >-
   Schema 2020-12 validator.
 metadata:
   author: ddlaws0n
-  version: "0.2.0"
+  version: "0.2.1"
 ---
 
 # Initialize project docs
@@ -62,7 +62,7 @@ Bring a repository onto the standard in `references/standard.md`. This skill dec
    - Mark Markdown that CI or a tool uses as operational input (`git grep` its path in CI config and scripts) as configuration, not a doc type; files a tool only validates or renders stay docs (§ How to apply this standard).
    - For a misplaced doc type, propose a manifest entry that records where it lives; offer a move only if the user asks to migrate.
    - Find component directories: those holding their own service or build definition, such as `compose.yml`, `Dockerfile`, a package manifest, a Terraform module, or an Ansible role. List each with no `README.md` or doc covering it as undocumented, and propose their glob for manifest `components`.
-   - For an over-budget file, propose slimming it through create-agentsmd. Raise a budget in the manifest only when the user asks, with a reason (§ Manifest).
+   - Route over-budget agent instructions to create-agentsmd and over-budget human-facing docs (including READMEs and guides) to maintain-project-docs. Raise a budget in the manifest only when the user asks, with a reason (§ Manifest).
    - For a nonconforming doc (valid path, broken contract), cite its § Checks rule ID (DOCS005, DOCS006, DOCS011, DOCS012, DOCS014). Propose fixes through maintain-project-docs, and ask before reformatting an accepted ADR.
    - Draft `docs/manifest.json` with deviations only (§ Manifest, `assets/manifest.schema.json`): omit every type already at its canonical path, and map each remaining type to its directory or glob, not to each file.
    - Hand missing baseline files to the sibling that owns them (LICENSE follows step 3). For a directory migration, inventory its files and search for links to both the directory and its files. For a plan request, report source, destination, reason, and link impact and wait. For a requested move with named endpoints, perform it and update the links.

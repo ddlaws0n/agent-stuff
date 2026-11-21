@@ -130,6 +130,18 @@
         "No docs/manifest.json is created and the agent leaves the migration uncommitted."
       ],
       "tags": ["normal"]
+    },
+    {
+      "id": 10,
+      "prompt": "Audit our over-budget docs. We use the on-demand budget for the README and setup guide. Identify which installed skill should handle each file and give its line count. Leave the files unchanged. Setup: build the repository with `sh evals/fixtures/build-repo.sh oversized <dir>` and work inside it.",
+      "expected_output": "Reports each file with its measured size and owning skill.",
+      "files": ["evals/fixtures/build-repo.sh"],
+      "assertions": [
+        "Routes the 511-line README.md and 511-line docs/guides/setup.md to maintain-project-docs.",
+        "Routes the 300-line AGENTS.md to create-agentsmd.",
+        "The working tree remains clean."
+      ],
+      "tags": ["boundary"]
     }
   ]
 }
