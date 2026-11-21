@@ -27,7 +27,7 @@ metadata:
    printf '%s\n' "$items" | jq -r '.[] | select(.title | ascii_downcase | contains("webhook")) | [.id, .title] | @tsv'
    ```
 
-2. For a new Login, let 1Password generate the password and suppress the item output. Check the exit status before reporting success. If a write's outcome is unclear, check the destination before attempting another create.
+2. For a new Login, let 1Password generate the password and suppress the item output. Check the exit status before reporting success.
 
    ```bash
    op item create --category Login --vault Infra --title 'Webhook' --generate-password >/dev/null
@@ -48,4 +48,4 @@ For a confirmed Login created with a generated password, use the actual item tit
 
 > Created the {title} Login in the {vault} vault. Open 1Password → {vault} → {title} to view the generated password.
 
-Use the known location directly, without fetching the password for display. For a denied create, report the redacted error and next action. For an uncertain create, report what remains unconfirmed. For lookups, return the requested metadata.
+Use the known location directly, without fetching the password for display. For a denied create, report the redacted error and next action. If the CLI cannot confirm the outcome, say the item may already exist and check the destination by metadata before retrying or suggesting a retry. For lookups, return the requested metadata.
