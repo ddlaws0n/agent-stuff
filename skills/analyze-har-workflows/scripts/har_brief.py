@@ -27,8 +27,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qsl, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import har_graph  # noqa: E402  # ty: ignore[unresolved-import]
-import har_probe  # noqa: E402  # ty: ignore[unresolved-import]
+import har_graph  # noqa: E402
+import har_probe  # noqa: E402
 
 CSRF_RE = re.compile(r"(?i)(csrf|xsrf|authenticity[-_]?token|requestverificationtoken|anti[-_]?forgery)")
 # Detection identifies capture-wide signals, not dependencies of the user's action.
@@ -79,17 +79,16 @@ class Facts:
         pairs = har_probe.header_pairs(req.get("headers"))
         values = dict(pairs)
         custom = [n for n, _ in pairs if n and n not in STANDARD_REQUEST_HEADERS and not n.startswith(("sec-", ":"))]
-        cookies = [p.split("=", 1)[0].strip() for p in values.get("cookie", "").split(";") if p.strip()]
+        cookies = har_probe.cookie_names(values.get("cookie", ""))
         cookies += [str(c.get("name")) for c in req.get("cookies") or [] if isinstance(c, dict) and c.get("name")]
         if cookies:
             self.cookie_requests += 1
             self.cookie_names.update(cookies)
         res_headers = har_probe.header_pairs(res.get("headers"))
-        set_cookies = {v.split("=", 1)[0].strip() for n, v in res_headers if n == "set-cookie"}
+        set_cookies = {name for n, v in res_headers if n == "set-cookie" for name in har_probe.cookie_names(v.split(";", 1)[0])}
         self.set_cookie_names.update(set_cookies)
         if values.get("authorization"):
-            scheme = values["authorization"].strip().split(" ", 1)
-            self.auth_schemes[scheme[0] if len(scheme) == 2 else "credential"] += 1
+            self.auth_schemes[har_probe.authorization_scheme(values["authorization"])] += 1
 
         post = har_probe.as_dict(req.get("postData"))
         fields = har_probe.body_shapes(post)
@@ -188,13 +187,13 @@ def differing_fields(w: Dict[str, Any], facts: Facts) -> List[str]:
     return lines
 
 
-def render_brief(graph: Dict[str, Any], facts: Facts, har: Path, out: Path, top: int, max_chars: int) -> str:
+def render_brief(graph: Dict[str, Any], facts: Facts, top: int, max_chars: int) -> str:
     app_host = facts.hosts.most_common(1)[0][0] if facts.hosts else "-"
     head = [
-        f"# HAR brief: {har.name}",
+        "# HAR brief",
         "",
         f"{facts.total} requests across {len(facts.hosts)} hosts (most: {app_host}); {facts.candidates} action candidates. "
-        f"Outputs in {out}: brief.md, workflow.md, graph.json. Groups, roles and link kinds are hints; matches show equality, not causality or lifetime.",
+        "Outputs: brief.md, workflow.md, graph.json. Groups, roles and link kinds are hints; matches show equality, not causality or lifetime.",
         "",
         "## Coverage",
         "",
@@ -243,12 +242,12 @@ def render_brief(graph: Dict[str, Any], facts: Facts, har: Path, out: Path, top:
     if graph["workflows"]:
         drill.add(graph["workflows"][0]["primary_index"])
         drill.update(i for e in workflow_edges(graph, graph["workflows"][0]) if e["kind"] in DRILL_KINDS for i in (e["from"], e["to"]))
-    tail = [f"Next: `har_probe.py show {har} --indices {','.join(map(str, sorted(drill)[:6]))}` for headers and field kinds of key steps."] if drill else []
+    tail = [f"Next: `uv run scripts/har_probe.py show <capture.har> --indices {','.join(map(str, sorted(drill)[:6]))}` for headers and field kinds of key steps."] if drill else []
     text = "\n".join(head + body + tail)
-    if len(text) > max_chars:
+    if len(text) + 1 > max_chars:
         note = "\n\n(brief truncated; see workflow.md for every workflow)\n" + "\n".join(tail)
         text = "\n".join(head + body)[: max(0, max_chars - len(note) - 1)].rsplit("\n", 1)[0] + note
-    return text + "\n"
+    return (text + "\n")[:max(0, max_chars)]
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -269,7 +268,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         graph = g.build()
         out = Path(args.out)
         har_graph.write_graph(graph, out, 10)
-        brief = render_brief(graph, facts, har, out, args.top, args.max_chars)
+        brief = render_brief(graph, facts, args.top, args.max_chars)
         (out / "brief.md").write_text(brief, encoding="utf-8")
         print(brief, end="")
     except BrokenPipeError:

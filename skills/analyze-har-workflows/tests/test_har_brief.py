@@ -75,6 +75,14 @@ class HarBriefTests(unittest.TestCase):
         for value in ("secret-cookie-1", "sensor-value-2", "csrf-abcdef123456", "a1b2c3d4e5f6", "L219", "Town"):
             self.assertNotIn(value, stdout)
 
+    def test_unknown_credentials_and_inline_data_stay_private(self):
+        entries = [entry(0, "GET", "data:text/plain,private-sample", req_headers=[
+            ("Authorization", "private-scheme more"), ("Cookie", "private-fragment; sid=private-cookie")
+        ])]
+        stdout, _ = run_brief(entries)
+        self.assertIn("credential on 1 requests", stdout)
+        self.assertNotIn("private-", stdout)
+
     def test_unrelated_challenge_is_a_capture_signal_without_verdict(self):
         entries = [
             entry(0, "GET", "https://www.google.com/recaptcha/api2/anchor?k=site-key-123", res_mime="text/html"),

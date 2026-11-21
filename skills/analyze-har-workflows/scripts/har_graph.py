@@ -40,7 +40,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Set, Tuple
 from urllib.parse import parse_qsl, unquote, urljoin, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import har_probe  # noqa: E402  # ty: ignore[unresolved-import]
+import har_probe  # noqa: E402
 
 UUID_RE = re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b")
 HEX_RE = re.compile(r"[0-9a-fA-F]{8,}")
@@ -162,8 +162,10 @@ def body_values(text: str, mime: str, params: Any, prefix: str) -> Iterator[Tupl
                 yield f"{prefix}.json:{loc}", key, str(v)
         return
     if "multipart/form-data" in mime:
-        for name, v in re.findall(r'name="([^"\r\n]+)"\r?\n\r?\n([^\r\n]{1,512})', text):
-            yield f"{prefix}.form:{name}", name, v
+        for name, file, value in har_probe.multipart_fields(text, mime):
+            if not file:
+                yield f"{prefix}.form:{name}", name, value
+
 
 
 def html_values(text: str) -> Iterator[Tuple[str, str, str]]:

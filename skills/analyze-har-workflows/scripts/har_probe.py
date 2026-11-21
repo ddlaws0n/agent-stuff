@@ -30,6 +30,8 @@ import re
 import sys
 from collections import Counter, defaultdict
 from decimal import Decimal
+from email import message_from_string
+from itertools import islice
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple
 from urllib.parse import parse_qsl, urlparse
@@ -166,6 +168,22 @@ def json_shapes(obj: Any, prefix: str = "", out: Optional[Dict[str, str]] = None
     return out
 
 
+def multipart_fields(text: str, mime: str) -> Iterator[Tuple[str, bool, str]]:
+    """Read only top-level form parts. File payloads never become field values."""
+    if "\n" in mime or "\r" in mime:
+        return
+    message = message_from_string(f"Content-Type: {mime}\r\n\r\n{text}")
+    parts = message.get_payload()
+    if not isinstance(parts, list):
+        return
+    for part in parts:
+        name = part.get_param("name", header="content-disposition")
+        if part.get_content_disposition() == "form-data" and isinstance(name, str):
+            file = part.get_filename() is not None
+            payload = part.get_payload()
+            yield name, file, payload if not file and isinstance(payload, str) else ""
+
+
 def body_shapes(post: Dict[str, Any], limit: int = 60, shape: Callable[[Any], str] = value_shape) -> Dict[str, str]:
     """{field: kind} for a request body (form params, urlencoded, JSON, multipart)."""
     text = str(post.get("text") or "")
@@ -180,7 +198,7 @@ def body_shapes(post: Dict[str, Any], limit: int = 60, shape: Callable[[Any], st
     if parsed is not None:
         return json_shapes(parsed, limit=limit, shape=shape)
     if "multipart/form-data" in mime:
-        return {str(redact_scalar(k)): "part" for k in re.findall(r'name="([^"\r\n]+)"', text)[:limit]}
+        return {str(redact_scalar(k)): "file" if file else "part" for k, file, _ in islice(multipart_fields(text, mime), limit)}
     return {}
 
 
@@ -242,7 +260,8 @@ def truncate_text(text: str, limit: int) -> Tuple[str, bool]:
         return "", bool(text)
     if len(text) <= limit:
         return text, False
-    return text[:limit] + f"\n...<truncated {len(text) - limit} chars>", True
+    marker = "...<truncated>"
+    return (text[:max(0, limit - len(marker))] + marker)[:limit], True
 
 
 def maybe_decode_content(content: Dict[str, Any]) -> str:
@@ -289,6 +308,8 @@ def normalize_path(path: str) -> str:
 
 def normalize_url(url: str, graphql_operation: Optional[str] = None) -> Dict[str, Any]:
     parsed = urlparse(url or "")
+    if parsed.scheme and parsed.scheme not in {"http", "https", "ws", "wss"}:
+        return {"scheme": parsed.scheme, "host": "", "path": "{redacted}", "normalized": f"{parsed.scheme}:{{redacted}}", "query_keys": []}
     query_keys = sorted({str(redact_scalar(k)) for k, _ in parse_qsl(parsed.query, keep_blank_values=True)})[:50]
     host = parsed.hostname or ""
     if parsed.port:
@@ -333,8 +354,10 @@ def post_data_info(post_data: Dict[str, Any]) -> Dict[str, Any]:
         if isinstance(parsed, dict):
             keys = sorted(str(redact_scalar(k)) for k in parsed.keys())[:200]
         elif text and "multipart/form-data" in mime:
-            keys = [str(redact_scalar(k)) for k in re.findall(r'name="([^"\r\n]+)"', text)[:200]]
-            files = ["<file>"] if re.search(r'filename="[^"\r\n]+"', text) else []
+            for name, file, _ in islice(multipart_fields(text, mime), 200):
+                keys.append(str(redact_scalar(name)))
+                if file:
+                    files.append("<file>")
     return {
         "has_body": bool(text or params),
         "mime": mime.split(";", 1)[0],
@@ -376,8 +399,10 @@ def iter_har_entries(path: Path) -> Iterator[Dict[str, Any]]:
     if ijson is not None:
         with path.open("rb") as f:
             # Preserve arbitrary-size integer IDs; convert Decimal timings at output.
-            for entry in ijson.items(f, "log.entries.item"):
-                yield entry
+            try:
+                yield from ijson.items(f, "log.entries.item")
+            except ijson.JSONError:
+                raise ValueError("Invalid HAR JSON") from None
     else:
         # Fallback is intentionally only for small HARs.
         size_mb = path.stat().st_size / (1024 * 1024)
@@ -531,6 +556,17 @@ def candidate_score(c: Dict[str, Any]) -> Tuple[int, List[str]]:
     return score, reasons
 
 
+def authorization_scheme(value: str) -> str:
+    parts = value.split(None, 1)
+    if len(parts) == 2 and parts[0].lower() in {"bearer", "basic", "digest", "negotiate", "token"}:
+        return parts[0]
+    return "credential"
+
+
+def cookie_names(value: str) -> List[str]:
+    return [str(redact_scalar(part.split("=", 1)[0].strip())) for part in value.split(";") if "=" in part]
+
+
 def header_summary(headers: Any) -> List[str]:
     """Header names with safe values: kinds for custom headers, names only for cookies."""
     out: List[str] = []
@@ -538,11 +574,10 @@ def header_summary(headers: Any) -> List[str]:
         if not lname or lname in QUIET_HEADERS or lname.startswith(("sec-", ":")):
             continue
         if lname in ("cookie", "set-cookie"):
-            parts = value.split(";") if lname == "cookie" else value.split(";", 1)[:1]
-            names = [str(redact_scalar(p.split("=", 1)[0].strip())) for p in parts if p.strip()]
+            names = cookie_names(value if lname == "cookie" else value.split(";", 1)[0])
             out.append(f"{lname}=<names: {', '.join(names[:12])}>")
         elif lname == "authorization":
-            out.append(f"authorization=<{value.split(' ', 1)[0] if ' ' in value.strip() else 'credential'} redacted>")
+            out.append(f"authorization=<{authorization_scheme(value)} redacted>")
         elif SENSITIVE_KEY_RE.search(lname):
             out.append(f"{lname}=<redacted>")
         elif lname in ("origin", "referer", "location"):

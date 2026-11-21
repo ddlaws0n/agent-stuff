@@ -58,7 +58,7 @@ class HarProbeTests(unittest.TestCase):
 
         def identifier(index, field):
             match = re.search(rf"\b{field}=<[^:>]+:(v\d+)>", blocks[index])
-            self.assertIsNotNone(match, (index, field))
+            assert match is not None, (index, field)
             return match.group(1)
 
         self.assertEqual(identifier(0, "nonce"), identifier(1, "nonce"))
@@ -124,6 +124,23 @@ class HarProbeTests(unittest.TestCase):
         self.assertEqual(info["mime"], "multipart/form-data")
         self.assertEqual(info["file_names"], ["<file>"])
         self.assertNotIn("patient-record.pdf", json.dumps(info))
+
+    def test_raw_multipart_excludes_names_inside_uploaded_files(self):
+        post = {"mimeType": "multipart/form-data; boundary=test",
+                "text": '--test\r\nContent-Disposition: form-data; name="upload"; filename="private-file"\r\n\r\nname="private-body"\r\n--test--\r\n'}
+        self.assertEqual(har_probe.body_shapes(post), {"upload": "file"})
+        info = har_probe.post_data_info(post)
+        self.assertEqual(info["keys"], ["upload"])
+        self.assertEqual(info["file_names"], ["<file>"])
+
+    def test_invalid_stream_does_not_print_capture_excerpt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "invalid.har"
+            path.write_text('{"log":{"entries":[private-fragment]}}')
+            result = subprocess.run([sys.executable, str(ROOT / "scripts/har_probe.py"), "show", str(path), "--indices", "0"],
+                                    capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("private-fragment", result.stdout + result.stderr)
 
     def test_telemetry_preflight_and_blocked_requests_rank_low(self):
         def score(method, url, status=200):
