@@ -4,9 +4,9 @@ Use for targeted changes to existing documentation. Shared scope, evidence, stal
 
 ## 1. Confirm the target
 
-Use the files the user named. If the target is ambiguous, discover likely project-owned documentation and ask before choosing among materially different targets. Common locations include, but are not limited to:
+Use the files the user named, resolving paths through `docs/manifest.json` when it exists. If the target is ambiguous, discover likely project-owned documentation and ask before choosing among materially different targets. Common locations include, but are not limited to:
 
-- root documents such as `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md`, and `CODE_OF_CONDUCT.md`
+- root documents such as `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `CODE_OF_CONDUCT.md`
 - `docs/`, `doc/`, or repository-specific documentation trees
 - package/module READMEs
 - ADR directories such as `adr/`, `decisions/`, or `architecture/decisions/`
@@ -20,3 +20,5 @@ Understand the current document's audience, link graph, and style before changin
 - Preserve accurate content and the document's existing style.
 - When a renamed concept or path appears in multiple in-scope documents, update all of them together.
 - If the correction requires a new document, explain why and follow `references/creating.md` only when the user's request permits creating documentation.
+- Plans and accepted ADRs follow the lifecycle rules in `references/standard.md` § Content contracts (Plans, ADRs). Deleting a finished plan is approval-gated per `SKILL.md` unless the user asked for it.
+- For a docs-vs-code freshness pass, compare each documented claim against the code and configuration, present the proposed diffs for review, and apply them only after the user approves.

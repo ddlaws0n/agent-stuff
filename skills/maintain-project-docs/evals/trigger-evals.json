@@ -32,6 +32,18 @@
     "should_trigger": true
   },
   {
+    "query": "Record the decision to switch to Postgres as an ADR.",
+    "should_trigger": true
+  },
+  {
+    "query": "Start a plan for the OIDC migration that the next session can resume.",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a runbook for rotating the production database credentials.",
+    "should_trigger": true
+  },
+  {
     "query": "Update the root AGENTS.md test commands while preserving its scoped operational rules.",
     "should_trigger": false
   },
@@ -61,6 +73,18 @@
   },
   {
     "query": "Write the GitHub release notes for v2.3 from the merged pull requests.",
+    "should_trigger": false
+  },
+  {
+    "query": "Update .github/copilot-instructions.md to match our new test command.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add an entry to CHANGELOG.md under Unreleased for the login fix.",
+    "should_trigger": false
+  },
+  {
+    "query": "Audit this repo's docs layout against the project docs standard and report what is missing or misplaced.",
     "should_trigger": false
   }
 ]

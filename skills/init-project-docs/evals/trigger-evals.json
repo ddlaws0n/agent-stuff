@@ -1,0 +1,86 @@
+[
+  {
+    "query": "Set up the docs structure for this new repo.",
+    "should_trigger": true
+  },
+  {
+    "query": "Adopt our project docs standard in this existing repo.",
+    "should_trigger": true
+  },
+  {
+    "query": "Where should ADRs and plans live in this repo?",
+    "should_trigger": true
+  },
+  {
+    "query": "Audit this repo's docs layout against the standard.",
+    "should_trigger": true
+  },
+  {
+    "query": "Bootstrap the README, AGENTS.md, and docs folder for a fresh TypeScript service.",
+    "should_trigger": true
+  },
+  {
+    "query": "We keep ADRs in adr/ and have a 300-line AGENTS.md. Bring this repo in line with the docs standard without moving anything yet.",
+    "should_trigger": true
+  },
+  {
+    "query": "Which standard docs is this repo missing, and where would the glossary and runbooks go?",
+    "should_trigger": true
+  },
+  {
+    "query": "Draft a docs/manifest.json that records where this repo keeps its docs when that differs from the standard layout.",
+    "should_trigger": true
+  },
+  {
+    "query": "Write a README for this package.",
+    "should_trigger": false
+  },
+  {
+    "query": "Update AGENTS.md with the new test command.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add a changelog entry for the login fix.",
+    "should_trigger": false
+  },
+  {
+    "query": "Fix the broken links in docs/.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add a GitHub Actions workflow that runs our tests.",
+    "should_trigger": false
+  },
+  {
+    "query": "Draft an ADR for switching from REST to gRPC.",
+    "should_trigger": false
+  },
+  {
+    "query": "Move docs/setup.md into docs/guides/ and update every link that points at it.",
+    "should_trigger": false
+  },
+  {
+    "query": "Create a CLAUDE.md that imports our AGENTS.md.",
+    "should_trigger": false
+  },
+  {
+    "query": "Which open-source license should this project use?",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up Docusaurus as the documentation site for this project.",
+    "should_trigger": false
+  },
+  {
+    "query": "Scaffold a new Python package with pyproject.toml, tests, and a CI config.",
+    "should_trigger": false
+  },
+  {
+    "query": "Generate API reference docs from our TypeScript types.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add a GitHub Actions job that lints our Markdown files.",
+    "should_trigger": false
+  }
+]
