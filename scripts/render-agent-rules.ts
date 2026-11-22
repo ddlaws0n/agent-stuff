@@ -14,7 +14,7 @@ import {
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
-const sources = join(import.meta.dir, "../global-rules");
+const sources = join(import.meta.dir, "../agent-rules");
 const source = (name: string) =>
   readFileSync(join(sources, name + ".md"), "utf8").trimEnd();
 const shared = source("global");
@@ -91,7 +91,7 @@ if (import.meta.main) {
     (args.length && !["--check", "--dry-run"].includes(args[0]))
   ) {
     throw new Error(
-      "Usage: bun scripts/render-global-rules.ts [--check | --dry-run]",
+      "Usage: bun scripts/render-agent-rules.ts [--check | --dry-run]",
     );
   }
   const mode =
