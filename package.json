@@ -43,5 +43,16 @@
   },
   "trustedDependencies": [
     "agnix"
-  ]
+  ],
+  "prettier": {
+    "proseWrap": "preserve",
+    "overrides": [
+      {
+        "files": "*.md",
+        "options": {
+          "embeddedLanguageFormatting": "off"
+        }
+      }
+    ]
+  }
 }
