@@ -1,0 +1,42 @@
+[
+  {
+    "query": "Audit all PR workspaces in this Orca run and tell me which links are stale.",
+    "should_trigger": true
+  },
+  {
+    "query": "Put my PR queue under one Orca parent and route fixes to the existing owners.",
+    "should_trigger": true
+  },
+  {
+    "query": "Which workers from the Orca review queue can I release?",
+    "should_trigger": true
+  },
+  {
+    "query": "Sync the Orca workspace columns for this batch of PRs.",
+    "should_trigger": true
+  },
+  {
+    "query": "Resume the PR queue in the same run and reuse the reviewers.",
+    "should_trigger": true
+  },
+  {
+    "query": "Send a message to my one terminal.",
+    "should_trigger": false
+  },
+  {
+    "query": "Move issue 7 across the GitHub Projects board.",
+    "should_trigger": false
+  },
+  {
+    "query": "Resolve a merge conflict in this branch.",
+    "should_trigger": false
+  },
+  {
+    "query": "Open a new Orca browser tab.",
+    "should_trigger": false
+  },
+  {
+    "query": "Explain git worktree prune.",
+    "should_trigger": false
+  }
+]

@@ -1,0 +1,4 @@
+Synthetic snapshot. Local Run R, queue parent Q in acme/tools, primary checkout P outside the queue. PR URLs are https://github.com/acme/tools/pull/<number>. Configured column IDs: doing, awaiting (review), accepted. All Git heads match the forge. User owns the primary checkout and its unstaged work.
+31: open, changes requested; child W31 under Q linked to PR 31; doing; active D31 owns fixes.
+32: open, ready for review; W32 unparented and dedicated to this queue; verified checkout of PR 32 with one staged change; doing; its only link is issue 9. D32 reported success; the user explicitly kept the session open.
+33: merged; W33 under Q and linked; accepted; D33 still running the separately requested post-merge check. No other workers.
