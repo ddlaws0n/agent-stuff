@@ -10,7 +10,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { plan, render } from "./render-global-rules";
+import { plan, render } from "./render-agent-rules";
 
 test("preview, migrate, back up and detect drift across both homes", () => {
   const home = mkdtempSync(join(tmpdir(), "agent-rules-"));

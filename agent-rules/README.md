@@ -3,9 +3,9 @@
 Edit `global.md` and the corresponding agent’s Markdown tail here. From the repository root, preview, deploy, and check for drift with Bun.
 
 ```sh
-bun scripts/render-global-rules.ts --dry-run
-bun scripts/render-global-rules.ts
-bun scripts/render-global-rules.ts --check
+bun scripts/render-agent-rules.ts --dry-run
+bun scripts/render-agent-rules.ts
+bun scripts/render-agent-rules.ts --check
 ```
 
 The renderer deploys the shared file under `~/.config/agent-rules/` so Claude Code and agy imports survive worktree or branch changes. Codex and both Pi homes receive the shared text plus their own tail. Orca mirrors the default Codex home’s instructions on launch. The renderer links that file to the shell Codex home and backs up changed files beside their originals before replacing them.

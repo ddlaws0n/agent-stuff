@@ -4,7 +4,6 @@ node_modules/
 dist/
 __pycache__/
 *.pyc
-eval-results/
 /eval/results/
 coverage/
 .ruff_cache/
