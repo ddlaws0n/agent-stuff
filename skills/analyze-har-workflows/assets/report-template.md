@@ -1,5 +1,9 @@
 # HAR Workflow Analysis: [task/site]
 
+Adapt or omit sections to fit the question. List only observed headers and dynamic values; distinguish required, inferred, and unknown prerequisites. Example rows below are prompts, not capture facts.
+
+For captured definitions/jobs, replace action-request sections with the definition and coverage section below. Present shared findings once; put exhaustive node/endpoint tables in the evidence appendix.
+
 ## Executive summary
 
 - **Observed task:** [What the user did]
@@ -19,9 +23,7 @@
 
 ```http
 [METHOD] [normalized URL]
-Authorization: <redacted-if-present>
-Cookie: <session-cookie-if-needed>
-X-CSRF-Token: <csrf-token-if-needed>
+[Observed header name]: <placeholder>
 Content-Type: [mime]
 ```
 
@@ -44,39 +46,25 @@ Response shape:
 
 ## Dynamic values
 
-<!-- prettier-ignore -->
-| Value | Where used | Source request/index | How to refresh |
-|-|-|-:|-|
-| CSRF token | header/body |  | GET page or bootstrap API |
-| Resource ID | URL/body |  | Current page/API response |
-| Upload URL | upload request |  | Init/presign endpoint |
+Name the field and cite where it appeared or changed. Give its lifetime only if the capture directly establishes it.
 
-## Automation recommendation
+## Captured definitions and runtime coverage
 
-[Explain the simplest reliable automation path. Prefer direct HTTP only when token refresh and replayability are clear. Recommend Playwright/browser automation where the reverse-engineering cost or challenge risk is high.]
+- **Definition:** [ID, version, update time, trigger and callable contract]
+- **Active behavior:** [Control flow, disabled steps, formulas and schema/description differences]
+- **Dependencies:** [Direct callers versus root/clone lineage; shared runs across captures; separate connections versus environment identity]
+- **Job coverage:** [Visible page, scope/total counts, version matching, executed branches and unverified results]
+- **Edit targets:** [Exact pointer, node type/operation, reference dependencies and checks]
 
-## Minimal implementation sketch
+## Feasibility and unknowns
 
-```python
-# Pseudocode only. Do not include real secrets.
-import httpx
+[Give the requested assessment using only observed prerequisites and results. Identify the missing capture evidence for each unresolved question.]
 
-with httpx.Client(follow_redirects=True) as client:
-    # 1. Authenticate or attach authorized session cookies.
-    # 2. Fetch bootstrap/form page if needed.
-    # 3. Submit primary action request.
-    # 4. Verify result.
-    pass
-```
+## Evidence appendix
 
-## Unknowns and validation plan
-
-1. [Run with fresh session to confirm tokens can be refreshed.]
-2. [Test minimal payload versus full captured payload.]
-3. [Verify server-side result via GET endpoint or UI.]
-
-## Evidence reviewed
-
-- Summary: `[private analysis directory]/summary.json`
-- Candidates: `[private analysis directory]/candidates.jsonl`
-- Selected entries: `[indices]`
+- Brief: `[private analysis directory]/brief.md`
+- Requests inspected with `show`: `[indices]`
+- Gaps: [missing bodies, absent cookies or tokens, unseen bootstrap]
+- Definition/node inventory: [paths, types, UUIDs/aliases, conditions, skip flags and mappings]
+- Job/cross-capture inventory: [lineage joins, timestamps, version evidence and coverage limits]
+- Verification: [Checks actually run, claim basis, review findings/dispositions if requested]
