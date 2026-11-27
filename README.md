@@ -32,6 +32,7 @@ Uses the [`skills` CLI](https://github.com/vercel-labs/skills). Some skills need
 | [`save-to-folio`](skills/save-to-folio/SKILL.md) | Save articles to the Folio read-later app with 1Password-backed login. |
 | [`triage-distributed-failures`](skills/triage-distributed-failures/SKILL.md) | Triage production anomalies in distributed systems with evidence timelines and approval-gated repair. |
 | [`update-changelog`](skills/update-changelog/SKILL.md) | Maintain CHANGELOG.md under Keep a Changelog: deduplicated Unreleased entries and dated release sections with compare links. |
+| [`writing`](skills/writing/SKILL.md) | Draft and edit prose with 21 guides adapted from Surendran B’s [writing-skills](https://github.com/surendranb/writing-skills/tree/03bd5bb33e0760cf44c32822d2d79d7e2c42c6a6). |
 
 ## Develop
 
@@ -43,6 +44,8 @@ bun run check     # typecheck, lint, format, skill validation, tests
 ```
 
 New skills start from [`templates/skill-template/`](templates/skill-template/SKILL.md); see [docs/authoring.md](docs/authoring.md) and [docs/evals.md](docs/evals.md). See [CONTRIBUTING.md](CONTRIBUTING.md) for the PR process and [AGENTS.md](AGENTS.md) for agent guidance.
+
+The [writing development guide](eval/writing/README.md) covers the pinned import, three-way evaluation and reproducible ZIP.
 
 ## License
 

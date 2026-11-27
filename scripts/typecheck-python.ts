@@ -32,6 +32,7 @@ export async function pythonTypecheckArgs(root: string): Promise<string[]> {
     ...paths.flatMap((path) => ["--extra-search-path", resolve(root, path)]),
     "skills",
     "eval/harness",
+    "eval/writing",
     "scripts",
   ];
 }

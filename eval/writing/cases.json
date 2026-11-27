@@ -1,0 +1,176 @@
+{
+  "quality": {
+    "q1": {
+      "split": "dev",
+      "required": ["business-writing"],
+      "allowed": ["plain-language", "corporate-communication", "de-ai"],
+      "max_reads": 3,
+      "contains": ["£18,000", "£24,000", "Friday", "Atlas", "Bright"],
+      "max_words": 100
+    },
+    "q2": {
+      "split": "dev",
+      "required": ["corporate-communication"],
+      "allowed": ["plain-language", "business-writing", "de-ai"],
+      "max_reads": 3,
+      "contains": ["Leeds", "York", "8 June", "4 June"]
+    },
+    "q3": {
+      "split": "held-out",
+      "required": ["blameless-postmortem"],
+      "allowed": ["de-ai"],
+      "max_reads": 3,
+      "contains": ["09:12", "09:29", "UTC", "47", "Mei"],
+      "max_words": 200
+    },
+    "q4": {
+      "split": "dev",
+      "required": ["google-dev-docs", "google-dev-docs-detail"],
+      "allowed": ["de-ai"],
+      "max_reads": 3,
+      "contains": ["atlas push demo.csv --dry-run", "25 MB", "E_LIMIT"]
+    },
+    "q5": {
+      "split": "dev",
+      "required": ["prfaq-amazon"],
+      "allowed": ["de-ai"],
+      "max_reads": 3,
+      "contains": ["West Street", "FAQ"]
+    },
+    "q6": {
+      "split": "dev",
+      "required": ["brevity-briefing"],
+      "allowed": ["de-ai"],
+      "max_reads": 3,
+      "contains": ["Alia", "Thursday"],
+      "max_words": 65
+    },
+    "q7": {
+      "split": "held-out",
+      "required": ["gov-uk-style", "gov-uk-style-detail"],
+      "allowed": ["de-ai"],
+      "max_reads": 3,
+      "contains": ["3 May 2027", "18", "£12", "Housing Benefit"]
+    },
+    "q8": {
+      "split": "dev",
+      "required": ["microsoft-style"],
+      "allowed": ["de-ai"],
+      "max_reads": 3,
+      "contains": [],
+      "max_words": 35
+    },
+    "q9": {
+      "split": "held-out",
+      "required": ["de-ai"],
+      "allowed": [],
+      "max_reads": 3,
+      "contains": ["Access may be suspended pending review.", "Jo", "Tuesday"]
+    },
+    "q10": {
+      "split": "dev",
+      "required": ["business-writing"],
+      "allowed": ["plain-language", "corporate-communication", "de-ai"],
+      "max_reads": 3,
+      "contains": ["R-216", "Wednesday"],
+      "max_words": 150,
+      "min_words": 100
+    },
+    "q11": {
+      "split": "held-out",
+      "required": ["yoda"],
+      "allowed": ["de-ai"],
+      "max_reads": 3,
+      "contains": ["orbit.svg"]
+    },
+    "q12": {
+      "split": "dev",
+      "required": ["journalism-ap"],
+      "allowed": ["de-ai"],
+      "max_reads": 3,
+      "contains": ["We still have work to do.", "August", "Tuesday"]
+    }
+  },
+  "routing": [
+    {
+      "id": "r-maintenance",
+      "prompt": "Rewrite these steps in ASD-STE100 and check its sentence limits: if the sample tray is empty, open the cover. Remove the sample tray. Close the cover.",
+      "split": "held-out",
+      "required": ["asd-ste100", "asd-ste100-detail"],
+      "allowed": [],
+      "max_reads": 2
+    },
+    {
+      "id": "r-plain",
+      "prompt": "Rewrite this for readers new to insurance: The excess is the sum the policyholder must pay toward an eligible claim.",
+      "split": "dev",
+      "required": ["plain-language"],
+      "allowed": [],
+      "max_reads": 1
+    },
+    {
+      "id": "r-economy",
+      "prompt": "Edit this sentence using Orwell's rules: It is incumbent upon us to effect the removal of unused keys prior to renewal.",
+      "split": "dev",
+      "required": ["orwells-rules"],
+      "allowed": [],
+      "max_reads": 1
+    },
+    {
+      "id": "r-persuade",
+      "prompt": "Use Scott Adams's persuasive writing style to argue for a shorter form. Only one of the five fields is used to book the appointment.",
+      "split": "held-out",
+      "required": ["scott-adams"],
+      "allowed": [],
+      "max_reads": 1
+    },
+    {
+      "id": "r-coach",
+      "prompt": "Write one sentence in Ted Lasso's voice for a teammate who missed a practice shot.",
+      "split": "dev",
+      "required": ["ted-lasso"],
+      "allowed": [],
+      "max_reads": 1
+    },
+    {
+      "id": "r-painting",
+      "prompt": "In Bob Ross's voice, guide me through softening a crooked painted horizon.",
+      "split": "dev",
+      "required": ["bob-ross"],
+      "allowed": [],
+      "max_reads": 1
+    },
+    {
+      "id": "r-bear",
+      "prompt": "Write a polite note in Paddington's voice about a missing umbrella.",
+      "split": "held-out",
+      "required": ["paddington"],
+      "allowed": [],
+      "max_reads": 1
+    },
+    {
+      "id": "r-pooh",
+      "prompt": "Write a small thank-you note in Winnie-the-Pooh's voice for a friend who brought tea.",
+      "split": "dev",
+      "required": ["winnie-the-pooh"],
+      "allowed": [],
+      "max_reads": 1
+    },
+    {
+      "id": "r-ogre",
+      "prompt": "In Shrek's voice ask a guest to wipe their boots at the door.",
+      "split": "dev",
+      "required": ["shrek"],
+      "allowed": [],
+      "max_reads": 1
+    },
+    {
+      "id": "r-pirate",
+      "prompt": "In Jack Sparrow's voice, ask the crew to return a borrowed compass.",
+      "split": "held-out",
+      "required": ["jack-sparrow"],
+      "allowed": [],
+      "max_reads": 1
+    }
+  ]
+}

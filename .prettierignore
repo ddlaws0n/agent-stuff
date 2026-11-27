@@ -6,3 +6,5 @@ bun.lock
 # Evaluation inputs are byte-for-byte fixtures.
 skills/*/evals/files/
 skills/*/evals/fixtures/
+# Generated from pinned Git blobs; compare with the writing importer.
+skills/writing/references/
