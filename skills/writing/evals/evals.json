@@ -1,0 +1,128 @@
+{
+  "skill_name": "writing",
+  "pressure": {
+    "required": false,
+    "reason": "This skill produces text. Boundary cases exercise fidelity, exact quotations and uncertainty."
+  },
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Turn these notes into a decision memo for our VP. Use at most 100 words. We recommend extending Atlas by 6 weeks at £18,000. Bright costs £24,000 and can start in July. A two-week handover is included only with Atlas. Procurement needs approval by Friday. Renewal beyond the extension is undecided.",
+      "expected_output": "The VP can choose between both offers and see the recommendation, deadline and renewal uncertainty.",
+      "assertions": [
+        "Keep both prices, the Friday deadline and which vendor includes the handover.",
+        "Do not imply that a longer renewal has been approved."
+      ],
+      "tags": ["normal"]
+    },
+    {
+      "id": 2,
+      "prompt": "Write the internal announcement for the support team. Two evening shifts will move from Leeds to York on 8 June. Nobody's role or pay changes. Individual schedules are still under review. Managers will meet affected staff on 4 June. Sound warm and straightforward.",
+      "expected_output": "Staff can see the change, what is settled, and when they will hear more.",
+      "assertions": [
+        "Retain both places, both dates and the distinction between shifts and jobs.",
+        "Avoid attributing motives or promising a final schedule."
+      ],
+      "tags": ["normal"]
+    },
+    {
+      "id": 3,
+      "prompt": "Draft a blameless incident review from the on-call notes. Checkout returned errors from 09:12 to 09:29 UTC. 47 attempts failed, with repeat attempts possible. Rolling back restored checkout. The cause is still unknown. Mei owns the log review. Keep the review under 200 words.",
+      "expected_output": "A concise review distinguishes observations, recovery, impact and ongoing investigation.",
+      "assertions": [
+        "Retain the interval, attempt count and owner.",
+        "Do not convert attempts into unique customers or a rollback into a proven cause."
+      ],
+      "tags": ["boundary"]
+    },
+    {
+      "id": 4,
+      "prompt": "Write a developer quickstart for uploading a sample. Keep the command and error code verbatim. Run `atlas push demo.csv --dry-run`. This validates up to 25 MB without uploading. E_LIMIT means the file exceeds the limit. No access token is needed for this local check.",
+      "expected_output": "A usable quickstart with accurate command, limit, outcome and troubleshooting.",
+      "assertions": [
+        "Preserve the command, limit and error code.",
+        "Keep the difference between local validation and upload explicit."
+      ],
+      "tags": ["normal"]
+    },
+    {
+      "id": 5,
+      "prompt": "Prepare a working-backwards press release and short internal and external FAQs for a proposed library pickup locker. The pilot would serve West Street cardholders after closing. No launch date, budget or customer interviews exist. Leave missing research explicit. Do not invent a quote.",
+      "expected_output": "The future-facing proposal distinguishes pilot intent from a launch or real endorsement.",
+      "assertions": [
+        "Include both FAQ audiences and the proposed pilot audience.",
+        "Use placeholders or gaps for missing evidence and keep all quotations factual."
+      ],
+      "tags": ["normal"]
+    },
+    {
+      "id": 6,
+      "prompt": "Draft a weekly digest for the operations chat, under 65 words. Monday's import finished; 3 supplier files remain on hold until owners confirm headers. Alia will check on Thursday. Avoid calling the release blocked: it has its own checklist.",
+      "expected_output": "Skimmable update with status, outstanding files and owner/time.",
+      "assertions": [
+        "Retain the outstanding number, owner and next check.",
+        "Do not imply the release is blocked."
+      ],
+      "tags": ["normal"]
+    },
+    {
+      "id": 7,
+      "prompt": "Rewrite this UK council help page in GOV.UK style. Applications close on 3 May 2027. Residents aged 18 or over can apply. Bring one proof of address. The £12 fee is waived for applicants receiving Housing Benefit. Keep the eligibility condition explicit.",
+      "expected_output": "A resident can determine eligibility, cost and what to bring.",
+      "assertions": [
+        "Preserve the deadline, amount, age threshold and fee-waiver condition."
+      ],
+      "tags": ["boundary"]
+    },
+    {
+      "id": 8,
+      "prompt": "Write product UI copy for a failed photo upload: title, message and button. The selected photo is still on the device. The network disconnected. The button starts another attempt. Use no more than 35 words for everything.",
+      "expected_output": "Three usable interface strings state the problem and recovery action.",
+      "assertions": [
+        "Give a recovery button and preserve the photo's status.",
+        "Stay within the length limit."
+      ],
+      "tags": ["normal"]
+    },
+    {
+      "id": 9,
+      "prompt": "Edit this note to sound like a real colleague. Keep the quoted sentence exactly: “Access may be suspended pending review.” Outside the quote I'm saying we've read Jo's request and expect a reply on Tuesday, but don't know yet. Draft: Our pivotal team has meticulously actioned Jo's request, underscoring our deep commitment to alignment. Expect an update Tuesday.",
+      "expected_output": "A casual, grounded message with an untouched quotation and a qualified expectation.",
+      "assertions": [
+        "Preserve the complete supplied quotation and attribution to Jo's request.",
+        "Avoid promising a Tuesday response."
+      ],
+      "tags": ["boundary"]
+    },
+    {
+      "id": 10,
+      "prompt": "Write a friendly, detailed letter to a customer who had to contact us twice. Refer to ticket R-216. A replacement is being checked, and shipping is not confirmed. We can call on Wednesday. Keep it between 100 and 150 words; don't force it into a short alert.",
+      "expected_output": "A diplomatic customer reply at the requested length containing a concrete next contact.",
+      "assertions": [
+        "Keep the ticket and the proposed contact day.",
+        "Do not confirm shipment, delivery time or compensation."
+      ],
+      "tags": ["boundary"]
+    },
+    {
+      "id": 11,
+      "prompt": "In Yoda's voice, give a beginner a two-sentence reminder to save their sketch as orbit.svg before closing the editor. Keep the filename exact. No other actions are needed.",
+      "expected_output": "A recognizable but legible voice with the correct order of operations.",
+      "assertions": [
+        "Preserve the filename and the ordering of save and close.",
+        "Return two sentences and no extra steps."
+      ],
+      "tags": ["boundary"]
+    },
+    {
+      "id": 12,
+      "prompt": "Rewrite this briefing as straight AP-style news copy for a local paper. The library director said Tuesday that the north branch may reopen in August. Repairs are still being assessed. The board has not voted. The exact quote is “We still have work to do.” Keep that quote.",
+      "expected_output": "A sourced news brief that retains uncertainty and the director's words.",
+      "assertions": [
+        "Keep the quote and attribute the tentative reopening.",
+        "Do not present an August reopening or a board decision as settled."
+      ],
+      "tags": ["normal"]
+    }
+  ]
+}

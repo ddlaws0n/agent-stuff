@@ -1,0 +1,102 @@
+[
+  {
+    "query": "This email to finance reads as defensive. Make it calmer: 'We've already sent the signed order twice.'",
+    "should_trigger": true,
+    "split": "dev"
+  },
+  {
+    "query": "Turn my notes into a board decision memo: extend the pilot by a week or end it today. We favour the extension.",
+    "should_trigger": true,
+    "split": "dev"
+  },
+  {
+    "query": "Draft an incident postmortem. The service recovered at noon; cause unknown.",
+    "should_trigger": true,
+    "split": "dev"
+  },
+  {
+    "query": "Please turn this into usable button and error copy: the card expired; the user can add another.",
+    "should_trigger": true,
+    "split": "dev"
+  },
+  {
+    "query": "Make this less like AI: Our pivotal initiative underscores our commitment to learning. We now run a weekly clinic.",
+    "should_trigger": true,
+    "split": "dev"
+  },
+  {
+    "query": "Turn these release notes into a Friday digest. Search shipped and billing is waiting for QA.",
+    "should_trigger": true,
+    "split": "dev"
+  },
+  {
+    "query": "Write up our eligibility rules for a UK council help page. Holders of a valid library card may apply.",
+    "should_trigger": true,
+    "split": "dev"
+  },
+  {
+    "query": "My teammate missed a practice shot. Write a note of encouragement in Ted Lasso's voice.",
+    "should_trigger": true,
+    "split": "held-out"
+  },
+  {
+    "query": "Make this account update sound like me: 'Yep, I checked twice. It’s still pending.' Keep it casual.",
+    "should_trigger": true,
+    "split": "held-out"
+  },
+  {
+    "query": "I need a diplomatic reply to a customer asking about shipment. The courier hasn't confirmed yet.",
+    "should_trigger": true,
+    "split": "held-out"
+  },
+  {
+    "query": "What is the difference between TCP and UDP?",
+    "should_trigger": false,
+    "split": "dev"
+  },
+  {
+    "query": "Write a Python function that returns the larger of two integers.",
+    "should_trigger": false,
+    "split": "dev"
+  },
+  {
+    "query": "Translate 'I left my coat here' into French literally.",
+    "should_trigger": false,
+    "split": "dev"
+  },
+  {
+    "query": "Investigate why our import failed. What evidence should I collect first?",
+    "should_trigger": false,
+    "split": "dev"
+  },
+  {
+    "query": "Extract the two email addresses from: a@example.org and b@example.org. Return JSON.",
+    "should_trigger": false,
+    "split": "dev"
+  },
+  {
+    "query": "How many minutes passed between 08:17 and 09:06?",
+    "should_trigger": false,
+    "split": "dev"
+  },
+  {
+    "query": "Sort these names alphabetically: Liz, Bea, Mo.",
+    "should_trigger": false,
+    "split": "dev"
+  },
+  {
+    "query": "Who is the character Paddington and where does he come from?",
+    "should_trigger": false,
+    "split": "held-out"
+  },
+  {
+    "query": "Is this JSON valid? {\"active\":true}",
+    "should_trigger": false,
+    "split": "held-out"
+  },
+  {
+    "query": "Which line of this arithmetic is wrong? 7 × 8 = 56, 56 − 12 = 46.",
+    "should_trigger": false,
+    "split": "held-out"
+  }
+]

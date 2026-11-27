@@ -8,6 +8,7 @@ test("ty resolves configured project imports in standalone PEP 723 scripts", asy
   const root = await mkdtemp(join(tmpdir(), "skill-python-types-"));
   try {
     await mkdir(join(root, "eval/harness"), { recursive: true });
+    await mkdir(join(root, "eval/writing"), { recursive: true });
     await Bun.write(
       join(root, "ty.toml"),
       '[environment]\npython-version = "3.13"\nextra-paths = ["helper modules"]\n',
