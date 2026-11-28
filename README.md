@@ -21,6 +21,7 @@ Uses the [`skills` CLI](https://github.com/vercel-labs/skills). Some skills need
 | [`build-ui-tailwind`](skills/build-ui-tailwind/SKILL.md) | Build, migrate, and audit Tailwind CSS v4 projects with the CSS-first model. |
 | [`create-agentsmd`](skills/create-agentsmd/SKILL.md) | Create repository-grounded agent instructions. |
 | [`create-github-actions`](skills/create-github-actions/SKILL.md) | Create and review secure GitHub Actions workflows. |
+| [`customizing-herdr`](skills/customizing-herdr/SKILL.md) | Customize and troubleshoot the Herdr desktop app on macOS: layouts, themes, mods, keybindings, and Gitview. |
 | [`design-event-dataflows`](skills/design-event-dataflows/SKILL.md) | Design event contracts, ordering, outbox/CDC, and replayable projections for log-centric dataflows. |
 | [`init-project-docs`](skills/init-project-docs/SKILL.md) | Bring a repository onto the project docs standard: scaffold the baseline for a new repo, or produce a gap report and manifest for an existing one. |
 | [`maintain-project-docs`](skills/maintain-project-docs/SKILL.md) | Create, update, and consolidate project Markdown documentation against the repository. |
