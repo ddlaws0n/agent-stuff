@@ -1,0 +1,66 @@
+[
+  {
+    "query": "My Herdr terminal text in the Zed layout feels a bit small at 13 px—can we bump it to 14 px without zooming the sidebar?",
+    "should_trigger": true
+  },
+  {
+    "query": "Pressing Cmd+Shift+G in Herdr stopped opening the Gitview Changes panel after I updated the app. Can you debug what broke?",
+    "should_trigger": true
+  },
+  {
+    "query": "I want to pull the latest herdr-zed-layout changes without losing my Move to Trash right-click patch in the Files tree.",
+    "should_trigger": true
+  },
+  {
+    "query": "Can you inspect a new third-party Herdr mod I found and wire it into my zed.json layout safely?",
+    "should_trigger": true
+  },
+  {
+    "query": "Switch Herdr back to the stock main layout and check what my pre-Zed keybindings looked like in the backup folder.",
+    "should_trigger": true
+  },
+  {
+    "query": "There is a .error file under my herdr-app config after I tweaked a zed-* mod. Help me diagnose it and run herdr-app check.",
+    "should_trigger": true
+  },
+  {
+    "query": "Adjust the Tokyo Night accent colors in my Herdr desktop theme and capture a screenshot to verify how it looks.",
+    "should_trigger": true
+  },
+  {
+    "query": "I'm setting up a second Mac with my Herdr desktop config and thinking about tracking it in chezmoi—what host constraints do I need to watch out for?",
+    "should_trigger": true
+  },
+  {
+    "query": "How do I list and detach stuck terminal sessions with the hc CLI in herdr-core?",
+    "should_trigger": false
+  },
+  {
+    "query": "Configure keybindings for the standalone herdr TUI over SSH on my Linux server.",
+    "should_trigger": false
+  },
+  {
+    "query": "Change the terminal font size and Tokyo Night theme in the Zed code editor's settings.json.",
+    "should_trigger": false
+  },
+  {
+    "query": "Set up the Gitview TUI plugin inside tmux so I can review diffs over SSH.",
+    "should_trigger": false
+  },
+  {
+    "query": "My Ghostty terminal font size looks blurry on my external monitor; how do I tweak Ghostty config?",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a Neovim Lua config to show git hunks and open a side-by-side diff view.",
+    "should_trigger": false
+  },
+  {
+    "query": "Help me set up chezmoi templates for my .zshrc, .gitconfig, and Homebrew Brewfile across two Macs.",
+    "should_trigger": false
+  },
+  {
+    "query": "Use gh pr diff to summarize the changes in pull request 42 on this repository.",
+    "should_trigger": false
+  }
+]
